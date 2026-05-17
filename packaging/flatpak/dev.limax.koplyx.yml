@@ -1,0 +1,31 @@
+id: dev.limax.koplyx
+runtime: org.gnome.Platform
+runtime-version: "46"
+sdk: org.gnome.Sdk
+command: koplyx
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --own-name=dev.limax.koplyx.StatusNotifierItem
+  - --filesystem=xdg-config/koplyx:create
+  - --filesystem=xdg-data/koplyx:create
+
+modules:
+  - name: koplyx
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 packaging/flatpak/koplyx-flatpak-launcher /app/bin/koplyx
+      - mkdir -p /app/opt/koplyx
+      - cp -R assets docs koplyx packaging README.md VERSION /app/opt/koplyx/
+      - install -Dm644 packaging/dev.limax.koplyx.desktop /app/share/applications/dev.limax.koplyx.desktop
+      - install -Dm644 assets/icons/dev.limax.koplyx.svg /app/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
+      - install -Dm644 packaging/metainfo/dev.limax.koplyx.metainfo.xml /app/share/metainfo/dev.limax.koplyx.metainfo.xml
+      - sed -i 's|^Exec=.*|Exec=koplyx|g' /app/share/applications/dev.limax.koplyx.desktop
+    sources:
+      - type: git
+        url: https://github.com/DemeulemeesterxMaxime/Koplyx.git
+        tag: v0.2.1

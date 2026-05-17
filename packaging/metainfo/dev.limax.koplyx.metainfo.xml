@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.limax.koplyx</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Koplyx</name>
+  <summary>Local encrypted clipboard history</summary>
+  <developer id="dev.limax">
+    <name>Limax</name>
+  </developer>
+  <description>
+    <p>Koplyx keeps a local encrypted history of text and image clipboard entries so users can quickly recover previous copies.</p>
+    <p>It provides search, pinned text, quick restore, optional X11 auto-paste, and a system tray indicator.</p>
+    <p>This app currently targets Linux desktop environments with X11 support. Wayland behavior can vary by compositor.</p>
+  </description>
+  <launchable type="desktop-id">dev.limax.koplyx.desktop</launchable>
+  <provides>
+    <binary>koplyx</binary>
+  </provides>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.2.1" date="2026-05-17">
+      <description>
+        <p>Add Snapcraft and Flatpak packaging metadata.</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-05-16">
+      <description>
+        <p>Public release hardening with Secret Service key storage and HTML documentation.</p>
+      </description>
+    </release>
+  </releases>
+  <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
+  <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
+  <custom>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.1/packaging/flatpak/dev.limax.koplyx.yml</value>
+  </custom>
+</component>

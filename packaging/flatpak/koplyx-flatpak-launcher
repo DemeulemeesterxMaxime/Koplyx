@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -eu
+
+export PYTHONPATH="/app/opt/koplyx:${PYTHONPATH:-}"
+exec /usr/bin/python3 /app/opt/koplyx/koplyx/main.py "$@"

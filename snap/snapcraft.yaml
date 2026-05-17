@@ -1,0 +1,61 @@
+name: koplyx
+base: core24
+version: "0.2.1"
+summary: Local encrypted clipboard history
+description: |
+  Koplyx is a Linux clipboard history app for text and images. It stores
+  clipboard entries locally with encryption, supports pinned text, search,
+  quick restore, optional auto-paste on X11, and a system tray indicator.
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  koplyx:
+    command: bin/koplyx-snap-launcher
+    desktop: usr/share/applications/dev.limax.koplyx.desktop
+    extensions: [gnome]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - gsettings
+      - home
+      - password-manager-service
+      - unity7
+      - wayland
+      - x11
+
+parts:
+  koplyx:
+    plugin: dump
+    source: .
+    source-type: local
+    organize:
+      "*": opt/koplyx/
+      snap/local/koplyx-snap-launcher: bin/koplyx-snap-launcher
+      packaging/dev.limax.koplyx.desktop: usr/share/applications/dev.limax.koplyx.desktop
+      assets/icons/dev.limax.koplyx.svg: usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
+    stage:
+      - opt/koplyx
+      - bin/koplyx-snap-launcher
+      - usr/share/applications/dev.limax.koplyx.desktop
+      - usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
+    override-build: |
+      craftctl default
+      chmod 0755 "$CRAFT_PART_INSTALL/bin/koplyx-snap-launcher"
+      sed -i 's|^Exec=.*|Exec=koplyx|g' "$CRAFT_PART_INSTALL/usr/share/applications/dev.limax.koplyx.desktop"
+    stage-packages:
+      - dbus-user-session
+      - gir1.2-gdkpixbuf-2.0
+      - gir1.2-gtk-4.0
+      - python3
+      - python3-cryptography
+      - python3-dbus
+      - python3-gi
+      - python3-pil
+      - python3-secretstorage
+      - xdotool

@@ -86,6 +86,15 @@ cd Koplyx
 Le build produit `dist/koplyx-<version>-linux-source.tar.gz`, `dist/koplyx_<version>_all.deb` et `dist/SHA256SUMS`.
 La GitHub Action `.github/workflows/release.yml` genere les memes fichiers en artefacts telechargeables, et les publie dans une GitHub Release quand un tag `v*` est pousse.
 
+## Snapcraft et Flathub
+
+- Snapcraft: `snap/snapcraft.yaml`
+- Flathub/Flatpak: `packaging/flatpak/dev.limax.koplyx.yml`
+- AppStream: `packaging/metainfo/dev.limax.koplyx.metainfo.xml`
+- Outils packaging: `packaging/scripts/install-packaging-tools.sh`
+
+Snapcraft et Flatpak Builder doivent etre installes localement pour construire ces paquets. Les commandes de publication sont documentees dans `docs/PUBLIC_RELEASE.md`.
+
 ## Note juridique naming
 
 Le nom Koplyx a ete choisi apres recherche preliminaire. Ce n'est pas une garantie juridique. Avant publication publique, verifier formellement WIPO, USPTO, EUIPO et INPI.

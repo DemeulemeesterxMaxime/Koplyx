@@ -162,6 +162,14 @@ cd Koplyx
 </code></pre>
 <p>Le build produit <code>dist/koplyx-&lt;version&gt;-linux-source.tar.gz</code>, <code>dist/koplyx_&lt;version&gt;_all.deb</code> et <code>dist/SHA256SUMS</code>.</p>
 <p>La GitHub Action <code>.github/workflows/release.yml</code> genere les memes fichiers en artefacts telechargeables, et les publie dans une GitHub Release quand un tag <code>v*</code> est pousse.</p>
+<h2>Snapcraft et Flathub</h2>
+<ul>
+<li>Snapcraft: <code>snap/snapcraft.yaml</code></li>
+<li>Flathub/Flatpak: <code>packaging/flatpak/dev.limax.koplyx.yml</code></li>
+<li>AppStream: <code>packaging/metainfo/dev.limax.koplyx.metainfo.xml</code></li>
+<li>Outils packaging: <code>packaging/scripts/install-packaging-tools.sh</code></li>
+</ul>
+<p>Snapcraft et Flatpak Builder doivent etre installes localement pour construire ces paquets. Les commandes de publication sont documentees dans <code>docs/PUBLIC_RELEASE.md</code>.</p>
 <h2>Note juridique naming</h2>
 <p>Le nom Koplyx a ete choisi apres recherche preliminaire. Ce n&#x27;est pas une garantie juridique. Avant publication publique, verifier formellement WIPO, USPTO, EUIPO et INPI.</p>
   </main>
