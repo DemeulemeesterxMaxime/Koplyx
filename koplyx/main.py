@@ -96,6 +96,44 @@ def ensure_private_file(path: Path) -> None:
         pass
 
 
+def ensure_private_dir(path: Path) -> None:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        path.chmod(0o700)
+    except OSError:
+        pass
+
+
+def harden_local_permissions() -> None:
+    for directory in (CONFIG_DIR, DATA_DIR):
+        ensure_private_dir(directory)
+    for path in (
+        CONFIG_DIR / "config.json",
+        CONFIG_DIR / "key.bin",
+        DATA_DIR / "history.db",
+        DATA_DIR / "history.db-wal",
+        DATA_DIR / "history.db-shm",
+    ):
+        if path.exists():
+            ensure_private_file(path)
+
+
+def private_preview(kind: str, mime: str, data: bytes, width: int | None = None, height: int | None = None) -> str:
+    if kind == "text":
+        try:
+            count = len(data.decode("utf-8"))
+        except UnicodeDecodeError:
+            count = len(data)
+        unit = "caractere" if count == 1 else "caracteres"
+        return f"Texte, {count} {unit}"
+    if kind == "image":
+        size_kb = max(1, round(len(data) / 1024))
+        if width is not None and height is not None:
+            return f"Image PNG, {width} x {height}, {size_kb} KB"
+        return f"Image PNG, {size_kb} KB"
+    return f"{mime}, {len(data)} octets"
+
+
 def user_desktop_path() -> Path:
     return xdg_path("XDG_DATA_HOME", ".local/share") / "applications" / "dev.limax.koplyx.desktop"
 
@@ -216,7 +254,7 @@ def global_shortcut_valid(accelerator: str) -> bool:
 
 class Config:
     def __init__(self) -> None:
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_private_dir(CONFIG_DIR)
         self.path = CONFIG_DIR / "config.json"
         self.data = DEFAULT_CONFIG.copy()
         if self.path.exists():
@@ -230,6 +268,7 @@ class Config:
 
     def save(self) -> None:
         self.path.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
+        ensure_private_file(self.path)
 
     def get(self, key: str):
         return self.data.get(key, DEFAULT_CONFIG.get(key))
@@ -241,7 +280,7 @@ class Config:
 
 class CryptoBox:
     def __init__(self) -> None:
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_private_dir(CONFIG_DIR)
         key = self.load_secret_service_key()
         if key is None:
             key = self.load_file_key()
@@ -295,7 +334,7 @@ class HistoryItem:
 
 class HistoryStore:
     def __init__(self, crypto: CryptoBox, config: Config) -> None:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_private_dir(DATA_DIR)
         self.crypto = crypto
         self.config = config
         self.db_path = DATA_DIR / "history.db"
@@ -317,10 +356,14 @@ class HistoryStore:
             """
         )
         self.conn.commit()
+        harden_local_permissions()
 
     def add(self, kind: str, mime: str, data: bytes, preview: str) -> bool:
         digest = sha256(kind, data)
         encrypted = self.crypto.encrypt(data)
+        stored_preview = private_preview(kind, mime, data)
+        if kind == "image" and preview.startswith("Image PNG,"):
+            stored_preview = preview
         ts = now_ts()
         cur = self.conn.cursor()
         try:
@@ -329,13 +372,14 @@ class HistoryStore:
                 INSERT INTO items(kind, mime, hash, encrypted_blob, preview, bytes_size, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (kind, mime, digest, encrypted, preview[:500], len(data), ts),
+                (kind, mime, digest, encrypted, stored_preview[:500], len(data), ts),
             )
             inserted = True
         except sqlite3.IntegrityError:
             cur.execute("UPDATE items SET created_at = ? WHERE hash = ?", (ts, digest))
             inserted = False
         self.conn.commit()
+        harden_local_permissions()
         self.prune()
         return inserted
 
@@ -373,10 +417,12 @@ class HistoryStore:
     def delete(self, item_id: int) -> None:
         self.conn.execute("DELETE FROM items WHERE id = ?", (item_id,))
         self.conn.commit()
+        harden_local_permissions()
 
     def clear(self) -> None:
         self.conn.execute("DELETE FROM items")
         self.conn.commit()
+        harden_local_permissions()
 
     def toggle_pin(self, item_id: int) -> None:
         self.conn.execute(
@@ -384,6 +430,7 @@ class HistoryStore:
             (item_id,),
         )
         self.conn.commit()
+        harden_local_permissions()
 
     def stats(self) -> tuple[int, int]:
         row = self.conn.execute("SELECT COUNT(*), COALESCE(SUM(bytes_size), 0) FROM items").fetchone()
@@ -422,6 +469,7 @@ class HistoryStore:
                 """
             )
         self.conn.commit()
+        harden_local_permissions()
 
 
 class ClipboardWatcher:
@@ -457,8 +505,7 @@ class ClipboardWatcher:
         if digest == self.last_text_hash:
             return
         self.last_text_hash = digest
-        preview = " ".join(text.strip().split())
-        self.app.store.add("text", "text/plain;charset=utf-8", data, preview)
+        self.app.store.add("text", "text/plain;charset=utf-8", data, private_preview("text", "text/plain;charset=utf-8", data))
         self.app.refresh()
 
     def on_texture(self, clipboard, result) -> None:
@@ -477,7 +524,7 @@ class ClipboardWatcher:
             return
         self.last_image_hash = digest
         w, h = texture.get_width(), texture.get_height()
-        self.app.store.add("image", "image/png", png_bytes, f"Image PNG - {w} x {h}")
+        self.app.store.add("image", "image/png", png_bytes, private_preview("image", "image/png", png_bytes, w, h))
         self.app.refresh()
 
     def set_text(self, text: str) -> None:
@@ -1350,10 +1397,20 @@ def run_gsettings(args: list[str]) -> bool:
         return False
 
 
+def read_gsettings(args: list[str]) -> str:
+    try:
+        result = subprocess.run(args, check=False, capture_output=True, text=True)
+    except OSError:
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
 def install_gnome_shortcut(shortcut: str, command: str) -> bool:
     base = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
     binding = f"{base}/koplyx/"
-    current = os.popen("gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings").read().strip()
+    current = read_gsettings(["gsettings", "get", "org.gnome.settings-daemon.plugins.media-keys", "custom-keybindings"])
     if not current or current == "@as []":
         bindings = [binding]
     else:

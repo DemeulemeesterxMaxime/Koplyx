@@ -19,6 +19,11 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.2.2" date="2026-05-17">
+      <description>
+        <p>Reduce plaintext clipboard metadata and harden local file permissions.</p>
+      </description>
+    </release>
     <release version="0.2.1" date="2026-05-17">
       <description>
         <p>Add Snapcraft and Flatpak packaging metadata.</p>
@@ -33,6 +38,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.1/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.2/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

@@ -13,7 +13,7 @@ cd Koplyx
 
 - Historique texte et image.
 - Deduplication par hash.
-- Recherche instantanee.
+- Recherche instantanee sur les metadonnees non sensibles.
 - Onglet dedie aux textes epingles.
 - Restauration dans le presse-papiers.
 - Collage automatique apres clic via `xdotool` sur X11.
@@ -34,7 +34,9 @@ cd Koplyx
 - Cle locale : Secret Service/libsecret si disponible, sinon `~/.config/koplyx/key.bin`
 - Base historique : `~/.local/share/koplyx/history.db`
 
-La base ne stocke pas les contenus en clair. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.
+Les contenus complets sont stockes dans `encrypted_blob`. Depuis `0.2.2`, les nouveaux apercus d'historique ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Les historiques crees avant `0.2.2` peuvent encore contenir d'anciens apercus en clair ; purger l'historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.
+
+Les dossiers locaux `~/.config/koplyx` et `~/.local/share/koplyx` sont durcis en `0700`, et les fichiers config, cle et base en `0600` quand le systeme de fichiers le permet. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.
 
 ## Raccourci global
 
@@ -82,6 +84,8 @@ Les contributions sont bienvenues pour les corrections de bugs, la documentation
 - `xdotool` sur X11 pour coller automatiquement dans le champ actif apres un clic.
 - `wtype` peut etre teste sur Wayland, mais il n'est pas une dependance du paquet `.deb`.
 - Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.
+
+Le collage automatique envoie volontairement `Ctrl+V` a la fenetre active apres restauration. Cette fonction doit etre testee sur l'environnement cible avant publication stable.
 
 ## Build release
 

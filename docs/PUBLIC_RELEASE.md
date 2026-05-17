@@ -8,6 +8,7 @@ Koplyx est pret pour une beta publique lorsque la validation locale passe sur la
 - Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.
 - Publier les checksums `SHA256SUMS` avec la release.
 - Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.
+- Purger l'historique local si des donnees reelles ont ete copiees avec une version anterieure a `0.2.2`, car les anciens apercus pouvaient contenir du texte en clair.
 - Tester une installation propre depuis le `.deb`, puis suppression et reinstall.
 
 ## Commandes release
@@ -23,6 +24,7 @@ sha256sum -c SHA256SUMS
 
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
 - Copier/coller un texte et verifier son apparition dans l'historique.
+- Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans `preview`.
 - Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
 - Epingler un texte et verifier sa presence dans l'onglet dedie.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
@@ -68,8 +70,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.2.1_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.1_amd64.snap
+ls -lh koplyx_0.2.2_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.2_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -139,8 +141,12 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.2.1
-git push origin v0.2.1
+git tag v0.2.2
+git push origin v0.2.2
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.
+
+## Nettoyage historique Git
+
+Avant de rendre le depot public sans traces personnelles, garder un backup puis reecrire l'historique local pour remplacer l'email auteur par l'email GitHub noreply et supprimer les anciens chemins locaux. Apres verification, publier avec `git push --force-with-lease origin main` seulement si aucun contributeur externe n'a base de travail sur l'ancien historique.

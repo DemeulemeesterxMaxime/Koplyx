@@ -104,7 +104,7 @@ cd Koplyx
 <ul>
 <li>Historique texte et image.</li>
 <li>Deduplication par hash.</li>
-<li>Recherche instantanee.</li>
+<li>Recherche instantanee sur les metadonnees non sensibles.</li>
 <li>Onglet dedie aux textes epingles.</li>
 <li>Restauration dans le presse-papiers.</li>
 <li>Collage automatique apres clic via <code>xdotool</code> sur X11.</li>
@@ -125,7 +125,8 @@ cd Koplyx
 <li>Cle locale : Secret Service/libsecret si disponible, sinon <code>~/.config/koplyx/key.bin</code></li>
 <li>Base historique : <code>~/.local/share/koplyx/history.db</code></li>
 </ul>
-<p>La base ne stocke pas les contenus en clair. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.</p>
+<p>Les contenus complets sont stockes dans <code>encrypted_blob</code>. Depuis <code>0.2.2</code>, les nouveaux apercus d&#x27;historique ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Les historiques crees avant <code>0.2.2</code> peuvent encore contenir d&#x27;anciens apercus en clair ; purger l&#x27;historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.</p>
+<p>Les dossiers locaux <code>~/.config/koplyx</code> et <code>~/.local/share/koplyx</code> sont durcis en <code>0700</code>, et les fichiers config, cle et base en <code>0600</code> quand le systeme de fichiers le permet. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.</p>
 <h2>Raccourci global</h2>
 <p>Le raccourci par defaut est <code>&lt;Ctrl&gt;&lt;Alt&gt;V</code>. Dans les parametres, le bouton <code>Installer raccourci GNOME</code> configure un custom keybinding GNOME qui lance :</p>
 <pre><code>
@@ -159,6 +160,7 @@ sha256sum -c SHA256SUMS
 <li><code>wtype</code> peut etre teste sur Wayland, mais il n&#x27;est pas une dependance du paquet <code>.deb</code>.</li>
 <li>Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.</li>
 </ul>
+<p>Le collage automatique envoie volontairement <code>Ctrl+V</code> a la fenetre active apres restauration. Cette fonction doit etre testee sur l&#x27;environnement cible avant publication stable.</p>
 <h2>Build release</h2>
 <pre><code>
 cd Koplyx

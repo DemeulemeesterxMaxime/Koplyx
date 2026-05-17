@@ -7,7 +7,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  security-scan:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check forbidden tracked files
+        run: |
+          forbidden="$(git ls-files | grep -E '(^|/)(\.env|key\.bin|history\.db|config\.json|snapcraft-login)$|(\.snap|\.deb|\.tar\.gz)$' || true)"
+          if [ -n "$forbidden" ]; then
+            printf '%s\n' "$forbidden"
+            exit 1
+          fi
+
+      - name: Check obvious secrets
+        run: |
+          if git grep -n -i -E '(BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9_]{36,}|github_pat_|xox[baprs]-|snapcraft-login|api[_-]?key[=:][^[:space:]]+|password[=:][^[:space:]]+)' -- . ':!.github/workflows/release.yml'; then
+            exit 1
+          fi
+
   build:
+    needs: security-scan
     runs-on: ubuntu-24.04
 
     steps:
@@ -46,6 +70,7 @@ jobs:
             dist/SHA256SUMS
 
   build-snap:
+    needs: security-scan
     runs-on: ubuntu-24.04
     env:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}

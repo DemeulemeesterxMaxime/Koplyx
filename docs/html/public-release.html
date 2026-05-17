@@ -101,6 +101,7 @@
 <li>Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.</li>
 <li>Publier les checksums <code>SHA256SUMS</code> avec la release.</li>
 <li>Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.</li>
+<li>Purger l&#x27;historique local si des donnees reelles ont ete copiees avec une version anterieure a <code>0.2.2</code>, car les anciens apercus pouvaient contenir du texte en clair.</li>
 <li>Tester une installation propre depuis le <code>.deb</code>, puis suppression et reinstall.</li>
 </ul>
 <h2>Commandes release</h2>
@@ -114,6 +115,7 @@ sha256sum -c SHA256SUMS
 <ul>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
 <li>Copier/coller un texte et verifier son apparition dans l&#x27;historique.</li>
+<li>Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans <code>preview</code>.</li>
 <li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
 <li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
 <li>Ouvrir les parametres, tester l&#x27;autostart et l&#x27;installation du raccourci GNOME.</li>
@@ -147,8 +149,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.2.1_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.1_amd64.snap
+ls -lh koplyx_0.2.2_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.2_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -199,10 +201,12 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 <p>Tag GitHub :</p>
 <pre><code>
 git push origin main
-git tag v0.2.1
-git push origin v0.2.1
+git tag v0.2.2
+git push origin v0.2.2
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
+<h2>Nettoyage historique Git</h2>
+<p>Avant de rendre le depot public sans traces personnelles, garder un backup puis reecrire l&#x27;historique local pour remplacer l&#x27;email auteur par l&#x27;email GitHub noreply et supprimer les anciens chemins locaux. Apres verification, publier avec <code>git push --force-with-lease origin main</code> seulement si aucun contributeur externe n&#x27;a base de travail sur l&#x27;ancien historique.</p>
   </main>
 </body>
 </html>

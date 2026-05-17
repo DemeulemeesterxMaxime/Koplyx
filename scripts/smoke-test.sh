@@ -30,18 +30,22 @@ export XDG_CONFIG_HOME="$KOPLYX_SMOKE_HOME/config"
 export XDG_DATA_HOME="$KOPLYX_SMOKE_HOME/data"
 
 /usr/bin/python3 - <<'PY'
-from koplyx.main import Config, CryptoBox, HistoryStore
+from koplyx.main import CONFIG_DIR, DATA_DIR, Config, CryptoBox, HistoryStore
 
 config = Config()
 crypto = CryptoBox()
 store = HistoryStore(crypto, config)
 store.add("text", "text/plain", b"koplyx smoke pinned", "koplyx smoke pinned")
-item = store.list("smoke")[0]
+item = store.list("")[0]
 store.toggle_pin(item.id)
 pinned = store.list("", pinned_text_only=True)
 assert len(pinned) == 1
-assert pinned[0].preview == "koplyx smoke pinned"
+assert pinned[0].preview != "koplyx smoke pinned"
 assert store.payload(pinned[0].id)[2] == b"koplyx smoke pinned"
+assert (CONFIG_DIR.stat().st_mode & 0o777) == 0o700
+assert (DATA_DIR.stat().st_mode & 0o777) == 0o700
+assert ((CONFIG_DIR / "config.json").stat().st_mode & 0o777) == 0o600
+assert ((DATA_DIR / "history.db").stat().st_mode & 0o777) == 0o600
 store.clear()
 print("storage ok")
 PY
