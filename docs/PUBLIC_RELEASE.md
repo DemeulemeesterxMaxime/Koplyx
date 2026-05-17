@@ -25,8 +25,11 @@ Installer l'outil :
 
 ```bash
 ./packaging/scripts/install-packaging-tools.sh
+newgrp lxd
 snapcraft login
 ```
+
+Si `snapcraft pack` affiche `user must be manually added to 'lxd' group before using LXD`, fermer et rouvrir la session Linux, ou lancer `newgrp lxd` dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.
 
 Construire et publier :
 
@@ -73,9 +76,9 @@ Soumission Flathub :
 Tag GitHub :
 
 ```bash
-git tag v0.2.0
 git push origin main
-git push origin v0.2.0
+git tag v0.2.1
+git push origin v0.2.1
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

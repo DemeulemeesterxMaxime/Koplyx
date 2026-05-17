@@ -115,8 +115,10 @@ sha256sum -c SHA256SUMS
 <p>Installer l&#x27;outil :</p>
 <pre><code>
 ./packaging/scripts/install-packaging-tools.sh
+newgrp lxd
 snapcraft login
 </code></pre>
+<p>Si <code>snapcraft pack</code> affiche <code>user must be manually added to &#x27;lxd&#x27; group before using LXD</code>, fermer et rouvrir la session Linux, ou lancer <code>newgrp lxd</code> dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.</p>
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
@@ -150,9 +152,9 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 </ol>
 <p>Tag GitHub :</p>
 <pre><code>
-git tag v0.2.0
 git push origin main
-git push origin v0.2.0
+git tag v0.2.1
+git push origin v0.2.1
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
   </main>
