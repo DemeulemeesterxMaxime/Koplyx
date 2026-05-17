@@ -124,6 +124,17 @@ cd Koplyx
 snapcraft pack
 </code></pre>
 <p>Si <code>snapcraft pack</code> affiche <code>user must be manually added to &#x27;lxd&#x27; group before using LXD</code>, fermer et rouvrir la session Linux, ou lancer <code>newgrp lxd</code> dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.</p>
+<p>Verifier que le groupe est actif avant de relancer Snapcraft :</p>
+<pre><code>
+groups
+</code></pre>
+<p>La sortie doit contenir <code>lxd</code>. Si ce n&#x27;est pas le cas :</p>
+<pre><code>
+sudo usermod -aG lxd &quot;$USER&quot;
+newgrp lxd
+groups
+</code></pre>
+<p>Si <code>groups</code> ne contient toujours pas <code>lxd</code>, fermer completement la session Linux puis se reconnecter.</p>
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
@@ -144,6 +155,7 @@ snapcraft clean
 snapcraft pack
 </code></pre>
 <p>Si une tentative a ete lancee avec <code>sudo snapcraft</code>, ignorer le log dans <code>/root/.local/state/snapcraft</code> et relancer sans <code>sudo</code> depuis le dossier projet.</p>
+<p>Si <code>snapcraft clean</code> ou <code>snapcraft pack</code> echoue avec <code>PermissionError(13, &#x27;Permission denied&#x27;)</code> sur LXD, le shell courant n&#x27;a pas encore le groupe <code>lxd</code>. Refaire la verification <code>groups</code>, puis rouvrir la session si necessaire.</p>
 <p>Si le probleme persiste, supprimer l&#x27;instance de build Snapcraft et verifier que le bridge LXD a du NAT :</p>
 <pre><code>
 lxc --project snapcraft list

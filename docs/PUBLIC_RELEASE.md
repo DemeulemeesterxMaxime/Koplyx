@@ -38,6 +38,22 @@ snapcraft pack
 
 Si `snapcraft pack` affiche `user must be manually added to 'lxd' group before using LXD`, fermer et rouvrir la session Linux, ou lancer `newgrp lxd` dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.
 
+Verifier que le groupe est actif avant de relancer Snapcraft :
+
+```bash
+groups
+```
+
+La sortie doit contenir `lxd`. Si ce n'est pas le cas :
+
+```bash
+sudo usermod -aG lxd "$USER"
+newgrp lxd
+groups
+```
+
+Si `groups` ne contient toujours pas `lxd`, fermer completement la session Linux puis se reconnecter.
+
 Construire et publier :
 
 ```bash
@@ -65,6 +81,8 @@ snapcraft pack
 ```
 
 Si une tentative a ete lancee avec `sudo snapcraft`, ignorer le log dans `/root/.local/state/snapcraft` et relancer sans `sudo` depuis le dossier projet.
+
+Si `snapcraft clean` ou `snapcraft pack` echoue avec `PermissionError(13, 'Permission denied')` sur LXD, le shell courant n'a pas encore le groupe `lxd`. Refaire la verification `groups`, puis rouvrir la session si necessaire.
 
 Si le probleme persiste, supprimer l'instance de build Snapcraft et verifier que le bridge LXD a du NAT :
 
