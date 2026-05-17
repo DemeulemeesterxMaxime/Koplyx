@@ -45,7 +45,7 @@ koplyx --toggle
 
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
 
-Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer `Modifier`, cliquer `Demarrer`, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le bouton `Fn` est affiche comme aide, mais GNOME ne peut generalement pas enregistrer `Fn` comme modificateur.
+Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer `Modifier`, cliquer `Demarrer` pour vider l'ancienne combinaison, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le bouton `Fn` est affiche comme aide, mais GNOME ne peut generalement pas enregistrer `Fn` comme modificateur.
 
 ## Installation utilisateur
 

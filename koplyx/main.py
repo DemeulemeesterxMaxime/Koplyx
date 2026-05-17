@@ -166,6 +166,8 @@ def paste_clipboard_now() -> bool:
 
 
 def accelerator_label(accelerator: str) -> str:
+    if not accelerator:
+        return "Aucune touche"
     success, keyval, modifiers = Gtk.accelerator_parse(accelerator)
     if success:
         return Gtk.accelerator_get_label(keyval, modifiers)
@@ -185,6 +187,8 @@ def normalize_accelerator(keyval: int, state: Gdk.ModifierType) -> str:
 
 
 def accelerator_from_parts(keyval: int, modifiers: Gdk.ModifierType) -> str:
+    if not keyval:
+        return ""
     return Gtk.accelerator_name(keyval, Gdk.ModifierType(modifiers))
 
 
@@ -905,6 +909,10 @@ class ShortcutCaptureDialog(Gtk.Window):
             self.finish()
         else:
             self.capturing = True
+            self.keyval = 0
+            self.modifiers = Gdk.ModifierType(0)
+            self.pending_shortcut = ""
+            self.fn_button.set_active(False)
             self.update_view()
             self.grab_focus()
 
