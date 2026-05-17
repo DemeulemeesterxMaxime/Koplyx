@@ -16,8 +16,9 @@ cd Koplyx
 - Recherche instantanee.
 - Onglet dedie aux textes epingles.
 - Restauration dans le presse-papiers.
-- Collage automatique apres clic si `xdotool` ou `wtype` est installe.
+- Collage automatique apres clic via `xdotool` sur X11.
 - Indicateur de barre systeme si le bureau expose AppIndicator/KStatusNotifierItem.
+- Icone Koplyx dediee dans le lanceur et la barre systeme.
 - Stockage SQLite local chiffre avec `cryptography.Fernet`.
 - Purge par nombre d'entrees, age et taille totale.
 - Parametres integres.
@@ -37,7 +38,7 @@ La base ne stocke pas les contenus en clair. La cle reste locale sur la machine 
 Le raccourci par defaut est `<Ctrl><Alt>V`. Dans les parametres, le bouton `Installer raccourci GNOME` configure un custom keybinding GNOME qui lance :
 
 ```bash
-/usr/bin/python3 Koplyx/koplyx/main.py --toggle
+koplyx --toggle
 ```
 
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
@@ -64,7 +65,7 @@ Le guide complet est dans `docs/TEST_RELEASE.md`.
 ## Dependances optionnelles
 
 - `xdotool` sur X11 pour coller automatiquement dans le champ actif apres un clic.
-- `wtype` sur Wayland si le bureau autorise l'injection clavier.
+- `wtype` peut etre teste sur Wayland, mais il n'est pas une dependance du paquet `.deb`.
 - Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.
 
 ## Build release

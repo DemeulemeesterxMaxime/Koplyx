@@ -52,6 +52,7 @@ def xdg_path(env_name: str, default_suffix: str) -> Path:
 CONFIG_DIR = xdg_path("XDG_CONFIG_HOME", ".config") / "koplyx"
 DATA_DIR = xdg_path("XDG_DATA_HOME", ".local/share") / "koplyx"
 RUNTIME_DIR = xdg_path("XDG_RUNTIME_DIR", ".cache") / "koplyx"
+ICON_NAME = "dev.limax.koplyx"
 
 
 def now_ts() -> int:
@@ -94,6 +95,40 @@ def paste_tool_name() -> str | None:
     if command_exists("xdotool"):
         return "xdotool"
     return None
+
+
+def x11_active_window() -> str | None:
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11" or not command_exists("xdotool"):
+        return None
+    result = subprocess.run(["xdotool", "getactivewindow"], check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    window_id = result.stdout.strip()
+    return window_id or None
+
+
+def x11_window_pid(window_id: str) -> int | None:
+    result = subprocess.run(["xdotool", "getwindowpid", window_id], check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    try:
+        return int(result.stdout.strip())
+    except ValueError:
+        return None
+
+
+def activate_x11_window(window_id: str | None) -> bool:
+    if not window_id or not command_exists("xdotool"):
+        return False
+    return (
+        subprocess.run(
+            ["xdotool", "windowactivate", "--sync", window_id],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode
+        == 0
+    )
 
 
 def paste_clipboard_now() -> bool:
@@ -502,6 +537,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         root.append(self.status)
 
     def present_focused(self) -> None:
+        self.app.remember_active_window()
         self.present()
         self.search.grab_focus()
 
@@ -549,7 +585,11 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         count, total = self.app.store.stats()
         mb = total / 1024 / 1024
         view_label = "textes epingles" if self.active_view == "pinned_text" else "historique"
-        self.status.set_text(f"{view_label} · {count} elements · {mb:.1f} Mo · stockage local chiffre")
+        message = self.app.status_message
+        if message:
+            self.status.set_text(message)
+        else:
+            self.status.set_text(f"{view_label} · {count} elements · {mb:.1f} Mo · stockage local chiffre")
 
     def confirm_clear(self) -> None:
         dialog = Gtk.AlertDialog(message="Effacer tout l'historique Koplyx ?")
@@ -608,10 +648,17 @@ class SettingsWindow(Gtk.Window):
         autostart.connect("clicked", self.install_autostart)
         root.append(autostart)
 
+        self.feedback = Gtk.Label()
+        self.feedback.set_wrap(True)
+        self.feedback.set_xalign(0)
+        self.feedback.add_css_class("settings-feedback")
+        root.append(self.feedback)
+
         tools = paste_tool_name()
         paste_note = tools if tools else "non disponible, installer xdotool sur X11 ou wtype sur Wayland"
+        tray_note = "disponible" if app.tray and app.tray.available else "non detecte"
         note = Gtk.Label(
-            label=f"Outil collage auto: {paste_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
+            label=f"Outil collage auto: {paste_note}. Barre systeme: {tray_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
         )
         note.set_wrap(True)
         note.set_xalign(0)
@@ -651,11 +698,14 @@ class SettingsWindow(Gtk.Window):
 
     def install_shortcut(self, _button) -> None:
         shortcut = self.app.config.get("shortcut")
-        command = f"{sys.executable} {Path(__file__).resolve()} --toggle"
-        install_gnome_shortcut(shortcut, command)
+        ok = install_gnome_shortcut(shortcut, "koplyx --toggle")
+        self.feedback.set_text("Raccourci GNOME installe." if ok else "Impossible d'installer le raccourci GNOME.")
+        self.app.set_status("Raccourci GNOME installe." if ok else "Erreur raccourci GNOME.")
 
     def install_autostart(self, _button) -> None:
-        install_autostart_file()
+        ok = install_autostart_file()
+        self.feedback.set_text("Autostart active." if ok else "Impossible d'activer l'autostart.")
+        self.app.set_status("Autostart active." if ok else "Erreur autostart.")
 
 
 class TrayIndicator:
@@ -709,19 +759,31 @@ class TrayIndicator:
             def GetAll(self, interface):
                 if interface != "org.kde.StatusNotifierItem":
                     return {}
-                tooltip = ["edit-paste-symbolic", [], "Koplyx", "Historique presse-papiers"]
-                return {
-                    "Category": "ApplicationStatus",
-                    "Id": "koplyx",
-                    "Title": "Koplyx",
-                    "Status": "Active",
-                    "WindowId": 0,
-                    "IconName": "edit-paste-symbolic",
-                    "IconThemePath": "",
-                    "AttentionIconName": "",
-                    "ToolTip": tooltip,
-                    "ItemIsMenu": False,
-                }
+                icon_path = str(PROJECT_ROOT / "assets/icons")
+                tooltip = dbus.Struct(
+                    (
+                        dbus.String(ICON_NAME),
+                        dbus.Array([], signature="(iiay)"),
+                        dbus.String("Koplyx"),
+                        dbus.String("Historique presse-papiers"),
+                    ),
+                    signature="sa(iiay)ss",
+                )
+                return dbus.Dictionary(
+                    {
+                        "Category": dbus.String("ApplicationStatus"),
+                        "Id": dbus.String("koplyx"),
+                        "Title": dbus.String("Koplyx"),
+                        "Status": dbus.String("Active"),
+                        "WindowId": dbus.UInt32(0),
+                        "IconName": dbus.String(ICON_NAME),
+                        "IconThemePath": dbus.String(icon_path),
+                        "AttentionIconName": dbus.String(""),
+                        "ToolTip": tooltip,
+                        "ItemIsMenu": dbus.Boolean(False),
+                    },
+                    signature="sv",
+                )
 
             @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="ssv", out_signature="")
             def Set(self, _interface, _prop, _value):
@@ -745,6 +807,8 @@ class KoplyxApplication(Gtk.Application):
         self.window: KoplyxWindow | None = None
         self.watcher: ClipboardWatcher | None = None
         self.tray: TrayIndicator | None = None
+        self.previous_window_id: str | None = None
+        self.status_message = ""
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
@@ -787,6 +851,24 @@ class KoplyxApplication(Gtk.Application):
         else:
             self.window.present_focused()
 
+    def remember_active_window(self) -> None:
+        window_id = x11_active_window()
+        if not window_id:
+            return
+        if x11_window_pid(window_id) == os.getpid():
+            return
+        self.previous_window_id = window_id
+
+    def set_status(self, message: str) -> None:
+        self.status_message = message
+        if self.window:
+            self.window.set_items(
+                self.store.list(
+                    self.window.query(),
+                    pinned_text_only=self.window.active_view == "pinned_text",
+                )
+            )
+
     def refresh(self) -> None:
         if self.window:
             self.window.set_items(
@@ -808,18 +890,33 @@ class KoplyxApplication(Gtk.Application):
         if self.window:
             self.window.hide()
         if self.config.get("auto_paste"):
-            GLib.timeout_add(140, self.try_auto_paste)
+            GLib.timeout_add(120, self.activate_then_paste)
+
+    def activate_then_paste(self) -> bool:
+        if activate_x11_window(self.previous_window_id):
+            GLib.timeout_add(180, self.try_auto_paste)
+        else:
+            self.set_status("Copie restauree. Collage auto impossible: fenetre precedente introuvable.")
+        return GLib.SOURCE_REMOVE
 
     def try_auto_paste(self) -> bool:
-        paste_clipboard_now()
+        if paste_clipboard_now():
+            self.set_status("Texte colle dans la fenetre active.")
+        else:
+            self.set_status("Copie restauree. Collage auto impossible: xdotool indisponible ou refuse.")
         return GLib.SOURCE_REMOVE
 
 
-def run_gsettings(args: list[str]) -> None:
-    Gio.Subprocess.new(args, Gio.SubprocessFlags.NONE).wait(None)
+def run_gsettings(args: list[str]) -> bool:
+    try:
+        proc = Gio.Subprocess.new(args, Gio.SubprocessFlags.NONE)
+        proc.wait(None)
+        return proc.get_successful()
+    except GLib.Error:
+        return False
 
 
-def install_gnome_shortcut(shortcut: str, command: str) -> None:
+def install_gnome_shortcut(shortcut: str, command: str) -> bool:
     base = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
     binding = f"{base}/koplyx/"
     current = os.popen("gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings").read().strip()
@@ -833,11 +930,12 @@ def install_gnome_shortcut(shortcut: str, command: str) -> None:
         if binding not in bindings:
             bindings.append(binding)
     list_value = "[" + ", ".join(f"'{b}'" for b in bindings) + "]"
-    run_gsettings(["gsettings", "set", "org.gnome.settings-daemon.plugins.media-keys", "custom-keybindings", list_value])
+    ok = run_gsettings(["gsettings", "set", "org.gnome.settings-daemon.plugins.media-keys", "custom-keybindings", list_value])
     schema = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
-    run_gsettings(["gsettings", "set", schema + ":" + binding, "name", APP_NAME])
-    run_gsettings(["gsettings", "set", schema + ":" + binding, "command", command])
-    run_gsettings(["gsettings", "set", schema + ":" + binding, "binding", shortcut])
+    ok = run_gsettings(["gsettings", "set", schema + ":" + binding, "name", APP_NAME]) and ok
+    ok = run_gsettings(["gsettings", "set", schema + ":" + binding, "command", command]) and ok
+    ok = run_gsettings(["gsettings", "set", schema + ":" + binding, "binding", shortcut]) and ok
+    return ok
 
 
 def desktop_entry(command: str) -> str:
@@ -846,18 +944,21 @@ Type=Application
 Name=Koplyx
 Comment=Historique local chiffre du presse-papiers
 Exec={command}
-Icon=edit-paste-symbolic
+Icon={ICON_NAME}
 Terminal=false
 Categories=Utility;GTK;
 StartupNotify=false
 """
 
 
-def install_autostart_file() -> None:
-    autostart = CONFIG_DIR.parent / "autostart"
-    autostart.mkdir(parents=True, exist_ok=True)
-    command = f"{sys.executable} {Path(__file__).resolve()} --hidden"
-    (autostart / "koplyx.desktop").write_text(desktop_entry(command), encoding="utf-8")
+def install_autostart_file() -> bool:
+    try:
+        autostart = CONFIG_DIR.parent / "autostart"
+        autostart.mkdir(parents=True, exist_ok=True)
+        (autostart / "koplyx.desktop").write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
+        return True
+    except OSError:
+        return False
 
 
 def apply_css() -> None:
@@ -905,6 +1006,10 @@ def apply_css() -> None:
     }
     .meta, .status, .settings-note {
       color: #8fa099;
+      font-size: 12px;
+    }
+    .settings-feedback {
+      color: #73e6a2;
       font-size: 12px;
     }
     .empty {

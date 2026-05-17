@@ -13,7 +13,7 @@ PACKAGE_NAME="koplyx"
 rm -rf "$DIST_DIR"
 mkdir -p "$STAGE_DIR" "$DEB_ROOT"
 
-cp -R bin docs koplyx packaging scripts README.md VERSION "$STAGE_DIR/"
+cp -R assets bin docs koplyx packaging scripts README.md VERSION "$STAGE_DIR/"
 find "$STAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 tar -C "$DIST_DIR" -czf "$DIST_DIR/koplyx-$VERSION-linux-source.tar.gz" "koplyx-$VERSION"
@@ -22,9 +22,10 @@ mkdir -p \
   "$DEB_ROOT/DEBIAN" \
   "$DEB_ROOT/opt/koplyx" \
   "$DEB_ROOT/usr/bin" \
-  "$DEB_ROOT/usr/share/applications"
+  "$DEB_ROOT/usr/share/applications" \
+  "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps"
 
-cp -R bin docs koplyx packaging scripts README.md VERSION "$DEB_ROOT/opt/koplyx/"
+cp -R assets bin docs koplyx packaging scripts README.md VERSION "$DEB_ROOT/opt/koplyx/"
 find "$DEB_ROOT/opt/koplyx" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 cat > "$DEB_ROOT/usr/bin/koplyx" <<'EOF'
@@ -34,6 +35,7 @@ EOF
 chmod 0755 "$DEB_ROOT/usr/bin/koplyx"
 
 cp packaging/dev.limax.koplyx.desktop "$DEB_ROOT/usr/share/applications/dev.limax.koplyx.desktop"
+cp assets/icons/dev.limax.koplyx.svg "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg"
 
 cat > "$DEB_ROOT/DEBIAN/control" <<EOF
 Package: $PACKAGE_NAME
@@ -54,6 +56,9 @@ cat > "$DEB_ROOT/DEBIAN/postinst" <<'EOF'
 set -e
 if command -v update-desktop-database >/dev/null 2>&1; then
   update-desktop-database /usr/share/applications >/dev/null 2>&1 || true
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q /usr/share/icons/hicolor >/dev/null 2>&1 || true
 fi
 exit 0
 EOF
