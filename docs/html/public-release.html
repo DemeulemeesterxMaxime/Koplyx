@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Publication publique</title>
+  <link rel="icon" href="assets/dev.limax.koplyx.svg" type="image/svg+xml">
   <style>
     :root {
       color-scheme: dark;
@@ -62,11 +63,31 @@
       color: var(--muted);
       font-size: 13px;
     }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+    }
+    .brand span {
+      color: #dff7ea;
+      font-size: 20px;
+      font-weight: 800;
+    }
   </style>
 </head>
 <body>
   <main>
     <header>
+      <div class="brand">
+        <img src="assets/dev.limax.koplyx.svg" alt="Logo Koplyx">
+        <span>Koplyx</span>
+      </div>
       <div class="nav">
         <a href="index.html">README</a>
         <a href="test-release.html">Tests</a>

@@ -10,6 +10,8 @@ SOURCES = [
     (ROOT / "docs/TEST_RELEASE.md", ROOT / "docs/html/test-release.html", "Tester et publier Koplyx"),
     (ROOT / "docs/PUBLIC_RELEASE.md", ROOT / "docs/html/public-release.html", "Publication publique"),
 ]
+LOGO_SOURCE = ROOT / "assets/icons/dev.limax.koplyx.svg"
+LOGO_TARGET = ROOT / "docs/html/assets/dev.limax.koplyx.svg"
 
 
 def inline(text: str) -> str:
@@ -97,6 +99,7 @@ def page(title: str, body: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(title)}</title>
+  <link rel="icon" href="assets/dev.limax.koplyx.svg" type="image/svg+xml">
   <style>
     :root {{
       color-scheme: dark;
@@ -155,11 +158,31 @@ def page(title: str, body: str) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }}
+    .brand img {{
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+    }}
+    .brand span {{
+      color: #dff7ea;
+      font-size: 20px;
+      font-weight: 800;
+    }}
   </style>
 </head>
 <body>
   <main>
     <header>
+      <div class="brand">
+        <img src="assets/dev.limax.koplyx.svg" alt="Logo Koplyx">
+        <span>Koplyx</span>
+      </div>
       <div class="nav">
         <a href="index.html">README</a>
         <a href="test-release.html">Tests</a>
@@ -174,6 +197,9 @@ def page(title: str, body: str) -> str:
 
 
 def main() -> int:
+    LOGO_TARGET.parent.mkdir(parents=True, exist_ok=True)
+    LOGO_TARGET.write_text(LOGO_SOURCE.read_text(encoding="utf-8"), encoding="utf-8")
+    print(f"wrote {LOGO_TARGET.relative_to(ROOT)}")
     for source, target, title in SOURCES:
         target.parent.mkdir(parents=True, exist_ok=True)
         body = markdown_to_html(source.read_text(encoding="utf-8"))
