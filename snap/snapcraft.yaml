@@ -43,7 +43,17 @@ parts:
       - usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
     override-build: |
       craftctl default
-      install -Dm755 "$CRAFT_PART_INSTALL/opt/koplyx/snap/local/koplyx-snap-launcher" "$CRAFT_PART_INSTALL/bin/koplyx-snap-launcher"
+      mkdir -p "$CRAFT_PART_INSTALL/bin"
+      cat > "$CRAFT_PART_INSTALL/bin/koplyx-snap-launcher" <<'EOF'
+      #!/usr/bin/env sh
+      set -eu
+
+      export PYTHONPATH="${SNAP}/opt/koplyx:${PYTHONPATH:-}"
+      export XDG_DATA_DIRS="${SNAP}/usr/share:${SNAP}/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+      export GDK_PIXBUF_MODULE_FILE="${SNAP}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+
+      exec "${SNAP}/usr/bin/python3" "${SNAP}/opt/koplyx/koplyx/main.py" "$@"
+      EOF
       install -Dm644 "$CRAFT_PART_INSTALL/opt/koplyx/packaging/dev.limax.koplyx.desktop" "$CRAFT_PART_INSTALL/usr/share/applications/dev.limax.koplyx.desktop"
       install -Dm644 "$CRAFT_PART_INSTALL/opt/koplyx/assets/icons/dev.limax.koplyx.svg" "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg"
       chmod 0755 "$CRAFT_PART_INSTALL/bin/koplyx-snap-launcher"
