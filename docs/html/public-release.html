@@ -122,12 +122,31 @@ snapcraft login
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
+ls -lh koplyx_0.2.1_amd64.snap
 snapcraft upload --release=edge koplyx_0.2.1_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
 snapcraft register koplyx
 </code></pre>
+<p>Si Snapcraft repond <code>already_owned: You already own the snap name &quot;koplyx&quot;</code>, le nom est deja reserve sur le compte courant. Ne pas relancer <code>snapcraft register koplyx</code>, passer directement a <code>snapcraft pack</code>.</p>
+<p>Si <code>snapcraft pack</code> echoue avec <code>A network related operation failed in a context of no network access</code>, le build a demarre mais le conteneur LXD Snapcraft n&#x27;a pas acces au reseau. Verifier/reinitialiser LXD puis relancer le build :</p>
+<pre><code>
+lxc network list
+lxc network show lxdbr0
+sudo snap restart lxd
+snapcraft clean
+snapcraft pack
+</code></pre>
+<p>Si le probleme persiste, supprimer l&#x27;instance de build Snapcraft et verifier que le bridge LXD a du NAT :</p>
+<pre><code>
+lxc --project snapcraft list
+lxc --project snapcraft delete --force snapcraft-koplyx-amd64-19796907 2&gt;/dev/null || true
+lxc network set lxdbr0 ipv4.nat true
+lxc network set lxdbr0 ipv6.nat true
+snapcraft pack
+</code></pre>
+<p>Ne lancer <code>snapcraft upload</code> que lorsque le fichier <code>.snap</code> existe vraiment dans le dossier projet.</p>
 <h2>Flathub</h2>
 <p>Installer les outils :</p>
 <pre><code>
