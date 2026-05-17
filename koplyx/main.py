@@ -242,14 +242,39 @@ class Config:
 class CryptoBox:
     def __init__(self) -> None:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        key = self.load_secret_service_key()
+        if key is None:
+            key = self.load_file_key()
+        self.fernet = Fernet(key)
+
+    def load_file_key(self) -> bytes:
         key_path = CONFIG_DIR / "key.bin"
         if key_path.exists():
-            key = key_path.read_bytes()
-        else:
-            key = Fernet.generate_key()
-            key_path.write_bytes(key)
-            ensure_private_file(key_path)
-        self.fernet = Fernet(key)
+            return key_path.read_bytes()
+        key = Fernet.generate_key()
+        key_path.write_bytes(key)
+        ensure_private_file(key_path)
+        return key
+
+    def load_secret_service_key(self) -> bytes | None:
+        try:
+            import secretstorage
+
+            connection = secretstorage.dbus_init()
+            attributes = {"application": "koplyx", "purpose": "fernet-key"}
+            for item in secretstorage.search_items(connection, attributes):
+                item.ensure_not_locked()
+                return bytes(item.get_secret())
+
+            key_path = CONFIG_DIR / "key.bin"
+            key = key_path.read_bytes() if key_path.exists() else Fernet.generate_key()
+            collection = secretstorage.get_default_collection(connection)
+            collection.ensure_not_locked()
+            collection.create_item("Koplyx local encryption key", attributes, key, replace=True)
+            ensure_private_file(key_path) if key_path.exists() else None
+            return key
+        except Exception:
+            return None
 
     def encrypt(self, data: bytes) -> bytes:
         return self.fernet.encrypt(data)
@@ -728,6 +753,14 @@ class SettingsWindow(Gtk.Window):
         self.feedback.add_css_class("settings-feedback")
         root.append(self.feedback)
 
+        shortcut_warning = Gtk.Label(
+            label="Attention: l'OS peut deja utiliser ce raccourci. Pour le liberer, allez dans Parametres > Clavier > Raccourcis clavier."
+        )
+        shortcut_warning.set_wrap(True)
+        shortcut_warning.set_xalign(0)
+        shortcut_warning.add_css_class("settings-warning")
+        root.append(shortcut_warning)
+
         tools = paste_tool_name()
         paste_note = tools if tools else "non disponible, installer xdotool sur X11 ou wtype sur Wayland"
         tray_note = "disponible" if app.tray and app.tray.available else "non detecte"
@@ -1201,6 +1234,7 @@ class KoplyxApplication(Gtk.Application):
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
+        Gtk.Window.set_default_icon_name(ICON_NAME)
         repair_user_desktop_files()
         apply_css()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.on_shutdown_signal)
@@ -1427,6 +1461,10 @@ def apply_css() -> None:
     .settings-feedback {
       color: #73e6a2;
       font-size: 12px;
+    }
+    .settings-warning {
+      color: #d6b46a;
+      font-size: 11px;
     }
     .shortcut-value {
       color: #dff7ea;

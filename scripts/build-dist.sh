@@ -44,7 +44,7 @@ Section: utils
 Priority: optional
 Architecture: all
 Maintainer: Limax <limax@example.local>
-Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-gdkpixbuf-2.0, python3-cryptography, python3-pil, python3-dbus, dbus-user-session, xdotool
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-gdkpixbuf-2.0, python3-cryptography, python3-pil, python3-dbus, python3-secretstorage, dbus-user-session, xdotool
 Recommends: gnome-shell-extension-appindicator
 Description: Local encrypted clipboard history for Linux
  Koplyx stores text and image clipboard history locally with encryption,

@@ -21,6 +21,7 @@ cd Koplyx
 - Menu de barre systeme avec acces aux parametres et action quitter.
 - Icone Koplyx dediee dans le lanceur et la barre systeme.
 - Stockage SQLite local chiffre avec `cryptography.Fernet`.
+- Cle de chiffrement stockee via Secret Service/libsecret quand disponible, avec fallback fichier local.
 - Purge par nombre d'entrees, age et taille totale.
 - Parametres integres.
 - Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.
@@ -30,10 +31,10 @@ cd Koplyx
 ## Donnees locales
 
 - Configuration : `~/.config/koplyx/config.json`
-- Cle locale : `~/.config/koplyx/key.bin`
+- Cle locale : Secret Service/libsecret si disponible, sinon `~/.config/koplyx/key.bin`
 - Base historique : `~/.local/share/koplyx/history.db`
 
-La base ne stocke pas les contenus en clair. La cle reste locale sur la machine ; pour une publication commerciale, il faudra remplacer ce mecanisme par une integration Secret Service/libsecret plus stricte.
+La base ne stocke pas les contenus en clair. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.
 
 ## Raccourci global
 
@@ -46,6 +47,8 @@ koplyx --toggle
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
 
 Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer `Modifier`, cliquer `Demarrer` pour vider l'ancienne combinaison, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le bouton `Fn` est affiche comme aide, mais GNOME ne peut generalement pas enregistrer `Fn` comme modificateur.
+
+Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Parametres > Clavier > Raccourcis clavier` pour changer ou liberer le raccourci systeme.
 
 ## Installation utilisateur
 
