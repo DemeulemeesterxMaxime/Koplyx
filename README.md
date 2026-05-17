@@ -18,6 +18,7 @@ cd Koplyx
 - Restauration dans le presse-papiers.
 - Collage automatique apres clic via `xdotool` sur X11.
 - Indicateur de barre systeme si le bureau expose AppIndicator/KStatusNotifierItem.
+- Menu de barre systeme avec acces aux parametres et action quitter.
 - Icone Koplyx dediee dans le lanceur et la barre systeme.
 - Stockage SQLite local chiffre avec `cryptography.Fernet`.
 - Purge par nombre d'entrees, age et taille totale.

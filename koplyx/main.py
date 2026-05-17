@@ -717,6 +717,10 @@ class SettingsWindow(Gtk.Window):
 
 
 class TrayIndicator:
+    MENU_PATH = "/Menu"
+    MENU_SETTINGS_ID = 1
+    MENU_QUIT_ID = 2
+
     def __init__(self, app: "KoplyxApplication") -> None:
         self.app = app
         self.available = False
@@ -737,11 +741,135 @@ class TrayIndicator:
         except Exception:
             return
 
+        class DBusMenu(dbus.service.Object):
+            def __init__(self, owner: "TrayIndicator") -> None:
+                self.owner = owner
+                super().__init__(owner.bus_name, TrayIndicator.MENU_PATH)
+
+            def menu_item(self, item_id: int, label: str) -> "dbus.Struct":
+                props = dbus.Dictionary(
+                    {
+                        "label": dbus.String(label),
+                        "enabled": dbus.Boolean(True),
+                        "visible": dbus.Boolean(True),
+                    },
+                    signature="sv",
+                )
+                return dbus.Struct((dbus.Int32(item_id), props, dbus.Array([], signature="v")), signature="ia{sv}av")
+
+            def root_layout(self) -> "dbus.Struct":
+                props = dbus.Dictionary(
+                    {
+                        "children-display": dbus.String("submenu"),
+                        "visible": dbus.Boolean(True),
+                    },
+                    signature="sv",
+                )
+                children = dbus.Array(
+                    [
+                        self.menu_item(TrayIndicator.MENU_SETTINGS_ID, "Parametres"),
+                        self.menu_item(TrayIndicator.MENU_QUIT_ID, "Quitter Koplyx"),
+                    ],
+                    signature="v",
+                )
+                return dbus.Struct((dbus.Int32(0), props, children), signature="ia{sv}av")
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
+            def GetLayout(self, _parent_id, _recursion_depth, _property_names):
+                return dbus.UInt32(1), self.root_layout()
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="aias", out_signature="a(ia{sv})")
+            def GetGroupProperties(self, ids, _property_names):
+                rows = []
+                labels = {
+                    TrayIndicator.MENU_SETTINGS_ID: "Parametres",
+                    TrayIndicator.MENU_QUIT_ID: "Quitter Koplyx",
+                }
+                for item_id in ids:
+                    label = labels.get(int(item_id))
+                    if label:
+                        rows.append(
+                            dbus.Struct(
+                                (
+                                    dbus.Int32(item_id),
+                                    dbus.Dictionary(
+                                        {
+                                            "label": dbus.String(label),
+                                            "enabled": dbus.Boolean(True),
+                                            "visible": dbus.Boolean(True),
+                                        },
+                                        signature="sv",
+                                    ),
+                                ),
+                                signature="ia{sv}",
+                            )
+                        )
+                return dbus.Array(rows, signature="(ia{sv})")
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="is", out_signature="v")
+            def GetProperty(self, item_id, prop):
+                if prop == "label":
+                    if int(item_id) == TrayIndicator.MENU_SETTINGS_ID:
+                        return dbus.String("Parametres")
+                    if int(item_id) == TrayIndicator.MENU_QUIT_ID:
+                        return dbus.String("Quitter Koplyx")
+                if prop in ("enabled", "visible"):
+                    return dbus.Boolean(True)
+                return dbus.String("")
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="isvu", out_signature="")
+            def Event(self, item_id, event_id, _data, _timestamp):
+                if event_id != "clicked":
+                    return
+                if int(item_id) == TrayIndicator.MENU_SETTINGS_ID:
+                    GLib.idle_add(self.owner.app.open_settings_from_tray)
+                elif int(item_id) == TrayIndicator.MENU_QUIT_ID:
+                    GLib.idle_add(self.owner.app.quit_from_tray)
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="i", out_signature="b")
+            def AboutToShow(self, _item_id):
+                return False
+
+            @dbus.service.method("com.canonical.dbusmenu", in_signature="ai", out_signature="aiai")
+            def AboutToShowGroup(self, ids):
+                return dbus.Array([], signature="i"), dbus.Array(ids, signature="i")
+
+            @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="ss", out_signature="v")
+            def Get(self, interface, prop):
+                values = self.GetAll(interface)
+                if prop in values:
+                    return values[prop]
+                raise dbus.exceptions.DBusException(
+                    f"Unknown property {prop}",
+                    name="org.freedesktop.DBus.Error.InvalidArgs",
+                )
+
+            @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
+            def GetAll(self, interface):
+                if interface != "com.canonical.dbusmenu":
+                    return dbus.Dictionary({}, signature="sv")
+                return dbus.Dictionary(
+                    {
+                        "Version": dbus.UInt32(3),
+                        "TextDirection": dbus.String("ltr"),
+                        "Status": dbus.String("normal"),
+                        "IconThemePath": dbus.String(str(PROJECT_ROOT / "assets/icons")),
+                    },
+                    signature="sv",
+                )
+
+            @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="ssv", out_signature="")
+            def Set(self, _interface, _prop, _value):
+                return
+
+            @dbus.service.signal("com.canonical.dbusmenu", signature="ui")
+            def LayoutUpdated(self, revision, parent):
+                return
+
         class StatusNotifierItem(dbus.service.Object):
             def __init__(self, owner: "TrayIndicator") -> None:
                 self.owner = owner
-                bus_name = dbus.service.BusName("dev.limax.koplyx.StatusNotifierItem", owner.bus)
-                super().__init__(bus_name, "/StatusNotifierItem")
+                super().__init__(owner.bus_name, "/StatusNotifierItem")
 
             @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii", out_signature="")
             def Activate(self, _x, _y):
@@ -783,7 +911,7 @@ class TrayIndicator:
                     ),
                     signature="sa(iiay)ss",
                 )
-                menu_path = dbus.ObjectPath("/NO_DBUSMENU")
+                menu_path = dbus.ObjectPath(TrayIndicator.MENU_PATH)
                 return dbus.Dictionary(
                     {
                         "Category": dbus.String("ApplicationStatus"),
@@ -805,6 +933,8 @@ class TrayIndicator:
             def Set(self, _interface, _prop, _value):
                 return
 
+        self.bus_name = dbus.service.BusName("dev.limax.koplyx.StatusNotifierItem", self.bus)
+        self.menu = DBusMenu(self)
         self.item = StatusNotifierItem(self)
         watcher = self.bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
         watcher.RegisterStatusNotifierItem(
@@ -867,6 +997,16 @@ class KoplyxApplication(Gtk.Application):
             self.window.hide()
         else:
             self.window.present_focused()
+
+    def open_settings_from_tray(self) -> bool:
+        self.ensure_window()
+        self.window.present_focused()
+        self.window.open_settings()
+        return GLib.SOURCE_REMOVE
+
+    def quit_from_tray(self) -> bool:
+        self.quit()
+        return GLib.SOURCE_REMOVE
 
     def remember_active_window(self) -> None:
         window_id = x11_active_window()
