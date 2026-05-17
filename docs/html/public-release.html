@@ -90,12 +90,11 @@
       </div>
       <div class="nav">
         <a href="index.html">README</a>
-        <a href="test-release.html">Tests</a>
         <a href="public-release.html">Publication</a>
       </div>
     </header>
     <h1>Publication publique</h1>
-<p>Koplyx est pret pour une beta publique lorsque les tests de <code>docs/TEST_RELEASE.md</code> passent sur la matrice cible.</p>
+<p>Koplyx est pret pour une beta publique lorsque la validation locale passe sur la matrice cible.</p>
 <h2>Avant publication</h2>
 <ul>
 <li>Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.</li>
@@ -111,6 +110,16 @@
 cd dist
 sha256sum -c SHA256SUMS
 </code></pre>
+<h2>Verification manuelle</h2>
+<ul>
+<li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
+<li>Copier/coller un texte et verifier son apparition dans l&#x27;historique.</li>
+<li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
+<li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
+<li>Ouvrir les parametres, tester l&#x27;autostart et l&#x27;installation du raccourci GNOME.</li>
+<li>Redemarrer la session et verifier la persistance de l&#x27;historique.</li>
+<li>Installer le snap depuis <code>edge</code> et refaire le lancement, l&#x27;icone, la zone systeme et l&#x27;historique.</li>
+</ul>
 <h2>Snapcraft</h2>
 <p>Installer l&#x27;outil :</p>
 <pre><code>

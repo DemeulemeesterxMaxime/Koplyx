@@ -90,7 +90,6 @@
       </div>
       <div class="nav">
         <a href="index.html">README</a>
-        <a href="test-release.html">Tests</a>
         <a href="public-release.html">Publication</a>
       </div>
     </header>
@@ -142,13 +141,18 @@ cd Koplyx
 </code></pre>
 <p>Cela installe un lanceur dans <code>~/.local/bin/koplyx</code> et une entree desktop dans <code>~/.local/share/applications/dev.limax.koplyx.desktop</code>.</p>
 <p>Sur X11, le script tente aussi d&#x27;installer <code>xdotool</code> via <code>apt</code> pour activer le collage automatique.</p>
-<h2>Tester avant release</h2>
+<h2>Validation locale</h2>
 <pre><code>
 cd Koplyx
 ./scripts/smoke-test.sh
+./scripts/build-dist.sh
+cd dist
+sha256sum -c SHA256SUMS
 </code></pre>
-<p>Le guide complet est dans <code>docs/TEST_RELEASE.md</code>.</p>
-<p>Les versions HTML statiques sont dans <code>docs/html/</code>.</p>
+<p>La checklist de publication est dans <code>docs/PUBLIC_RELEASE.md</code>.</p>
+<p>Les versions HTML statiques de la documentation sont dans <code>docs/html/</code>.</p>
+<h2>Contribuer</h2>
+<p>Les contributions sont bienvenues pour les corrections de bugs, la documentation, le packaging Linux et les ameliorations ciblees de l&#x27;experience utilisateur. Lire <code>CONTRIBUTING.md</code> avant d&#x27;ouvrir une issue ou une pull request.</p>
 <h2>Dependances optionnelles</h2>
 <ul>
 <li><code>xdotool</code> sur X11 pour coller automatiquement dans le champ actif apres un clic.</li>

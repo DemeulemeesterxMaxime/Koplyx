@@ -7,7 +7,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = [
     (ROOT / "README.md", ROOT / "docs/html/index.html", "Koplyx"),
-    (ROOT / "docs/TEST_RELEASE.md", ROOT / "docs/html/test-release.html", "Tester et publier Koplyx"),
     (ROOT / "docs/PUBLIC_RELEASE.md", ROOT / "docs/html/public-release.html", "Publication publique"),
 ]
 LOGO_SOURCE = ROOT / "assets/icons/dev.limax.koplyx.svg"
@@ -185,7 +184,6 @@ def page(title: str, body: str) -> str:
       </div>
       <div class="nav">
         <a href="index.html">README</a>
-        <a href="test-release.html">Tests</a>
         <a href="public-release.html">Publication</a>
       </div>
     </header>

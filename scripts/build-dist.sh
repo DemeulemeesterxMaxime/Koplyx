@@ -15,7 +15,7 @@ mkdir -p "$STAGE_DIR" "$DEB_ROOT"
 
 ./scripts/build-html-docs.py
 
-cp -R .github assets bin docs koplyx packaging scripts snap LICENSE README.md VERSION "$STAGE_DIR/"
+cp -R .github assets bin docs koplyx packaging scripts snap CODE_OF_CONDUCT.md CONTRIBUTING.md LICENSE README.md SECURITY.md VERSION "$STAGE_DIR/"
 find "$STAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 tar -C "$DIST_DIR" -czf "$DIST_DIR/koplyx-$VERSION-linux-source.tar.gz" "koplyx-$VERSION"
@@ -28,7 +28,7 @@ mkdir -p \
   "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" \
   "$DEB_ROOT/usr/share/metainfo"
 
-cp -R assets bin docs koplyx packaging scripts LICENSE README.md VERSION "$DEB_ROOT/opt/koplyx/"
+cp -R assets bin docs koplyx packaging scripts CODE_OF_CONDUCT.md CONTRIBUTING.md LICENSE README.md SECURITY.md VERSION "$DEB_ROOT/opt/koplyx/"
 find "$DEB_ROOT/opt/koplyx" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 cat > "$DEB_ROOT/usr/bin/koplyx" <<'EOF'

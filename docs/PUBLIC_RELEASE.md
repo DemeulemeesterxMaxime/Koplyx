@@ -1,6 +1,6 @@
 # Publication publique
 
-Koplyx est pret pour une beta publique lorsque les tests de `docs/TEST_RELEASE.md` passent sur la matrice cible.
+Koplyx est pret pour une beta publique lorsque la validation locale passe sur la matrice cible.
 
 ## Avant publication
 
@@ -18,6 +18,16 @@ Koplyx est pret pour une beta publique lorsque les tests de `docs/TEST_RELEASE.m
 cd dist
 sha256sum -c SHA256SUMS
 ```
+
+## Verification manuelle
+
+- Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
+- Copier/coller un texte et verifier son apparition dans l'historique.
+- Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
+- Epingler un texte et verifier sa presence dans l'onglet dedie.
+- Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
+- Redemarrer la session et verifier la persistance de l'historique.
+- Installer le snap depuis `edge` et refaire le lancement, l'icone, la zone systeme et l'historique.
 
 ## Snapcraft
 

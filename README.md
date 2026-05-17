@@ -60,15 +60,22 @@ cd Koplyx
 Cela installe un lanceur dans `~/.local/bin/koplyx` et une entree desktop dans `~/.local/share/applications/dev.limax.koplyx.desktop`.
 Sur X11, le script tente aussi d'installer `xdotool` via `apt` pour activer le collage automatique.
 
-## Tester avant release
+## Validation locale
 
 ```bash
 cd Koplyx
 ./scripts/smoke-test.sh
+./scripts/build-dist.sh
+cd dist
+sha256sum -c SHA256SUMS
 ```
 
-Le guide complet est dans `docs/TEST_RELEASE.md`.
-Les versions HTML statiques sont dans `docs/html/`.
+La checklist de publication est dans `docs/PUBLIC_RELEASE.md`.
+Les versions HTML statiques de la documentation sont dans `docs/html/`.
+
+## Contribuer
+
+Les contributions sont bienvenues pour les corrections de bugs, la documentation, le packaging Linux et les ameliorations ciblees de l'experience utilisateur. Lire `CONTRIBUTING.md` avant d'ouvrir une issue ou une pull request.
 
 ## Dependances optionnelles
 
