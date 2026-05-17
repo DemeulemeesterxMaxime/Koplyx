@@ -81,6 +81,14 @@ def ensure_private_file(path: Path) -> None:
         pass
 
 
+def user_desktop_path() -> Path:
+    return xdg_path("XDG_DATA_HOME", ".local/share") / "applications" / "dev.limax.koplyx.desktop"
+
+
+def autostart_desktop_path() -> Path:
+    return xdg_path("XDG_CONFIG_HOME", ".config") / "autostart" / "koplyx.desktop"
+
+
 def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
 
@@ -753,7 +761,13 @@ class TrayIndicator:
 
             @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="ss", out_signature="v")
             def Get(self, interface, prop):
-                return self.GetAll(interface)[prop]
+                values = self.GetAll(interface)
+                if prop in values:
+                    return values[prop]
+                raise dbus.exceptions.DBusException(
+                    f"Unknown property {prop}",
+                    name="org.freedesktop.DBus.Error.InvalidArgs",
+                )
 
             @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
             def GetAll(self, interface):
@@ -769,6 +783,7 @@ class TrayIndicator:
                     ),
                     signature="sa(iiay)ss",
                 )
+                menu_path = dbus.ObjectPath("/NO_DBUSMENU")
                 return dbus.Dictionary(
                     {
                         "Category": dbus.String("ApplicationStatus"),
@@ -780,6 +795,7 @@ class TrayIndicator:
                         "IconThemePath": dbus.String(icon_path),
                         "AttentionIconName": dbus.String(""),
                         "ToolTip": tooltip,
+                        "Menu": menu_path,
                         "ItemIsMenu": dbus.Boolean(False),
                     },
                     signature="sv",
@@ -812,6 +828,7 @@ class KoplyxApplication(Gtk.Application):
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
+        repair_user_desktop_files()
         apply_css()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.on_shutdown_signal)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.on_shutdown_signal)
@@ -951,11 +968,27 @@ StartupNotify=false
 """
 
 
+def repair_user_desktop_files() -> None:
+    desktop_path = user_desktop_path()
+    if desktop_path.exists():
+        try:
+            desktop_path.write_text(desktop_entry("koplyx"), encoding="utf-8")
+        except OSError:
+            pass
+
+    autostart_path = autostart_desktop_path()
+    if autostart_path.exists():
+        try:
+            autostart_path.write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
+        except OSError:
+            pass
+
+
 def install_autostart_file() -> bool:
     try:
-        autostart = CONFIG_DIR.parent / "autostart"
-        autostart.mkdir(parents=True, exist_ok=True)
-        (autostart / "koplyx.desktop").write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
+        autostart_path = autostart_desktop_path()
+        autostart_path.parent.mkdir(parents=True, exist_ok=True)
+        autostart_path.write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
         return True
     except OSError:
         return False
