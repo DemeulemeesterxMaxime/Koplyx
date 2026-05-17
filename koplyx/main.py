@@ -184,6 +184,18 @@ def normalize_accelerator(keyval: int, state: Gdk.ModifierType) -> str:
     return Gtk.accelerator_name(keyval, modifiers)
 
 
+def accelerator_from_parts(keyval: int, modifiers: Gdk.ModifierType) -> str:
+    return Gtk.accelerator_name(keyval, Gdk.ModifierType(modifiers))
+
+
+def parse_accelerator_parts(accelerator: str) -> tuple[int, Gdk.ModifierType]:
+    success, keyval, modifiers = Gtk.accelerator_parse(accelerator)
+    if success:
+        return keyval, modifiers
+    success, keyval, modifiers = Gtk.accelerator_parse(DEFAULT_CONFIG["shortcut"])
+    return keyval, modifiers
+
+
 def global_shortcut_valid(accelerator: str) -> bool:
     success, keyval, modifiers = Gtk.accelerator_parse(accelerator)
     if not success:
@@ -790,10 +802,11 @@ class SettingsWindow(Gtk.Window):
 class ShortcutCaptureDialog(Gtk.Window):
     def __init__(self, parent: Gtk.Window, current_shortcut: str) -> None:
         super().__init__(title="Modifier le raccourci", transient_for=parent, modal=True)
-        self.set_default_size(420, 240)
+        self.set_default_size(460, 330)
         self.add_css_class("settings-window")
         self.capturing = False
-        self.pending_shortcut = current_shortcut
+        self.keyval, self.modifiers = parse_accelerator_parts(current_shortcut)
+        self.pending_shortcut = accelerator_from_parts(self.keyval, self.modifiers)
         self.on_done = None
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
@@ -819,6 +832,19 @@ class ShortcutCaptureDialog(Gtk.Window):
         self.value.set_hexpand(True)
         root.append(self.value)
 
+        modifiers = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        modifiers.set_halign(Gtk.Align.CENTER)
+        root.append(modifiers)
+
+        self.ctrl_button = self.modifier_button("Ctrl", Gdk.ModifierType.CONTROL_MASK)
+        self.alt_button = self.modifier_button("Alt", Gdk.ModifierType.ALT_MASK)
+        self.super_button = self.modifier_button("Super", Gdk.ModifierType.SUPER_MASK)
+        self.fn_button = Gtk.ToggleButton(label="Fn")
+        self.fn_button.set_tooltip_text("Fn est materiel sur la plupart des claviers et ne peut pas etre enregistre par GNOME.")
+        self.fn_button.connect("toggled", self.on_fn_toggled)
+        for button in (self.ctrl_button, self.alt_button, self.super_button, self.fn_button):
+            modifiers.append(button)
+
         actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         actions.set_halign(Gtk.Align.END)
         cancel = Gtk.Button(label="Annuler")
@@ -835,18 +861,44 @@ class ShortcutCaptureDialog(Gtk.Window):
         self.add_controller(controller)
         self.update_view()
 
+    def modifier_button(self, label: str, mask: Gdk.ModifierType) -> Gtk.ToggleButton:
+        button = Gtk.ToggleButton(label=label)
+        button.modifier_mask = mask
+        button.connect("toggled", self.on_modifier_toggled)
+        return button
+
+    def on_modifier_toggled(self, button: Gtk.ToggleButton) -> None:
+        if button.get_active():
+            self.modifiers = Gdk.ModifierType(self.modifiers | button.modifier_mask)
+        else:
+            self.modifiers = Gdk.ModifierType(self.modifiers & ~button.modifier_mask)
+        self.sync_pending_shortcut()
+        self.update_view()
+
+    def on_fn_toggled(self, _button: Gtk.ToggleButton) -> None:
+        self.instructions.set_text("Fn ne peut pas etre enregistre par GNOME. Utilisez Ctrl, Alt ou Super.")
+
+    def sync_modifier_buttons(self) -> None:
+        for button in (self.ctrl_button, self.alt_button, self.super_button):
+            button.handler_block_by_func(self.on_modifier_toggled)
+            button.set_active(bool(self.modifiers & button.modifier_mask))
+            button.handler_unblock_by_func(self.on_modifier_toggled)
+
+    def sync_pending_shortcut(self) -> None:
+        self.pending_shortcut = accelerator_from_parts(self.keyval, self.modifiers)
+
     def update_view(self) -> None:
+        self.sync_modifier_buttons()
         self.value.set_text(accelerator_label(self.pending_shortcut))
         if self.capturing:
             self.instructions.set_text(
-                "Capture active. Appuyez sur la combinaison voulue, puis sur Entree pour valider."
+                "Capture active. Appuyez sur la touche principale, ou cliquez Ctrl/Alt/Super, puis Valider."
             )
-            self.primary.set_label("Valider")
         else:
             self.instructions.set_text(
-                "Appuyez sur Entree ou sur Demarrer pour commencer la capture du nouveau raccourci."
+                "Cliquez Demarrer, appuyez sur la touche principale, ajustez Ctrl/Alt/Super, puis Valider."
             )
-            self.primary.set_label("Demarrer")
+        self.primary.set_label("Valider" if self.capturing else "Demarrer")
 
     def toggle_capture(self) -> None:
         if self.capturing:
@@ -857,6 +909,9 @@ class ShortcutCaptureDialog(Gtk.Window):
             self.grab_focus()
 
     def finish(self) -> None:
+        if not global_shortcut_valid(self.pending_shortcut):
+            self.instructions.set_text("Combinaison invalide. Ajoutez Ctrl, Alt ou Super, puis Valider.")
+            return
         if callable(self.on_done):
             self.on_done(self.pending_shortcut)
         self.close()
@@ -867,7 +922,6 @@ class ShortcutCaptureDialog(Gtk.Window):
             return True
 
         if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            self.toggle_capture()
             return True
 
         if not self.capturing:
@@ -876,17 +930,24 @@ class ShortcutCaptureDialog(Gtk.Window):
         if keyval in MODIFIER_KEYS:
             return True
 
-        accelerator = normalize_accelerator(keyval, state)
-        if not global_shortcut_valid(accelerator):
-            self.instructions.set_text("Combinaison invalide. Ajoutez Ctrl, Alt ou Super avec une touche.")
-            return True
-
-        self.pending_shortcut = accelerator
-        self.instructions.set_text(
-            f"Combinaison capturee: {accelerator_label(accelerator)}. Appuyez sur Entree pour valider."
+        state_modifiers = state & (
+            Gdk.ModifierType.SHIFT_MASK
+            | Gdk.ModifierType.CONTROL_MASK
+            | Gdk.ModifierType.ALT_MASK
+            | Gdk.ModifierType.SUPER_MASK
+            | Gdk.ModifierType.META_MASK
+            | Gdk.ModifierType.HYPER_MASK
         )
-        self.value.set_text(accelerator_label(accelerator))
+        self.keyval = keyval
+        self.modifiers = Gdk.ModifierType(self.modifiers | state_modifiers)
+        self.sync_pending_shortcut()
+        if not global_shortcut_valid(self.pending_shortcut):
+            self.instructions.set_text("Combinaison invalide. Ajoutez Ctrl, Alt ou Super, puis Valider.")
+        else:
+            self.instructions.set_text(f"Touche capturee: {accelerator_label(self.pending_shortcut)}. Cliquez Valider.")
+        self.value.set_text(accelerator_label(self.pending_shortcut))
         self.primary.set_label("Valider")
+        self.sync_modifier_buttons()
         return True
 
 
