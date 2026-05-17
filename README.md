@@ -68,6 +68,7 @@ cd Koplyx
 ```
 
 Le guide complet est dans `docs/TEST_RELEASE.md`.
+Les versions HTML statiques sont dans `docs/html/`.
 
 ## Dependances optionnelles
 

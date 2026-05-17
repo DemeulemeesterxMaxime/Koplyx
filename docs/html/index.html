@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Koplyx</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111614;
+      --surface: #171d1b;
+      --text: #eef3ef;
+      --muted: #8fa099;
+      --accent: #73e6a2;
+      --border: #2a3531;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 42px 22px 64px;
+    }
+    h1, h2, h3 {
+      color: #dff7ea;
+      line-height: 1.2;
+    }
+    a { color: var(--accent); }
+    code {
+      background: #202925;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 5px;
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: auto;
+      padding: 14px;
+    }
+    pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+    li { margin: 5px 0; }
+    p, li { color: var(--text); }
+    header {
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+      padding-bottom: 12px;
+    }
+    .nav {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="nav">
+        <a href="index.html">README</a>
+        <a href="test-release.html">Tests</a>
+        <a href="public-release.html">Publication</a>
+      </div>
+    </header>
+    <h1>Koplyx</h1>
+<p>Koplyx est une micro-app Linux d&#x27;historique du presse-papiers. Elle surveille les copies texte et image, stocke l&#x27;historique localement avec chiffrement applicatif, puis permet de retrouver et restaurer une ancienne copie via une fenetre compacte.</p>
+<h2>Lancer en developpement</h2>
+<pre><code>
+cd Koplyx
+./bin/koplyx
+</code></pre>
+<h2>Fonctionnalites v1</h2>
+<ul>
+<li>Historique texte et image.</li>
+<li>Deduplication par hash.</li>
+<li>Recherche instantanee.</li>
+<li>Onglet dedie aux textes epingles.</li>
+<li>Restauration dans le presse-papiers.</li>
+<li>Collage automatique apres clic via <code>xdotool</code> sur X11.</li>
+<li>Indicateur de barre systeme si le bureau expose AppIndicator/KStatusNotifierItem.</li>
+<li>Menu de barre systeme avec acces aux parametres et action quitter.</li>
+<li>Icone Koplyx dediee dans le lanceur et la barre systeme.</li>
+<li>Stockage SQLite local chiffre avec <code>cryptography.Fernet</code>.</li>
+<li>Cle de chiffrement stockee via Secret Service/libsecret quand disponible, avec fallback fichier local.</li>
+<li>Purge par nombre d&#x27;entrees, age et taille totale.</li>
+<li>Parametres integres.</li>
+<li>Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.</li>
+<li>Installation optionnelle du raccourci GNOME.</li>
+<li>Autostart utilisateur optionnel.</li>
+</ul>
+<h2>Donnees locales</h2>
+<ul>
+<li>Configuration : <code>~/.config/koplyx/config.json</code></li>
+<li>Cle locale : Secret Service/libsecret si disponible, sinon <code>~/.config/koplyx/key.bin</code></li>
+<li>Base historique : <code>~/.local/share/koplyx/history.db</code></li>
+</ul>
+<p>La base ne stocke pas les contenus en clair. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.</p>
+<h2>Raccourci global</h2>
+<p>Le raccourci par defaut est <code>&lt;Ctrl&gt;&lt;Alt&gt;V</code>. Dans les parametres, le bouton <code>Installer raccourci GNOME</code> configure un custom keybinding GNOME qui lance :</p>
+<pre><code>
+koplyx --toggle
+</code></pre>
+<p>Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.</p>
+<p>Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer <code>Modifier</code>, cliquer <code>Demarrer</code> pour vider l&#x27;ancienne combinaison, choisir si besoin <code>Ctrl</code>, <code>Alt</code> ou <code>Super</code>, appuyer sur la touche principale, puis cliquer <code>Valider</code>. Le bouton <code>Fn</code> est affiche comme aide, mais GNOME ne peut generalement pas enregistrer <code>Fn</code> comme modificateur.</p>
+<p>Si le raccourci ne repond pas, il peut deja etre reserve par l&#x27;OS. Ouvrir <code>Parametres &gt; Clavier &gt; Raccourcis clavier</code> pour changer ou liberer le raccourci systeme.</p>
+<h2>Installation utilisateur</h2>
+<pre><code>
+cd Koplyx
+./packaging/install-user.sh
+</code></pre>
+<p>Cela installe un lanceur dans <code>~/.local/bin/koplyx</code> et une entree desktop dans <code>~/.local/share/applications/dev.limax.koplyx.desktop</code>.</p>
+<p>Sur X11, le script tente aussi d&#x27;installer <code>xdotool</code> via <code>apt</code> pour activer le collage automatique.</p>
+<h2>Tester avant release</h2>
+<pre><code>
+cd Koplyx
+./scripts/smoke-test.sh
+</code></pre>
+<p>Le guide complet est dans <code>docs/TEST_RELEASE.md</code>.</p>
+<p>Les versions HTML statiques sont dans <code>docs/html/</code>.</p>
+<h2>Dependances optionnelles</h2>
+<ul>
+<li><code>xdotool</code> sur X11 pour coller automatiquement dans le champ actif apres un clic.</li>
+<li><code>wtype</code> peut etre teste sur Wayland, mais il n&#x27;est pas une dependance du paquet <code>.deb</code>.</li>
+<li>Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.</li>
+</ul>
+<h2>Build release</h2>
+<pre><code>
+cd Koplyx
+./scripts/build-dist.sh
+</code></pre>
+<p>Le build produit <code>dist/koplyx-&lt;version&gt;-linux-source.tar.gz</code>, <code>dist/koplyx_&lt;version&gt;_all.deb</code> et <code>dist/SHA256SUMS</code>.</p>
+<p>La GitHub Action <code>.github/workflows/release.yml</code> genere les memes fichiers en artefacts telechargeables, et les publie dans une GitHub Release quand un tag <code>v*</code> est pousse.</p>
+<h2>Note juridique naming</h2>
+<p>Le nom Koplyx a ete choisi apres recherche preliminaire. Ce n&#x27;est pas une garantie juridique. Avant publication publique, verifier formellement WIPO, USPTO, EUIPO et INPI.</p>
+  </main>
+</body>
+</html>

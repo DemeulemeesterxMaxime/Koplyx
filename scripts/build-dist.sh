@@ -13,6 +13,8 @@ PACKAGE_NAME="koplyx"
 rm -rf "$DIST_DIR"
 mkdir -p "$STAGE_DIR" "$DEB_ROOT"
 
+./scripts/build-html-docs.py
+
 cp -R assets bin docs koplyx packaging scripts README.md VERSION "$STAGE_DIR/"
 find "$STAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
 
