@@ -1,0 +1,68 @@
+name: Build release artifacts
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dbus-user-session \
+            dpkg-dev \
+            fakeroot \
+            gir1.2-gdkpixbuf-2.0 \
+            gir1.2-gtk-4.0 \
+            python3-cryptography \
+            python3-dbus \
+            python3-gi \
+            python3-pil \
+            xdotool \
+            xvfb
+
+      - name: Smoke test
+        run: xvfb-run -a ./scripts/smoke-test.sh
+
+      - name: Build artifacts
+        run: ./scripts/build-dist.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: koplyx-linux
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+            dist/SHA256SUMS
+
+  github-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: koplyx-linux
+          path: dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.deb
+            dist/SHA256SUMS
