@@ -31,18 +31,25 @@ apps:
 
 parts:
   koplyx:
-    plugin: dump
+    plugin: nil
     source: .
     source-type: local
-    organize:
-      "*": opt/koplyx/
     stage:
       - opt/koplyx
       - bin/koplyx-snap-launcher
       - usr/share/applications/dev.limax.koplyx.desktop
       - usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
     override-build: |
-      craftctl default
+      mkdir -p "$CRAFT_PART_INSTALL/opt/koplyx"
+      cp -a \
+        "$CRAFT_PART_SRC/assets" \
+        "$CRAFT_PART_SRC/docs" \
+        "$CRAFT_PART_SRC/koplyx" \
+        "$CRAFT_PART_SRC/packaging" \
+        "$CRAFT_PART_SRC/README.md" \
+        "$CRAFT_PART_SRC/VERSION" \
+        "$CRAFT_PART_INSTALL/opt/koplyx/"
+
       mkdir -p "$CRAFT_PART_INSTALL/bin"
       cat > "$CRAFT_PART_INSTALL/bin/koplyx-snap-launcher" <<'EOF'
       #!/usr/bin/env sh
