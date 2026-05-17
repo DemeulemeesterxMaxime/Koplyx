@@ -118,6 +118,11 @@ sha256sum -c SHA256SUMS
 newgrp lxd
 snapcraft login
 </code></pre>
+<p>Ne pas lancer <code>snapcraft</code> avec <code>sudo</code>. Snapcraft doit tourner avec l&#x27;utilisateur courant, sinon il utilise l&#x27;etat <code>/root/.local/state/snapcraft</code>, un autre trousseau de connexion, et une configuration LXD differente. <code>cd</code> ne s&#x27;utilise pas non plus avec <code>sudo</code> :</p>
+<pre><code>
+cd Koplyx
+snapcraft pack
+</code></pre>
 <p>Si <code>snapcraft pack</code> affiche <code>user must be manually added to &#x27;lxd&#x27; group before using LXD</code>, fermer et rouvrir la session Linux, ou lancer <code>newgrp lxd</code> dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.</p>
 <p>Construire et publier :</p>
 <pre><code>
@@ -138,6 +143,7 @@ sudo snap restart lxd
 snapcraft clean
 snapcraft pack
 </code></pre>
+<p>Si une tentative a ete lancee avec <code>sudo snapcraft</code>, ignorer le log dans <code>/root/.local/state/snapcraft</code> et relancer sans <code>sudo</code> depuis le dossier projet.</p>
 <p>Si le probleme persiste, supprimer l&#x27;instance de build Snapcraft et verifier que le bridge LXD a du NAT :</p>
 <pre><code>
 lxc --project snapcraft list

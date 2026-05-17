@@ -29,6 +29,13 @@ newgrp lxd
 snapcraft login
 ```
 
+Ne pas lancer `snapcraft` avec `sudo`. Snapcraft doit tourner avec l'utilisateur courant, sinon il utilise l'etat `/root/.local/state/snapcraft`, un autre trousseau de connexion, et une configuration LXD differente. `cd` ne s'utilise pas non plus avec `sudo` :
+
+```bash
+cd Koplyx
+snapcraft pack
+```
+
 Si `snapcraft pack` affiche `user must be manually added to 'lxd' group before using LXD`, fermer et rouvrir la session Linux, ou lancer `newgrp lxd` dans le terminal courant. Snapcraft construit le paquet dans une instance LXD, donc le groupe doit etre actif avant le build.
 
 Construire et publier :
@@ -56,6 +63,8 @@ sudo snap restart lxd
 snapcraft clean
 snapcraft pack
 ```
+
+Si une tentative a ete lancee avec `sudo snapcraft`, ignorer le log dans `/root/.local/state/snapcraft` et relancer sans `sudo` depuis le dossier projet.
 
 Si le probleme persiste, supprimer l'instance de build Snapcraft et verifier que le bridge LXD a du NAT :
 
