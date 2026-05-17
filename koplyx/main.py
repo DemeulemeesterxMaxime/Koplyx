@@ -688,7 +688,7 @@ class SettingsWindow(Gtk.Window):
         title.add_css_class("settings-title")
         root.append(title)
 
-        self.shortcut = self.shortcut_capture(root, "Raccourci global", "shortcut")
+        self.shortcut = self.shortcut_row(root, "Raccourci global", "shortcut")
         self.max_items = self.spin(root, "Nombre max d'entrees", "max_items", 10, 10000)
         self.max_age = self.spin(root, "Retention en jours", "max_age_days", 1, 3650)
         self.max_storage = self.spin(root, "Stockage max (Mo)", "max_storage_mb", 16, 8192)
@@ -730,61 +730,26 @@ class SettingsWindow(Gtk.Window):
         row.append(widget)
         return widget
 
-    def shortcut_capture(self, root, label: str, key: str) -> Gtk.Entry:
+    def shortcut_row(self, root, label: str, key: str) -> Gtk.Box:
         row = self.row(root, label)
-        widget = Gtk.Entry()
-        widget.set_editable(False)
-        widget.set_can_focus(True)
-        widget.set_hexpand(False)
-        widget.set_width_chars(24)
-        widget.set_tooltip_text("Focus ici, Entree pour demarrer, appuyez sur la combinaison, Entree pour valider.")
-        widget.capturing = False
-        widget.pending_shortcut = self.app.config.get(key)
-        self.update_shortcut_entry(widget, key)
+        value = Gtk.Label(label=accelerator_label(self.app.config.get(key)))
+        value.add_css_class("shortcut-value")
+        button = Gtk.Button(label="Modifier")
+        button.connect("clicked", lambda _button: self.open_shortcut_dialog(key, value))
+        row.append(value)
+        row.append(button)
+        return row
 
-        controller = Gtk.EventControllerKey()
-        controller.connect("key-pressed", self.on_shortcut_key_pressed, widget, key)
-        widget.add_controller(controller)
-        row.append(widget)
-        return widget
+    def open_shortcut_dialog(self, key: str, value_label: Gtk.Label) -> None:
+        dialog = ShortcutCaptureDialog(self, self.app.config.get(key))
+        dialog.present()
+        dialog.on_done = lambda shortcut: self.on_shortcut_dialog_done(key, value_label, shortcut)
 
-    def update_shortcut_entry(self, widget: Gtk.Entry, key: str) -> None:
-        current = widget.pending_shortcut or self.app.config.get(key)
-        label = accelerator_label(current)
-        if widget.capturing:
-            widget.set_text(f"Capture: {label}  | Entree pour valider")
-        else:
-            widget.set_text(f"{label}  | Entree pour modifier")
-
-    def on_shortcut_key_pressed(self, _controller, keyval, _keycode, state, widget: Gtk.Entry, key: str) -> bool:
-        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-            if widget.capturing:
-                self.app.config.set(key, widget.pending_shortcut)
-                widget.capturing = False
-                self.feedback.set_text(f"Raccourci pret: {accelerator_label(widget.pending_shortcut)}.")
-                self.app.set_status("Raccourci modifie. Cliquez Installer raccourci GNOME pour l'appliquer.")
-            else:
-                widget.capturing = True
-                widget.pending_shortcut = self.app.config.get(key)
-                self.feedback.set_text("Capture active: appuyez sur une combinaison, puis Entree pour valider.")
-            self.update_shortcut_entry(widget, key)
-            return True
-
-        if not widget.capturing:
-            return False
-
-        if keyval in MODIFIER_KEYS:
-            return True
-
-        accelerator = normalize_accelerator(keyval, state)
-        if not global_shortcut_valid(accelerator):
-            self.feedback.set_text("Combinaison invalide: ajoutez Ctrl, Alt ou Super avec une touche.")
-            return True
-
-        widget.pending_shortcut = accelerator
-        self.feedback.set_text(f"Combinaison capturee: {accelerator_label(accelerator)}. Entree pour valider.")
-        self.update_shortcut_entry(widget, key)
-        return True
+    def on_shortcut_dialog_done(self, key: str, value_label: Gtk.Label, shortcut: str) -> None:
+        self.app.config.set(key, shortcut)
+        value_label.set_text(accelerator_label(shortcut))
+        self.feedback.set_text(f"Raccourci pret: {accelerator_label(shortcut)}.")
+        self.app.set_status("Raccourci modifie. Cliquez Installer raccourci GNOME pour l'appliquer.")
 
     def spin(self, root, label: str, key: str, minimum: int, maximum: int) -> Gtk.SpinButton:
         row = self.row(root, label)
@@ -820,6 +785,109 @@ class SettingsWindow(Gtk.Window):
         ok = install_autostart_file()
         self.feedback.set_text("Autostart active." if ok else "Impossible d'activer l'autostart.")
         self.app.set_status("Autostart active." if ok else "Erreur autostart.")
+
+
+class ShortcutCaptureDialog(Gtk.Window):
+    def __init__(self, parent: Gtk.Window, current_shortcut: str) -> None:
+        super().__init__(title="Modifier le raccourci", transient_for=parent, modal=True)
+        self.set_default_size(420, 240)
+        self.add_css_class("settings-window")
+        self.capturing = False
+        self.pending_shortcut = current_shortcut
+        self.on_done = None
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        root.set_margin_top(20)
+        root.set_margin_bottom(18)
+        root.set_margin_start(20)
+        root.set_margin_end(20)
+        self.set_child(root)
+
+        title = Gtk.Label(label="Modifier le raccourci global")
+        title.set_xalign(0)
+        title.add_css_class("settings-title")
+        root.append(title)
+
+        self.instructions = Gtk.Label()
+        self.instructions.set_xalign(0)
+        self.instructions.set_wrap(True)
+        self.instructions.add_css_class("settings-note")
+        root.append(self.instructions)
+
+        self.value = Gtk.Label()
+        self.value.add_css_class("shortcut-dialog-value")
+        self.value.set_hexpand(True)
+        root.append(self.value)
+
+        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        actions.set_halign(Gtk.Align.END)
+        cancel = Gtk.Button(label="Annuler")
+        cancel.connect("clicked", lambda _button: self.close())
+        actions.append(cancel)
+        self.primary = Gtk.Button(label="Demarrer")
+        self.primary.add_css_class("primary")
+        self.primary.connect("clicked", lambda _button: self.toggle_capture())
+        actions.append(self.primary)
+        root.append(actions)
+
+        controller = Gtk.EventControllerKey()
+        controller.connect("key-pressed", self.on_key_pressed)
+        self.add_controller(controller)
+        self.update_view()
+
+    def update_view(self) -> None:
+        self.value.set_text(accelerator_label(self.pending_shortcut))
+        if self.capturing:
+            self.instructions.set_text(
+                "Capture active. Appuyez sur la combinaison voulue, puis sur Entree pour valider."
+            )
+            self.primary.set_label("Valider")
+        else:
+            self.instructions.set_text(
+                "Appuyez sur Entree ou sur Demarrer pour commencer la capture du nouveau raccourci."
+            )
+            self.primary.set_label("Demarrer")
+
+    def toggle_capture(self) -> None:
+        if self.capturing:
+            self.finish()
+        else:
+            self.capturing = True
+            self.update_view()
+            self.grab_focus()
+
+    def finish(self) -> None:
+        if callable(self.on_done):
+            self.on_done(self.pending_shortcut)
+        self.close()
+
+    def on_key_pressed(self, _controller, keyval, _keycode, state) -> bool:
+        if keyval in (Gdk.KEY_Escape,):
+            self.close()
+            return True
+
+        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            self.toggle_capture()
+            return True
+
+        if not self.capturing:
+            return True
+
+        if keyval in MODIFIER_KEYS:
+            return True
+
+        accelerator = normalize_accelerator(keyval, state)
+        if not global_shortcut_valid(accelerator):
+            self.instructions.set_text("Combinaison invalide. Ajoutez Ctrl, Alt ou Super avec une touche.")
+            return True
+
+        self.pending_shortcut = accelerator
+        self.instructions.set_text(
+            f"Combinaison capturee: {accelerator_label(accelerator)}. Appuyez sur Entree pour valider."
+        )
+        self.value.set_text(accelerator_label(accelerator))
+        self.primary.set_label("Valider")
+        return True
 
 
 class TrayIndicator:
@@ -1290,6 +1358,20 @@ def apply_css() -> None:
     .settings-feedback {
       color: #73e6a2;
       font-size: 12px;
+    }
+    .shortcut-value {
+      color: #dff7ea;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .shortcut-dialog-value {
+      background: #20312b;
+      border: 1px solid #2fa862;
+      border-radius: 8px;
+      color: #dff7ea;
+      font-size: 24px;
+      font-weight: 800;
+      padding: 18px;
     }
     .empty {
       color: #8fa099;
