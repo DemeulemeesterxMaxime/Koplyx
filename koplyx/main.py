@@ -44,6 +44,21 @@ DEFAULT_CONFIG = {
     "start_hidden": False,
 }
 
+MODIFIER_KEYS = {
+    Gdk.KEY_Shift_L,
+    Gdk.KEY_Shift_R,
+    Gdk.KEY_Control_L,
+    Gdk.KEY_Control_R,
+    Gdk.KEY_Alt_L,
+    Gdk.KEY_Alt_R,
+    Gdk.KEY_Meta_L,
+    Gdk.KEY_Meta_R,
+    Gdk.KEY_Super_L,
+    Gdk.KEY_Super_R,
+    Gdk.KEY_Hyper_L,
+    Gdk.KEY_Hyper_R,
+}
+
 
 def xdg_path(env_name: str, default_suffix: str) -> Path:
     return Path(os.environ.get(env_name, Path.home() / default_suffix)).expanduser()
@@ -150,6 +165,39 @@ def paste_clipboard_now() -> bool:
     return False
 
 
+def accelerator_label(accelerator: str) -> str:
+    success, keyval, modifiers = Gtk.accelerator_parse(accelerator)
+    if success:
+        return Gtk.accelerator_get_label(keyval, modifiers)
+    return accelerator
+
+
+def normalize_accelerator(keyval: int, state: Gdk.ModifierType) -> str:
+    modifiers = state & (
+        Gdk.ModifierType.SHIFT_MASK
+        | Gdk.ModifierType.CONTROL_MASK
+        | Gdk.ModifierType.ALT_MASK
+        | Gdk.ModifierType.SUPER_MASK
+        | Gdk.ModifierType.META_MASK
+        | Gdk.ModifierType.HYPER_MASK
+    )
+    return Gtk.accelerator_name(keyval, modifiers)
+
+
+def global_shortcut_valid(accelerator: str) -> bool:
+    success, keyval, modifiers = Gtk.accelerator_parse(accelerator)
+    if not success:
+        return False
+    required = (
+        Gdk.ModifierType.CONTROL_MASK
+        | Gdk.ModifierType.ALT_MASK
+        | Gdk.ModifierType.SUPER_MASK
+        | Gdk.ModifierType.META_MASK
+        | Gdk.ModifierType.HYPER_MASK
+    )
+    return Gtk.accelerator_valid(keyval, modifiers) and bool(modifiers & required)
+
+
 class Config:
     def __init__(self) -> None:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -160,6 +208,8 @@ class Config:
                 self.data.update(json.loads(self.path.read_text(encoding="utf-8")))
             except (json.JSONDecodeError, OSError):
                 pass
+        if not global_shortcut_valid(str(self.data.get("shortcut", ""))):
+            self.data["shortcut"] = DEFAULT_CONFIG["shortcut"]
         self.save()
 
     def save(self) -> None:
@@ -638,7 +688,7 @@ class SettingsWindow(Gtk.Window):
         title.add_css_class("settings-title")
         root.append(title)
 
-        self.shortcut = self.entry(root, "Raccourci global", "shortcut")
+        self.shortcut = self.shortcut_capture(root, "Raccourci global", "shortcut")
         self.max_items = self.spin(root, "Nombre max d'entrees", "max_items", 10, 10000)
         self.max_age = self.spin(root, "Retention en jours", "max_age_days", 1, 3650)
         self.max_storage = self.spin(root, "Stockage max (Mo)", "max_storage_mb", 16, 8192)
@@ -679,6 +729,62 @@ class SettingsWindow(Gtk.Window):
         widget.connect("changed", lambda w: self.app.config.set(key, w.get_text()))
         row.append(widget)
         return widget
+
+    def shortcut_capture(self, root, label: str, key: str) -> Gtk.Entry:
+        row = self.row(root, label)
+        widget = Gtk.Entry()
+        widget.set_editable(False)
+        widget.set_can_focus(True)
+        widget.set_hexpand(False)
+        widget.set_width_chars(24)
+        widget.set_tooltip_text("Focus ici, Entree pour demarrer, appuyez sur la combinaison, Entree pour valider.")
+        widget.capturing = False
+        widget.pending_shortcut = self.app.config.get(key)
+        self.update_shortcut_entry(widget, key)
+
+        controller = Gtk.EventControllerKey()
+        controller.connect("key-pressed", self.on_shortcut_key_pressed, widget, key)
+        widget.add_controller(controller)
+        row.append(widget)
+        return widget
+
+    def update_shortcut_entry(self, widget: Gtk.Entry, key: str) -> None:
+        current = widget.pending_shortcut or self.app.config.get(key)
+        label = accelerator_label(current)
+        if widget.capturing:
+            widget.set_text(f"Capture: {label}  | Entree pour valider")
+        else:
+            widget.set_text(f"{label}  | Entree pour modifier")
+
+    def on_shortcut_key_pressed(self, _controller, keyval, _keycode, state, widget: Gtk.Entry, key: str) -> bool:
+        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            if widget.capturing:
+                self.app.config.set(key, widget.pending_shortcut)
+                widget.capturing = False
+                self.feedback.set_text(f"Raccourci pret: {accelerator_label(widget.pending_shortcut)}.")
+                self.app.set_status("Raccourci modifie. Cliquez Installer raccourci GNOME pour l'appliquer.")
+            else:
+                widget.capturing = True
+                widget.pending_shortcut = self.app.config.get(key)
+                self.feedback.set_text("Capture active: appuyez sur une combinaison, puis Entree pour valider.")
+            self.update_shortcut_entry(widget, key)
+            return True
+
+        if not widget.capturing:
+            return False
+
+        if keyval in MODIFIER_KEYS:
+            return True
+
+        accelerator = normalize_accelerator(keyval, state)
+        if not global_shortcut_valid(accelerator):
+            self.feedback.set_text("Combinaison invalide: ajoutez Ctrl, Alt ou Super avec une touche.")
+            return True
+
+        widget.pending_shortcut = accelerator
+        self.feedback.set_text(f"Combinaison capturee: {accelerator_label(accelerator)}. Entree pour valider.")
+        self.update_shortcut_entry(widget, key)
+        return True
 
     def spin(self, root, label: str, key: str, minimum: int, maximum: int) -> Gtk.SpinButton:
         row = self.row(root, label)

@@ -23,6 +23,7 @@ cd Koplyx
 - Stockage SQLite local chiffre avec `cryptography.Fernet`.
 - Purge par nombre d'entrees, age et taille totale.
 - Parametres integres.
+- Capture du raccourci clavier dans les parametres avec Entree pour demarrer/valider.
 - Installation optionnelle du raccourci GNOME.
 - Autostart utilisateur optionnel.
 
@@ -43,6 +44,8 @@ koplyx --toggle
 ```
 
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
+
+Pour modifier la combinaison dans Koplyx : focus sur le champ `Raccourci global`, appuyer sur `Entree`, appuyer sur la combinaison voulue, puis appuyer a nouveau sur `Entree` pour valider.
 
 ## Installation utilisateur
 
