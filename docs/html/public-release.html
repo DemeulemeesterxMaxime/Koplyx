@@ -119,7 +119,11 @@ sha256sum -c SHA256SUMS
 <li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
 <li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
 <li>Ouvrir les parametres, tester l&#x27;autostart et l&#x27;installation du raccourci GNOME.</li>
+<li>Verifier <code>~/.config/autostart/koplyx.desktop</code> et la presence de <code>Exec=koplyx --hidden</code> ou d&#x27;un fallback Python local en mode source.</li>
+<li>Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme.</li>
+<li>Utiliser <code>Quitter Koplyx</code> depuis la barre systeme et verifier que le processus s&#x27;arrete.</li>
 <li>Redemarrer la session et verifier la persistance de l&#x27;historique.</li>
+<li>Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.</li>
 <li>Installer le snap depuis <code>edge</code> et refaire le lancement, l&#x27;icone, la zone systeme et l&#x27;historique.</li>
 </ul>
 <h2>Snapcraft</h2>
@@ -149,8 +153,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.2.2_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.2_amd64.snap
+ls -lh koplyx_0.2.3_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.3_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -201,8 +205,8 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 <p>Tag GitHub :</p>
 <pre><code>
 git push origin main
-git tag v0.2.2
-git push origin v0.2.2
+git tag v0.2.3
+git push origin v0.2.3
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
 <h2>Nettoyage historique Git</h2>

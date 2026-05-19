@@ -117,7 +117,8 @@ cd Koplyx
 <li>Parametres integres.</li>
 <li>Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.</li>
 <li>Installation optionnelle du raccourci GNOME.</li>
-<li>Autostart utilisateur optionnel.</li>
+<li>Demarrage automatique en arriere-plan par defaut.</li>
+<li>Fermeture de la fenetre en mise en veille, avec acces maintenu depuis la barre systeme.</li>
 </ul>
 <h2>Donnees locales</h2>
 <ul>
@@ -135,6 +136,9 @@ koplyx --toggle
 <p>Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.</p>
 <p>Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer <code>Modifier</code>, cliquer <code>Demarrer</code> pour vider l&#x27;ancienne combinaison, choisir si besoin <code>Ctrl</code>, <code>Alt</code> ou <code>Super</code>, appuyer sur la touche principale, puis cliquer <code>Valider</code>. Le bouton <code>Fn</code> est affiche comme aide, mais GNOME ne peut generalement pas enregistrer <code>Fn</code> comme modificateur.</p>
 <p>Si le raccourci ne repond pas, il peut deja etre reserve par l&#x27;OS. Ouvrir <code>Parametres &gt; Clavier &gt; Raccourcis clavier</code> pour changer ou liberer le raccourci systeme.</p>
+<h2>Fonctionnement en arriere-plan</h2>
+<p>Koplyx installe son autostart utilisateur par defaut et se lance avec <code>koplyx --hidden</code> au demarrage de session. Fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser <code>Quitter Koplyx</code> dans le menu de la barre systeme.</p>
+<p>L&#x27;autostart peut etre desactive dans les parametres avec <code>Lancer Koplyx au demarrage</code>. Dans certains environnements sandbox, l&#x27;ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d&#x27;erreur.</p>
 <h2>Installation utilisateur</h2>
 <pre><code>
 cd Koplyx

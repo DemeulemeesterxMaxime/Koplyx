@@ -30,9 +30,20 @@ export XDG_CONFIG_HOME="$KOPLYX_SMOKE_HOME/config"
 export XDG_DATA_HOME="$KOPLYX_SMOKE_HOME/data"
 
 /usr/bin/python3 - <<'PY'
-from koplyx.main import CONFIG_DIR, DATA_DIR, Config, CryptoBox, HistoryStore
+from koplyx.main import (
+    CONFIG_DIR,
+    DATA_DIR,
+    Config,
+    CryptoBox,
+    HistoryStore,
+    autostart_desktop_path,
+    install_autostart_file,
+    remove_autostart_file,
+)
 
 config = Config()
+assert config.get("start_hidden") is True
+assert config.get("autostart_enabled") is True
 crypto = CryptoBox()
 store = HistoryStore(crypto, config)
 store.add("text", "text/plain", b"koplyx smoke pinned", "koplyx smoke pinned")
@@ -46,18 +57,24 @@ assert (CONFIG_DIR.stat().st_mode & 0o777) == 0o700
 assert (DATA_DIR.stat().st_mode & 0o777) == 0o700
 assert ((CONFIG_DIR / "config.json").stat().st_mode & 0o777) == 0o600
 assert ((DATA_DIR / "history.db").stat().st_mode & 0o777) == 0o600
+assert install_autostart_file()
+autostart = autostart_desktop_path()
+assert autostart.exists()
+assert "--hidden" in autostart.read_text(encoding="utf-8")
+assert remove_autostart_file()
+assert not autostart.exists()
 store.clear()
 print("storage ok")
 PY
-
-rm -rf "$KOPLYX_SMOKE_HOME"
 
 timeout 3s ./bin/koplyx --hidden >/tmp/koplyx-smoke.out 2>/tmp/koplyx-smoke.err || code=$?
 code="${code:-0}"
 if [ "$code" != "0" ] && [ "$code" != "124" ]; then
   cat /tmp/koplyx-smoke.err >&2
+  rm -rf "$KOPLYX_SMOKE_HOME"
   exit "$code"
 fi
+rm -rf "$KOPLYX_SMOKE_HOME"
 
 printf '%s\n' "gtk startup ok"
 printf '%s\n' "smoke test passed"

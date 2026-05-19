@@ -26,7 +26,8 @@ cd Koplyx
 - Parametres integres.
 - Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.
 - Installation optionnelle du raccourci GNOME.
-- Autostart utilisateur optionnel.
+- Demarrage automatique en arriere-plan par defaut.
+- Fermeture de la fenetre en mise en veille, avec acces maintenu depuis la barre systeme.
 
 ## Donnees locales
 
@@ -51,6 +52,12 @@ Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut acc
 Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer `Modifier`, cliquer `Demarrer` pour vider l'ancienne combinaison, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le bouton `Fn` est affiche comme aide, mais GNOME ne peut generalement pas enregistrer `Fn` comme modificateur.
 
 Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Parametres > Clavier > Raccourcis clavier` pour changer ou liberer le raccourci systeme.
+
+## Fonctionnement en arriere-plan
+
+Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --hidden` au demarrage de session. Fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser `Quitter Koplyx` dans le menu de la barre systeme.
+
+L'autostart peut etre desactive dans les parametres avec `Lancer Koplyx au demarrage`. Dans certains environnements sandbox, l'ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d'erreur.
 
 ## Installation utilisateur
 

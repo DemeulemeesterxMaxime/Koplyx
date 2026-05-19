@@ -28,7 +28,11 @@ sha256sum -c SHA256SUMS
 - Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
 - Epingler un texte et verifier sa presence dans l'onglet dedie.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
+- Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
+- Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme.
+- Utiliser `Quitter Koplyx` depuis la barre systeme et verifier que le processus s'arrete.
 - Redemarrer la session et verifier la persistance de l'historique.
+- Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.
 - Installer le snap depuis `edge` et refaire le lancement, l'icone, la zone systeme et l'historique.
 
 ## Snapcraft
@@ -70,8 +74,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.2.2_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.2_amd64.snap
+ls -lh koplyx_0.2.3_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.3_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -141,8 +145,8 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.2.2
-git push origin v0.2.2
+git tag v0.2.3
+git push origin v0.2.3
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

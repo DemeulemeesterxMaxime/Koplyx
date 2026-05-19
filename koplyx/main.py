@@ -6,6 +6,7 @@ import json
 import os
 import signal
 import sqlite3
+import shlex
 import shutil
 import subprocess
 import sys
@@ -41,7 +42,8 @@ DEFAULT_CONFIG = {
     "capture_images": True,
     "auto_paste": True,
     "show_tray": True,
-    "start_hidden": False,
+    "start_hidden": True,
+    "autostart_enabled": True,
 }
 
 MODIFIER_KEYS = {
@@ -262,6 +264,9 @@ class Config:
                 self.data.update(json.loads(self.path.read_text(encoding="utf-8")))
             except (json.JSONDecodeError, OSError):
                 pass
+        for key, value in DEFAULT_CONFIG.items():
+            self.data.setdefault(key, value)
+        self.data["start_hidden"] = True
         if not global_shortcut_valid(str(self.data.get("shortcut", ""))):
             self.data["shortcut"] = DEFAULT_CONFIG["shortcut"]
         self.save()
@@ -615,6 +620,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.set_size_request(420, 360)
         self.add_css_class("koplyx-window")
         self.active_view = "history"
+        self.connect("close-request", self.on_close_request)
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.set_child(root)
@@ -686,6 +692,10 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.app.remember_active_window()
         self.present()
         self.search.grab_focus()
+
+    def on_close_request(self, _window) -> bool:
+        self.app.sleep_to_tray()
+        return True
 
     def query(self) -> str:
         return self.search.get_text()
@@ -784,13 +794,14 @@ class SettingsWindow(Gtk.Window):
         self.capture_images = self.switch(root, "Capturer les images", "capture_images")
         self.auto_paste = self.switch(root, "Coller automatiquement apres un clic", "auto_paste")
         self.show_tray = self.switch(root, "Afficher dans la barre systeme", "show_tray")
+        self.autostart = self.switch(root, "Lancer Koplyx au demarrage", "autostart_enabled", self.on_autostart_changed)
 
         install = Gtk.Button(label="Installer raccourci GNOME")
         install.add_css_class("primary")
         install.connect("clicked", self.install_shortcut)
         root.append(install)
 
-        autostart = Gtk.Button(label="Activer autostart")
+        autostart = Gtk.Button(label="Reparer l'autostart")
         autostart.connect("clicked", self.install_autostart)
         root.append(autostart)
 
@@ -855,10 +866,13 @@ class SettingsWindow(Gtk.Window):
         row.append(widget)
         return widget
 
-    def switch(self, root, label: str, key: str) -> Gtk.Switch:
+    def switch(self, root, label: str, key: str, callback=None) -> Gtk.Switch:
         row = self.row(root, label)
         widget = Gtk.Switch(active=bool(self.app.config.get(key)))
-        widget.connect("notify::active", lambda w, _p: self.app.config.set(key, w.get_active()))
+        if callback is None:
+            widget.connect("notify::active", lambda w, _p: self.app.config.set(key, w.get_active()))
+        else:
+            widget.connect("notify::active", callback)
         row.append(widget)
         return widget
 
@@ -878,9 +892,20 @@ class SettingsWindow(Gtk.Window):
         self.app.set_status("Raccourci GNOME installe." if ok else "Erreur raccourci GNOME.")
 
     def install_autostart(self, _button) -> None:
-        ok = install_autostart_file()
+        ok = self.app.set_autostart_enabled(True)
+        self.autostart.set_active(ok)
         self.feedback.set_text("Autostart active." if ok else "Impossible d'activer l'autostart.")
         self.app.set_status("Autostart active." if ok else "Erreur autostart.")
+
+    def on_autostart_changed(self, widget: Gtk.Switch, _param) -> None:
+        active = widget.get_active()
+        ok = self.app.set_autostart_enabled(active)
+        if ok:
+            self.feedback.set_text("Autostart active." if active else "Autostart desactive.")
+            self.app.set_status("Autostart active." if active else "Autostart desactive.")
+        else:
+            self.feedback.set_text("Impossible de modifier l'autostart.")
+            self.app.set_status("Erreur autostart.")
 
 
 class ShortcutCaptureDialog(Gtk.Window):
@@ -1283,6 +1308,7 @@ class KoplyxApplication(Gtk.Application):
         Gtk.Application.do_startup(self)
         Gtk.Window.set_default_icon_name(ICON_NAME)
         repair_user_desktop_files()
+        self.sync_autostart()
         apply_css()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.on_shutdown_signal)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.on_shutdown_signal)
@@ -1318,7 +1344,7 @@ class KoplyxApplication(Gtk.Application):
 
     def toggle_window(self) -> None:
         if self.window.is_visible():
-            self.window.hide()
+            self.sleep_to_tray()
         else:
             self.window.present_focused()
 
@@ -1331,6 +1357,25 @@ class KoplyxApplication(Gtk.Application):
     def quit_from_tray(self) -> bool:
         self.quit()
         return GLib.SOURCE_REMOVE
+
+    def sleep_to_tray(self) -> None:
+        if self.window:
+            self.window.hide()
+        self.set_status("Koplyx reste actif dans la barre systeme.")
+
+    def sync_autostart(self) -> None:
+        if self.config.get("autostart_enabled"):
+            ok = install_autostart_file()
+            if not ok:
+                self.set_status("Autostart indisponible dans cet environnement.")
+        else:
+            remove_autostart_file()
+
+    def set_autostart_enabled(self, enabled: bool) -> bool:
+        ok = install_autostart_file() if enabled else remove_autostart_file()
+        if ok:
+            self.config.set("autostart_enabled", enabled)
+        return ok
 
     def remember_active_window(self) -> None:
         window_id = x11_active_window()
@@ -1442,6 +1487,13 @@ StartupNotify=false
 """
 
 
+def autostart_command() -> str:
+    installed = shutil.which("koplyx")
+    if installed:
+        return "koplyx --hidden"
+    return f"/usr/bin/python3 {shlex.quote(str(PROJECT_ROOT / 'koplyx/main.py'))} --hidden"
+
+
 def repair_user_desktop_files() -> None:
     desktop_path = user_desktop_path()
     if desktop_path.exists():
@@ -1453,7 +1505,7 @@ def repair_user_desktop_files() -> None:
     autostart_path = autostart_desktop_path()
     if autostart_path.exists():
         try:
-            autostart_path.write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
+            autostart_path.write_text(desktop_entry(autostart_command()), encoding="utf-8")
         except OSError:
             pass
 
@@ -1462,7 +1514,17 @@ def install_autostart_file() -> bool:
     try:
         autostart_path = autostart_desktop_path()
         autostart_path.parent.mkdir(parents=True, exist_ok=True)
-        autostart_path.write_text(desktop_entry("koplyx --hidden"), encoding="utf-8")
+        autostart_path.write_text(desktop_entry(autostart_command()), encoding="utf-8")
+        return True
+    except OSError:
+        return False
+
+
+def remove_autostart_file() -> bool:
+    try:
+        autostart_path = autostart_desktop_path()
+        if autostart_path.exists():
+            autostart_path.unlink()
         return True
     except OSError:
         return False
