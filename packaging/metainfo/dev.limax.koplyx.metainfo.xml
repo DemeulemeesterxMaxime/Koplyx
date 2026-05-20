@@ -9,8 +9,8 @@
     <name>Limax</name>
   </developer>
   <description>
-    <p>Koplyx keeps a local encrypted history of text and image clipboard entries so users can quickly recover previous copies.</p>
-    <p>It provides search, pinned text, quick restore, optional X11 auto-paste, and a system tray indicator.</p>
+    <p>Koplyx keeps a local encrypted history of text, image and file clipboard entries so users can quickly recover previous copies.</p>
+    <p>It provides decrypted in-app previews, search, pinned text, quick restore, optional X11 auto-paste, and a system tray indicator.</p>
     <p>This app currently targets Linux desktop environments with X11 support. Wayland behavior can vary by compositor.</p>
   </description>
   <launchable type="desktop-id">dev.limax.koplyx.desktop</launchable>
@@ -19,6 +19,11 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.2.4" date="2026-05-20">
+      <description>
+        <p>Add decrypted in-app previews for text, image thumbnails, and copied file names without storing sensitive previews in SQLite.</p>
+      </description>
+    </release>
     <release version="0.2.3" date="2026-05-19">
       <description>
         <p>Start in the background by default and keep running from the system tray when the window is closed.</p>
@@ -43,6 +48,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.3/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.4/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

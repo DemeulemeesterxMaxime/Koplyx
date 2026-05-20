@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import base64
 import hashlib
@@ -11,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -133,7 +136,56 @@ def private_preview(kind: str, mime: str, data: bytes, width: int | None = None,
         if width is not None and height is not None:
             return f"Image PNG, {width} x {height}, {size_kb} KB"
         return f"Image PNG, {size_kb} KB"
+    if kind in ("file", "files"):
+        count = len(uri_list_from_bytes(data))
+        if count == 1:
+            return "Fichier, 1 element"
+        return f"Fichiers, {count} elements"
     return f"{mime}, {len(data)} octets"
+
+
+def text_excerpt(data: bytes, limit: int = 180) -> str:
+    text = data.decode("utf-8", errors="replace").replace("\x00", "")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    excerpt = " / ".join(lines[:2]) if lines else text.strip()
+    excerpt = " ".join(excerpt.split())
+    if not excerpt:
+        return "Texte vide"
+    if len(excerpt) > limit:
+        return excerpt[: limit - 1].rstrip() + "…"
+    return excerpt
+
+
+def uri_list_from_bytes(data: bytes) -> list[str]:
+    text = data.decode("utf-8", errors="replace")
+    uris = []
+    for line in text.replace("\r\n", "\n").split("\n"):
+        line = line.strip()
+        if line and not line.startswith("#"):
+            uris.append(line)
+    return uris
+
+
+def uri_display_name(uri: str) -> str:
+    parsed = urllib.parse.urlparse(uri)
+    if parsed.scheme == "file":
+        path = urllib.parse.unquote(parsed.path)
+        name = Path(path).name
+        return name or path or uri
+    path = urllib.parse.unquote(parsed.path)
+    return Path(path).name or parsed.netloc or uri
+
+
+def file_title_from_uris(uris: list[str]) -> str:
+    if not uris:
+        return "Fichier"
+    if len(uris) == 1:
+        return uri_display_name(uris[0])
+    return f"{len(uris)} fichiers"
+
+
+def format_uri_list(uris: list[str]) -> bytes:
+    return ("\r\n".join(uris) + "\r\n").encode("utf-8")
 
 
 def user_desktop_path() -> Path:
@@ -337,6 +389,20 @@ class HistoryItem:
     pinned: int
 
 
+@dataclass
+class DisplayItem:
+    id: int
+    kind: str
+    mime: str
+    stored_preview: str
+    title: str
+    detail: str
+    search_text: str
+    created_at: int
+    pinned: int
+    image_data: bytes | None = None
+
+
 class HistoryStore:
     def __init__(self, crypto: CryptoBox, config: Config) -> None:
         ensure_private_dir(DATA_DIR)
@@ -407,6 +473,23 @@ class HistoryStore:
             LIMIT 300
             """,
             params,
+        ).fetchall()
+        return [HistoryItem(*row) for row in rows]
+
+    def recent(self, pinned_text_only: bool = False) -> list[HistoryItem]:
+        conditions = []
+        if pinned_text_only:
+            conditions.append("pinned = 1")
+            conditions.append("kind = 'text'")
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        rows = self.conn.execute(
+            f"""
+            SELECT id, kind, mime, preview, created_at, pinned
+            FROM items
+            {where}
+            ORDER BY pinned DESC, created_at DESC
+            LIMIT 300
+            """
         ).fetchall()
         return [HistoryItem(*row) for row in rows]
 
@@ -484,6 +567,7 @@ class ClipboardWatcher:
         self.clipboard = display.get_clipboard()
         self.last_text_hash = ""
         self.last_image_hash = ""
+        self.last_file_hash = ""
         self.paused_until = 0.0
 
     def start(self) -> None:
@@ -496,6 +580,7 @@ class ClipboardWatcher:
             self.clipboard.read_text_async(None, self.on_text)
         if self.app.config.get("capture_images"):
             self.clipboard.read_texture_async(None, self.on_texture)
+        self.clipboard.read_value_async(Gdk.FileList.__gtype__, GLib.PRIORITY_DEFAULT, None, self.on_files)
         return True
 
     def on_text(self, clipboard, result) -> None:
@@ -504,6 +589,8 @@ class ClipboardWatcher:
         except GLib.Error:
             return
         if not text or not text.strip():
+            return
+        if text.strip().startswith("file://"):
             return
         data = text.encode("utf-8")
         digest = sha256("text", data)
@@ -532,6 +619,29 @@ class ClipboardWatcher:
         self.app.store.add("image", "image/png", png_bytes, private_preview("image", "image/png", png_bytes, w, h))
         self.app.refresh()
 
+    def on_files(self, clipboard, result) -> None:
+        try:
+            file_list = clipboard.read_value_finish(result)
+        except (GLib.Error, TypeError):
+            return
+        if not file_list:
+            return
+        try:
+            files = list(file_list.get_files())
+        except Exception:
+            return
+        uris = [file.get_uri() for file in files if file.get_uri()]
+        if not uris:
+            return
+        data = format_uri_list(uris)
+        digest = sha256("files", data)
+        if digest == self.last_file_hash:
+            return
+        self.last_file_hash = digest
+        kind = "file" if len(uris) == 1 else "files"
+        self.app.store.add(kind, "text/uri-list", data, private_preview(kind, "text/uri-list", data))
+        self.app.refresh()
+
     def set_text(self, text: str) -> None:
         self.paused_until = time.time() + 1.0
         self.last_text_hash = sha256("text", text.encode("utf-8"))
@@ -547,9 +657,20 @@ class ClipboardWatcher:
         provider = Gdk.ContentProvider.new_for_value(texture)
         self.clipboard.set_content(provider)
 
+    def set_files(self, data: bytes) -> bool:
+        uris = uri_list_from_bytes(data)
+        files = [Gio.File.new_for_uri(uri) for uri in uris]
+        if not files:
+            return False
+        self.paused_until = time.time() + 1.0
+        self.last_file_hash = sha256("files", format_uri_list(uris))
+        file_list = Gdk.FileList.new_from_list(files)
+        provider = Gdk.ContentProvider.new_for_value(file_list)
+        return self.clipboard.set_content(provider)
+
 
 class HistoryRow(Gtk.ListBoxRow):
-    def __init__(self, app: "KoplyxApplication", item: HistoryItem) -> None:
+    def __init__(self, app: "KoplyxApplication", item: DisplayItem) -> None:
         super().__init__()
         self.app = app
         self.item = item
@@ -563,21 +684,16 @@ class HistoryRow(Gtk.ListBoxRow):
         root.set_margin_end(8)
         self.set_child(root)
 
-        type_box = Gtk.Box()
-        type_box.set_size_request(42, 42)
-        type_box.add_css_class("type-box")
-        type_label = Gtk.Label(label="IMG" if item.kind == "image" else "TXT")
-        type_label.add_css_class("type-label")
-        type_box.append(type_label)
-        root.append(type_box)
+        root.append(self.preview_widget(item))
 
         text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         text_box.set_hexpand(True)
-        title = Gtk.Label(label=item.preview)
+        title = Gtk.Label(label=item.title)
         title.set_xalign(0)
         title.set_ellipsize(3)
+        title.set_lines(2)
         title.add_css_class("preview")
-        meta = Gtk.Label(label=f"{item.kind.upper()} · {human_time(item.created_at)}" + (" · epingle" if item.pinned else ""))
+        meta = Gtk.Label(label=f"{item.detail} · {human_time(item.created_at)}" + (" · epingle" if item.pinned else ""))
         meta.set_xalign(0)
         meta.add_css_class("meta")
         text_box.append(title)
@@ -599,6 +715,31 @@ class HistoryRow(Gtk.ListBoxRow):
         root.append(pin)
         root.append(paste)
         root.append(delete)
+
+    def preview_widget(self, item: DisplayItem) -> Gtk.Widget:
+        if item.kind == "image" and item.image_data:
+            try:
+                texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(item.image_data))
+                picture = Gtk.Picture.new_for_paintable(texture)
+                picture.set_size_request(42, 42)
+                picture.add_css_class("thumb")
+                return picture
+            except Exception:
+                pass
+
+        type_box = Gtk.Box()
+        type_box.set_size_request(42, 42)
+        type_box.add_css_class("type-box")
+        icon_name = {
+            "text": "text-x-generic-symbolic",
+            "file": "text-x-generic-symbolic",
+            "files": "folder-symbolic",
+            "image": "image-x-generic-symbolic",
+        }.get(item.kind, "edit-copy-symbolic")
+        image = Gtk.Image.new_from_icon_name(icon_name)
+        image.add_css_class("type-icon")
+        type_box.append(image)
+        return type_box
 
     def on_paste(self, _button) -> None:
         self.app.restore_item(self.item.id)
@@ -722,7 +863,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         if item:
             self.app.restore_item(item.id)
 
-    def set_items(self, items: list[HistoryItem]) -> None:
+    def set_items(self, items: list[DisplayItem]) -> None:
         while child := self.listbox.get_first_child():
             self.listbox.remove(child)
         if not items:
@@ -1388,34 +1529,85 @@ class KoplyxApplication(Gtk.Application):
     def set_status(self, message: str) -> None:
         self.status_message = message
         if self.window:
-            self.window.set_items(
-                self.store.list(
-                    self.window.query(),
-                    pinned_text_only=self.window.active_view == "pinned_text",
-                )
-            )
+            self.window.set_items(self.display_items())
 
     def refresh(self) -> None:
         if self.window:
-            self.window.set_items(
-                self.store.list(
-                    self.window.query(),
-                    pinned_text_only=self.window.active_view == "pinned_text",
-                )
+            self.window.set_items(self.display_items())
+
+    def display_items(self) -> list[DisplayItem]:
+        if not self.window:
+            return []
+        query = self.window.query().strip().lower()
+        pinned_text_only = self.window.active_view == "pinned_text"
+        display_items = []
+        for item in self.store.recent(pinned_text_only=pinned_text_only):
+            display_item = self.display_item(item)
+            if query and query not in display_item.search_text.lower():
+                continue
+            display_items.append(display_item)
+        return display_items
+
+    def display_item(self, item: HistoryItem) -> DisplayItem:
+        payload = self.store.payload(item.id)
+        if not payload:
+            return DisplayItem(
+                item.id,
+                item.kind,
+                item.mime,
+                item.preview,
+                item.preview,
+                item.kind.upper(),
+                item.preview,
+                item.created_at,
+                item.pinned,
             )
+        kind, mime, data = payload
+        if kind == "text":
+            title = text_excerpt(data)
+            detail = private_preview(kind, mime, data)
+            search_text = f"{title} {detail}"
+            return DisplayItem(item.id, kind, mime, item.preview, title, detail, search_text, item.created_at, item.pinned)
+        if kind == "image":
+            detail = private_preview(kind, mime, data)
+            return DisplayItem(
+                item.id,
+                kind,
+                mime,
+                item.preview,
+                "Image copiee",
+                detail,
+                detail,
+                item.created_at,
+                item.pinned,
+                image_data=data,
+            )
+        if kind in ("file", "files"):
+            uris = uri_list_from_bytes(data)
+            title = file_title_from_uris(uris)
+            detail = private_preview(kind, mime, data)
+            search_text = " ".join([title, detail, *[uri_display_name(uri) for uri in uris]])
+            return DisplayItem(item.id, kind, mime, item.preview, title, detail, search_text, item.created_at, item.pinned)
+        return DisplayItem(item.id, kind, mime, item.preview, item.preview, kind.upper(), item.preview, item.created_at, item.pinned)
 
     def restore_item(self, item_id: int) -> None:
         payload = self.store.payload(item_id)
         if not payload or not self.watcher:
             return
         kind, _mime, data = payload
+        restored = True
         if kind == "text":
             self.watcher.set_text(data.decode("utf-8", errors="replace"))
         elif kind == "image":
             self.watcher.set_image_png(data)
+        elif kind in ("file", "files"):
+            restored = self.watcher.set_files(data)
+            self.set_status("Fichier restaure dans le presse-papiers." if restored else "Restauration fichier impossible.")
+        else:
+            restored = False
         if self.window:
             self.window.hide()
-        if self.config.get("auto_paste"):
+        if restored and self.config.get("auto_paste") and kind in ("text", "image"):
             GLib.timeout_add(120, self.activate_then_paste)
 
     def activate_then_paste(self) -> bool:
@@ -1563,10 +1755,12 @@ def apply_css() -> None:
       background: #20312b;
       border-radius: 8px;
     }
-    .type-label {
+    .type-icon {
       color: #73e6a2;
-      font-size: 11px;
-      font-weight: 700;
+    }
+    .thumb {
+      background: #20312b;
+      border-radius: 8px;
     }
     .preview {
       color: #f2f6f2;

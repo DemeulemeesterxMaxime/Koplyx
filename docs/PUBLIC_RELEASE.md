@@ -23,7 +23,10 @@ sha256sum -c SHA256SUMS
 ## Verification manuelle
 
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
-- Copier/coller un texte et verifier son apparition dans l'historique.
+- Copier/coller un texte et verifier son apparition dans l'historique avec un extrait lisible.
+- Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.
+- Copier une image et verifier l'apparition d'une vignette stable dans l'historique.
+- Copier un fichier et verifier que son nom complet avec extension apparait dans l'historique.
 - Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans `preview`.
 - Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
 - Epingler un texte et verifier sa presence dans l'onglet dedie.
@@ -74,8 +77,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.2.3_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.3_amd64.snap
+ls -lh koplyx_0.2.4_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.4_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -145,8 +148,8 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.2.3
-git push origin v0.2.3
+git tag v0.2.4
+git push origin v0.2.4
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

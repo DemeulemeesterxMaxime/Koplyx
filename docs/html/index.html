@@ -102,9 +102,10 @@ cd Koplyx
 </code></pre>
 <h2>Fonctionnalites v1</h2>
 <ul>
-<li>Historique texte et image.</li>
+<li>Historique texte, image et fichiers copies.</li>
 <li>Deduplication par hash.</li>
-<li>Recherche instantanee sur les metadonnees non sensibles.</li>
+<li>Apercus reels dans l&#x27;app apres dechiffrement en memoire : extrait texte, vignette image, nom de fichier.</li>
+<li>Recherche instantanee en memoire sur les apercus dechiffres.</li>
 <li>Onglet dedie aux textes epingles.</li>
 <li>Restauration dans le presse-papiers.</li>
 <li>Collage automatique apres clic via <code>xdotool</code> sur X11.</li>
@@ -126,7 +127,7 @@ cd Koplyx
 <li>Cle locale : Secret Service/libsecret si disponible, sinon <code>~/.config/koplyx/key.bin</code></li>
 <li>Base historique : <code>~/.local/share/koplyx/history.db</code></li>
 </ul>
-<p>Les contenus complets sont stockes dans <code>encrypted_blob</code>. Depuis <code>0.2.2</code>, les nouveaux apercus d&#x27;historique ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Les historiques crees avant <code>0.2.2</code> peuvent encore contenir d&#x27;anciens apercus en clair ; purger l&#x27;historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.</p>
+<p>Les contenus complets sont stockes dans <code>encrypted_blob</code>. Depuis <code>0.2.2</code>, les nouveaux apercus stockes dans SQLite ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Depuis <code>0.2.4</code>, l&#x27;interface affiche des apercus reels en dechiffrant les entrees en memoire quand la fenetre est ouverte : extrait texte, vignette image et nom de fichier. Ces apercus visibles dans l&#x27;app ne sont pas reinjectes en clair dans SQLite. Les historiques crees avant <code>0.2.2</code> peuvent encore contenir d&#x27;anciens apercus en clair ; purger l&#x27;historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.</p>
 <p>Les dossiers locaux <code>~/.config/koplyx</code> et <code>~/.local/share/koplyx</code> sont durcis en <code>0700</code>, et les fichiers config, cle et base en <code>0600</code> quand le systeme de fichiers le permet. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.</p>
 <h2>Raccourci global</h2>
 <p>Le raccourci par defaut est <code>&lt;Ctrl&gt;&lt;Alt&gt;V</code>. Dans les parametres, le bouton <code>Installer raccourci GNOME</code> configure un custom keybinding GNOME qui lance :</p>
@@ -163,6 +164,7 @@ sha256sum -c SHA256SUMS
 <li><code>xdotool</code> sur X11 pour coller automatiquement dans le champ actif apres un clic.</li>
 <li><code>wtype</code> peut etre teste sur Wayland, mais il n&#x27;est pas une dependance du paquet <code>.deb</code>.</li>
 <li>Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.</li>
+<li>La restauration de fichiers depend du support <code>text/uri-list</code>/<code>Gdk.FileList</code> de l&#x27;application cible.</li>
 </ul>
 <p>Le collage automatique envoie volontairement <code>Ctrl+V</code> a la fenetre active apres restauration. Cette fonction doit etre testee sur l&#x27;environnement cible avant publication stable.</p>
 <h2>Build release</h2>

@@ -1,12 +1,13 @@
 name: koplyx
 title: Koplyx
 base: core24
-version: "0.2.3"
+version: "0.2.4"
 summary: Local encrypted clipboard history
 description: |
-  Koplyx is a Linux clipboard history app for text and images. It stores
-  clipboard entries locally with encryption, supports pinned text, search,
-  quick restore, optional auto-paste on X11, and a system tray indicator.
+  Koplyx is a Linux clipboard history app for text, images, and copied files.
+  It stores clipboard entries locally with encryption, supports decrypted
+  in-app previews, pinned text, search, quick restore, optional auto-paste on
+  X11, and a system tray indicator.
 license: MIT
 contact: https://github.com/DemeulemeesterxMaxime/Koplyx/issues
 issues: https://github.com/DemeulemeesterxMaxime/Koplyx/issues

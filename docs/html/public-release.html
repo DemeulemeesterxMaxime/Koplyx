@@ -114,7 +114,10 @@ sha256sum -c SHA256SUMS
 <h2>Verification manuelle</h2>
 <ul>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
-<li>Copier/coller un texte et verifier son apparition dans l&#x27;historique.</li>
+<li>Copier/coller un texte et verifier son apparition dans l&#x27;historique avec un extrait lisible.</li>
+<li>Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.</li>
+<li>Copier une image et verifier l&#x27;apparition d&#x27;une vignette stable dans l&#x27;historique.</li>
+<li>Copier un fichier et verifier que son nom complet avec extension apparait dans l&#x27;historique.</li>
 <li>Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans <code>preview</code>.</li>
 <li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
 <li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
@@ -153,8 +156,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.2.3_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.3_amd64.snap
+ls -lh koplyx_0.2.4_amd64.snap
+snapcraft upload --release=edge koplyx_0.2.4_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -205,8 +208,8 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 <p>Tag GitHub :</p>
 <pre><code>
 git push origin main
-git tag v0.2.3
-git push origin v0.2.3
+git tag v0.2.4
+git push origin v0.2.4
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
 <h2>Nettoyage historique Git</h2>

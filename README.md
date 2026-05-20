@@ -11,9 +11,10 @@ cd Koplyx
 
 ## Fonctionnalites v1
 
-- Historique texte et image.
+- Historique texte, image et fichiers copies.
 - Deduplication par hash.
-- Recherche instantanee sur les metadonnees non sensibles.
+- Apercus reels dans l'app apres dechiffrement en memoire : extrait texte, vignette image, nom de fichier.
+- Recherche instantanee en memoire sur les apercus dechiffres.
 - Onglet dedie aux textes epingles.
 - Restauration dans le presse-papiers.
 - Collage automatique apres clic via `xdotool` sur X11.
@@ -35,7 +36,7 @@ cd Koplyx
 - Cle locale : Secret Service/libsecret si disponible, sinon `~/.config/koplyx/key.bin`
 - Base historique : `~/.local/share/koplyx/history.db`
 
-Les contenus complets sont stockes dans `encrypted_blob`. Depuis `0.2.2`, les nouveaux apercus d'historique ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Les historiques crees avant `0.2.2` peuvent encore contenir d'anciens apercus en clair ; purger l'historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.
+Les contenus complets sont stockes dans `encrypted_blob`. Depuis `0.2.2`, les nouveaux apercus stockes dans SQLite ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Depuis `0.2.4`, l'interface affiche des apercus reels en dechiffrant les entrees en memoire quand la fenetre est ouverte : extrait texte, vignette image et nom de fichier. Ces apercus visibles dans l'app ne sont pas reinjectes en clair dans SQLite. Les historiques crees avant `0.2.2` peuvent encore contenir d'anciens apercus en clair ; purger l'historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.
 
 Les dossiers locaux `~/.config/koplyx` et `~/.local/share/koplyx` sont durcis en `0700`, et les fichiers config, cle et base en `0600` quand le systeme de fichiers le permet. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.
 
@@ -91,6 +92,7 @@ Les contributions sont bienvenues pour les corrections de bugs, la documentation
 - `xdotool` sur X11 pour coller automatiquement dans le champ actif apres un clic.
 - `wtype` peut etre teste sur Wayland, mais il n'est pas une dependance du paquet `.deb`.
 - Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.
+- La restauration de fichiers depend du support `text/uri-list`/`Gdk.FileList` de l'application cible.
 
 Le collage automatique envoie volontairement `Ctrl+V` a la fenetre active apres restauration. Cette fonction doit etre testee sur l'environnement cible avant publication stable.
 
