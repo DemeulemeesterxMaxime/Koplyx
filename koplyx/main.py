@@ -1578,7 +1578,11 @@ class TrayIndicator:
 
 class KoplyxApplication(Gtk.Application):
     def __init__(self) -> None:
-        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+        # Sous Snap strict, l'autorisation du nom D-Bus est fournie par le
+        # Store après revue. L'absence temporaire de cette autorisation ne
+        # doit jamais empêcher l'ouverture de la fenêtre principale.
+        application_id = None if os.environ.get("SNAP") else APP_ID
+        super().__init__(application_id=application_id, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.config = Config()
         self.crypto = CryptoBox()
         self.store = HistoryStore(self.crypto, self.config)

@@ -2,6 +2,13 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.3.3] - 2026-09-13
+
+### Corrigé
+
+- Koplyx ouvre désormais sa fenêtre dans le Snap même si le nom de service D-Bus de session n'est pas encore autorisé.
+- Les noms D-Bus possédés par Koplyx sont déclarés comme des slots Snap, conformément au modèle de confinement.
+
 ## [0.3.2] - 2026-09-13
 
 ### Corrigé
