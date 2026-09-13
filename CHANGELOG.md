@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.3.1] - 2026-09-13
+
+### Corrigé
+
+- Le lanceur Snap ne dépend plus d'une variable disponible seulement pendant la construction, ce qui rétablit le lancement depuis le centre d'applications.
+
 ## [0.3.0] - 2026-09-13
 
 ### Ajouté

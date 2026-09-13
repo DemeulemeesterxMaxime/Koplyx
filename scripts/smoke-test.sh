@@ -14,6 +14,20 @@ PY
 /usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
 /usr/bin/python3 tests/test_core.py
 
+set +e
+SNAP_LAUNCHER_OUTPUT="$(env -u SNAPCRAFT_ARCH_TRIPLET SNAP=/tmp/koplyx-smoke-missing-snap ./snap/local/koplyx-snap-launcher --version 2>&1)"
+SNAP_LAUNCHER_CODE=$?
+set -e
+if printf '%s' "$SNAP_LAUNCHER_OUTPUT" | grep -q 'SNAPCRAFT_ARCH_TRIPLET: parameter not set'; then
+  printf '%s\n' "snap launcher depends on a build-only environment variable" >&2
+  exit 1
+fi
+if [ "$SNAP_LAUNCHER_CODE" -ne 127 ]; then
+  printf '%s\n' "unexpected snap launcher verification exit: $SNAP_LAUNCHER_CODE" >&2
+  exit 1
+fi
+printf '%s\n' "snap launcher runtime environment ok"
+
 if command -v dbus-run-session >/dev/null 2>&1 && command -v xvfb-run >/dev/null 2>&1; then
   dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_tray_integration.py
 else

@@ -35,6 +35,13 @@
 ## Release stable 0.3.0
 
 - [x] Mettre à jour la version centralisée, les métadonnées de packaging et le changelog.
-- [ ] Ouvrir la pull request de release et attendre la CI GitHub.
-- [ ] Merger vers `main` après validation de la CI.
-- [ ] Créer le tag `v0.3.0` et vérifier la publication des artefacts GitHub.
+- [x] Ouvrir la pull request de release et attendre la CI GitHub.
+- [x] Merger vers `main` après validation de la CI.
+- [x] Créer le tag `v0.3.0` et vérifier la publication des artefacts GitHub.
+
+## Correctif critique Snap 0.3.1
+
+- [x] Identifier l'échec de démarrage depuis le centre d'applications : `SNAPCRAFT_ARCH_TRIPLET` indisponible à l'exécution.
+- [x] Retirer la dépendance de runtime à cette variable de build.
+- [ ] Valider les tests, l'artefact Snap et le lancement sur une installation Snap propre.
+- [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.1` sur le canal stable.

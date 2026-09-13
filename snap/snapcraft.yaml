@@ -1,7 +1,7 @@
 name: koplyx
 title: Koplyx
 base: core24
-version: "0.3.0"
+version: "0.3.1"
 summary: Local encrypted clipboard history
 description: |
   Koplyx is a Linux clipboard history app for text, images, and copied files.
@@ -66,7 +66,8 @@ parts:
 
       export PYTHONPATH="${SNAP}/opt/koplyx:${PYTHONPATH:-}"
       export XDG_DATA_DIRS="${SNAP}/usr/share:${SNAP}/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-      export GDK_PIXBUF_MODULE_FILE="${SNAP}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+      # L'extension GNOME initialise les chargeurs GdkPixbuf. Ne pas utiliser
+      # SNAPCRAFT_ARCH_TRIPLET ici : cette variable n'existe qu'au build.
 
       exec "${SNAP}/usr/bin/python3" "${SNAP}/opt/koplyx/koplyx/main.py" "$@"
       EOF
