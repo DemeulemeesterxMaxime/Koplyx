@@ -677,11 +677,11 @@ class HistoryRow(Gtk.ListBoxRow):
         self.set_activatable(True)
         self.add_css_class("history-row")
 
-        root = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        root.set_margin_top(6)
-        root.set_margin_bottom(6)
-        root.set_margin_start(10)
-        root.set_margin_end(8)
+        root = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        root.set_margin_top(10)
+        root.set_margin_bottom(10)
+        root.set_margin_start(12)
+        root.set_margin_end(12)
         self.set_child(root)
 
         root.append(self.preview_widget(item))
@@ -692,7 +692,7 @@ class HistoryRow(Gtk.ListBoxRow):
         title.set_xalign(0)
         title.set_ellipsize(3)
         title.set_lines(2)
-        title.add_css_class("preview")
+        title.add_css_class("history-title")
         meta = Gtk.Label(label=f"{item.detail} · {human_time(item.created_at)}" + (" · epingle" if item.pinned else ""))
         meta.set_xalign(0)
         meta.add_css_class("meta")
@@ -700,35 +700,49 @@ class HistoryRow(Gtk.ListBoxRow):
         text_box.append(meta)
         root.append(text_box)
 
+        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        actions.add_css_class("row-actions")
+        actions.set_valign(Gtk.Align.CENTER)
         pin = Gtk.Button(icon_name="view-pin-symbolic")
-        pin.set_tooltip_text("Epingler")
-        pin.add_css_class("flat-icon")
+        pin.set_tooltip_text("Retirer des epingles" if item.pinned else "Epingler")
+        pin.add_css_class("icon-button")
+        if item.pinned:
+            pin.add_css_class("is-pinned")
         pin.connect("clicked", self.on_pin)
         paste = Gtk.Button(icon_name="edit-paste-symbolic")
         paste.set_tooltip_text("Restaurer dans le presse-papiers")
-        paste.add_css_class("accent-icon")
+        paste.add_css_class("restore-button")
         paste.connect("clicked", self.on_paste)
         delete = Gtk.Button(icon_name="user-trash-symbolic")
         delete.set_tooltip_text("Supprimer")
-        delete.add_css_class("flat-icon")
+        delete.add_css_class("icon-button")
+        delete.add_css_class("danger-button")
         delete.connect("clicked", self.on_delete)
-        root.append(pin)
-        root.append(paste)
-        root.append(delete)
+        for button in (pin, paste, delete):
+            button.set_halign(Gtk.Align.CENTER)
+            button.set_valign(Gtk.Align.CENTER)
+            actions.append(button)
+        root.append(actions)
 
     def preview_widget(self, item: DisplayItem) -> Gtk.Widget:
         if item.kind == "image" and item.image_data:
             try:
                 texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(item.image_data))
                 picture = Gtk.Picture.new_for_paintable(texture)
-                picture.set_size_request(42, 42)
+                picture.set_size_request(48, 48)
+                picture.set_halign(Gtk.Align.CENTER)
+                picture.set_valign(Gtk.Align.CENTER)
                 picture.add_css_class("thumb")
                 return picture
             except Exception:
                 pass
 
-        type_box = Gtk.Box()
-        type_box.set_size_request(42, 42)
+        type_box = Gtk.CenterBox()
+        type_box.set_size_request(48, 48)
+        type_box.set_hexpand(False)
+        type_box.set_vexpand(False)
+        type_box.set_halign(Gtk.Align.CENTER)
+        type_box.set_valign(Gtk.Align.CENTER)
         type_box.add_css_class("type-box")
         icon_name = {
             "text": "text-x-generic-symbolic",
@@ -737,8 +751,11 @@ class HistoryRow(Gtk.ListBoxRow):
             "image": "image-x-generic-symbolic",
         }.get(item.kind, "edit-copy-symbolic")
         image = Gtk.Image.new_from_icon_name(icon_name)
+        image.set_pixel_size(20)
+        image.set_halign(Gtk.Align.CENTER)
+        image.set_valign(Gtk.Align.CENTER)
         image.add_css_class("type-icon")
-        type_box.append(image)
+        type_box.set_center_widget(image)
         return type_box
 
     def on_paste(self, _button) -> None:
@@ -757,48 +774,77 @@ class KoplyxWindow(Gtk.ApplicationWindow):
     def __init__(self, app: "KoplyxApplication") -> None:
         super().__init__(application=app, title=APP_NAME)
         self.app = app
-        self.set_default_size(560, 620)
-        self.set_size_request(420, 360)
+        self.set_default_size(640, 720)
+        self.set_size_request(460, 480)
         self.add_css_class("koplyx-window")
         self.active_view = "history"
         self.connect("close-request", self.on_close_request)
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.add_css_class("app-shell")
         self.set_child(root)
 
-        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        header.set_margin_top(14)
-        header.set_margin_bottom(10)
-        header.set_margin_start(14)
-        header.set_margin_end(14)
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=16)
+        header.set_margin_top(22)
+        header.set_margin_bottom(16)
+        header.set_margin_start(22)
+        header.set_margin_end(22)
+        header.add_css_class("hero")
         root.append(header)
 
+        brand_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
+        brand_box.set_hexpand(True)
+        eyebrow = Gtk.Label(label="PRESSE-PAPIERS LOCAL")
+        eyebrow.set_xalign(0)
+        eyebrow.add_css_class("eyebrow")
+        brand_box.append(eyebrow)
         brand = Gtk.Label(label="Koplyx")
+        brand.set_xalign(0)
         brand.add_css_class("brand")
-        header.append(brand)
+        brand_box.append(brand)
+        subtitle = Gtk.Label(label="Vos copies restent sur votre machine.")
+        subtitle.set_xalign(0)
+        subtitle.add_css_class("subtitle")
+        brand_box.append(subtitle)
+        header.append(brand_box)
 
+        header_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        header_actions.add_css_class("header-actions")
+
+        settings = Gtk.Button(icon_name="emblem-system-symbolic")
+        settings.set_tooltip_text("Parametres")
+        settings.add_css_class("icon-button")
+        settings.connect("clicked", lambda _b: self.open_settings())
+        header_actions.append(settings)
+
+        clear = Gtk.Button(icon_name="edit-clear-all-symbolic")
+        clear.set_tooltip_text("Effacer l'historique")
+        clear.add_css_class("icon-button")
+        clear.add_css_class("danger-button")
+        clear.connect("clicked", lambda _b: self.confirm_clear())
+        header_actions.append(clear)
+        header.append(header_actions)
+
+        search_panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        search_panel.set_margin_start(22)
+        search_panel.set_margin_end(22)
+        search_panel.set_margin_bottom(14)
+        search_panel.add_css_class("search-panel")
+        search_label = Gtk.Label(label="RETROUVER UNE COPIE")
+        search_label.set_xalign(0)
+        search_label.add_css_class("search-label")
+        search_panel.append(search_label)
         self.search = Gtk.SearchEntry()
         self.search.set_placeholder_text("Rechercher dans l'historique")
         self.search.set_hexpand(True)
         self.search.connect("search-changed", lambda _w: app.refresh())
-        header.append(self.search)
-
-        settings = Gtk.Button(icon_name="emblem-system-symbolic")
-        settings.set_tooltip_text("Parametres")
-        settings.add_css_class("flat-icon")
-        settings.connect("clicked", lambda _b: self.open_settings())
-        header.append(settings)
-
-        clear = Gtk.Button(icon_name="edit-clear-all-symbolic")
-        clear.set_tooltip_text("Effacer l'historique")
-        clear.add_css_class("flat-icon")
-        clear.connect("clicked", lambda _b: self.confirm_clear())
-        header.append(clear)
+        search_panel.append(self.search)
+        root.append(search_panel)
 
         tabs = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        tabs.set_margin_start(14)
-        tabs.set_margin_end(14)
-        tabs.set_margin_bottom(10)
+        tabs.set_margin_start(22)
+        tabs.set_margin_end(22)
+        tabs.set_margin_bottom(14)
         tabs.add_css_class("tabs")
         root.append(tabs)
 
@@ -813,21 +859,37 @@ class KoplyxWindow(Gtk.ApplicationWindow):
 
         scroller = Gtk.ScrolledWindow()
         scroller.set_vexpand(True)
+        scroller.set_margin_start(14)
+        scroller.set_margin_end(14)
+        scroller.set_margin_bottom(10)
+        scroller.add_css_class("history-scroller")
         root.append(scroller)
 
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         self.listbox.connect("row-activated", self.on_row_activated)
+        self.listbox.add_css_class("history-list")
         scroller.set_child(self.listbox)
 
+        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        footer.set_margin_top(4)
+        footer.set_margin_bottom(18)
+        footer.set_margin_start(22)
+        footer.set_margin_end(22)
+        footer.add_css_class("status-panel")
+        self.status_icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+        self.status_icon.set_pixel_size(16)
+        self.status_icon.add_css_class("status-icon")
+        footer.append(self.status_icon)
         self.status = Gtk.Label()
         self.status.set_xalign(0)
+        self.status.set_hexpand(True)
         self.status.add_css_class("status")
-        self.status.set_margin_top(8)
-        self.status.set_margin_bottom(10)
-        self.status.set_margin_start(14)
-        self.status.set_margin_end(14)
-        root.append(self.status)
+        footer.append(self.status)
+        self.tray_badge = Gtk.Label()
+        self.tray_badge.add_css_class("tray-badge")
+        footer.append(self.tray_badge)
+        root.append(footer)
 
     def present_focused(self) -> None:
         self.app.remember_active_window()
@@ -867,14 +929,24 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         while child := self.listbox.get_first_child():
             self.listbox.remove(child)
         if not items:
-            message = (
-                "Aucun texte epingle"
-                if self.active_view == "pinned_text"
-                else "Aucune copie enregistree"
-            )
-            empty = Gtk.Label(label=message)
-            empty.add_css_class("empty")
-            empty.set_margin_top(80)
+            empty = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+            empty.set_halign(Gtk.Align.CENTER)
+            empty.set_valign(Gtk.Align.CENTER)
+            empty.set_vexpand(True)
+            empty.add_css_class("empty-state")
+            icon = Gtk.Image.new_from_icon_name("view-pin-symbolic" if self.active_view == "pinned_text" else "edit-copy-symbolic")
+            icon.set_pixel_size(34)
+            icon.add_css_class("empty-icon")
+            empty.append(icon)
+            title = Gtk.Label(label="Aucun texte epingle" if self.active_view == "pinned_text" else "Votre historique est pret")
+            title.add_css_class("empty-title")
+            empty.append(title)
+            detail = Gtk.Label(label="Epinglez les textes importants pour les garder a portee de main." if self.active_view == "pinned_text" else "Copiez du texte, une image ou un fichier pour le retrouver ici.")
+            detail.set_wrap(True)
+            detail.set_justify(Gtk.Justification.CENTER)
+            detail.set_max_width_chars(38)
+            detail.add_css_class("empty-detail")
+            empty.append(detail)
             self.listbox.append(empty)
         else:
             for item in items:
@@ -887,6 +959,16 @@ class KoplyxWindow(Gtk.ApplicationWindow):
             self.status.set_text(message)
         else:
             self.status.set_text(f"{view_label} · {count} elements · {mb:.1f} Mo · stockage local chiffre")
+        self.tray_badge.set_text(self.app.tray_label())
+        self.tray_badge.set_tooltip_text(self.app.tray_detail())
+        if self.app.background_mode_active():
+            self.tray_badge.remove_css_class("tray-warning")
+            self.tray_badge.add_css_class("tray-active")
+            self.status_icon.set_from_icon_name("emblem-ok-symbolic")
+        else:
+            self.tray_badge.remove_css_class("tray-active")
+            self.tray_badge.add_css_class("tray-warning")
+            self.status_icon.set_from_icon_name("dialog-warning-symbolic")
 
     def confirm_clear(self) -> None:
         dialog = Gtk.AlertDialog(message="Effacer tout l'historique Koplyx ?")
@@ -910,66 +992,100 @@ class KoplyxWindow(Gtk.ApplicationWindow):
 
 class SettingsWindow(Gtk.Window):
     def __init__(self, app: "KoplyxApplication", parent: Gtk.Window) -> None:
-        super().__init__(title="Parametres Koplyx", transient_for=parent, modal=True)
+        super().__init__(title="Paramètres Koplyx", transient_for=parent, modal=True)
         self.app = app
-        self.set_default_size(460, 460)
+        self.set_default_size(520, 660)
+        self.set_size_request(420, 480)
         self.add_css_class("settings-window")
 
-        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
-        root.set_margin_top(18)
-        root.set_margin_bottom(18)
-        root.set_margin_start(18)
-        root.set_margin_end(18)
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.add_css_class("settings-shell")
         self.set_child(root)
 
-        title = Gtk.Label(label="Parametres")
+        header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        header.set_margin_top(22)
+        header.set_margin_bottom(14)
+        header.set_margin_start(22)
+        header.set_margin_end(22)
+        header.add_css_class("settings-hero")
+        title = Gtk.Label(label="Paramètres")
         title.set_xalign(0)
         title.add_css_class("settings-title")
-        root.append(title)
+        header.append(title)
+        subtitle = Gtk.Label(label="Personnalisez la capture, la confidentialité et l'accès rapide.")
+        subtitle.set_xalign(0)
+        subtitle.set_wrap(True)
+        subtitle.add_css_class("subtitle")
+        header.append(subtitle)
+        self.tray_status = Gtk.Label(label=f"{app.tray_label()} · {app.tray_detail()}")
+        self.tray_status.set_xalign(0)
+        self.tray_status.set_wrap(True)
+        self.tray_status.add_css_class("settings-note")
+        header.append(self.tray_status)
+        root.append(header)
 
-        self.shortcut = self.shortcut_row(root, "Raccourci global", "shortcut")
-        self.max_items = self.spin(root, "Nombre max d'entrees", "max_items", 10, 10000)
-        self.max_age = self.spin(root, "Retention en jours", "max_age_days", 1, 3650)
-        self.max_storage = self.spin(root, "Stockage max (Mo)", "max_storage_mb", 16, 8192)
-        self.capture_text = self.switch(root, "Capturer le texte", "capture_text")
-        self.capture_images = self.switch(root, "Capturer les images", "capture_images")
-        self.auto_paste = self.switch(root, "Coller automatiquement apres un clic", "auto_paste")
-        self.show_tray = self.switch(root, "Afficher dans la barre systeme", "show_tray")
-        self.autostart = self.switch(root, "Lancer Koplyx au demarrage", "autostart_enabled", self.on_autostart_changed)
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_vexpand(True)
+        root.append(scroller)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        content.set_margin_top(8)
+        content.set_margin_bottom(22)
+        content.set_margin_start(22)
+        content.set_margin_end(22)
+        scroller.set_child(content)
 
-        install = Gtk.Button(label="Installer raccourci GNOME")
+        self.section(content, "ACCÈS RAPIDE")
+        self.shortcut = self.shortcut_row(content, "Raccourci global", "shortcut")
+        install = Gtk.Button(label="Installer le raccourci GNOME")
         install.add_css_class("primary")
         install.connect("clicked", self.install_shortcut)
-        root.append(install)
+        content.append(install)
 
-        autostart = Gtk.Button(label="Reparer l'autostart")
+        self.section(content, "HISTORIQUE")
+        self.max_items = self.spin(content, "Nombre max d'entrées", "max_items", 10, 10000)
+        self.max_age = self.spin(content, "Rétention en jours", "max_age_days", 1, 3650)
+        self.max_storage = self.spin(content, "Stockage max (Mo)", "max_storage_mb", 16, 8192)
+        self.capture_text = self.switch(content, "Capturer le texte", "capture_text")
+        self.capture_images = self.switch(content, "Capturer les images", "capture_images")
+
+        self.section(content, "ARRIÈRE-PLAN")
+        self.auto_paste = self.switch(content, "Coller automatiquement après un clic", "auto_paste")
+        self.show_tray = self.switch(content, "Afficher dans la barre système", "show_tray", self.on_tray_changed)
+        self.autostart = self.switch(content, "Lancer Koplyx au démarrage", "autostart_enabled", self.on_autostart_changed)
+        autostart = Gtk.Button(label="Réparer l'autostart")
         autostart.connect("clicked", self.install_autostart)
-        root.append(autostart)
+        content.append(autostart)
 
         self.feedback = Gtk.Label()
         self.feedback.set_wrap(True)
         self.feedback.set_xalign(0)
         self.feedback.add_css_class("settings-feedback")
-        root.append(self.feedback)
+        content.append(self.feedback)
 
         shortcut_warning = Gtk.Label(
-            label="Attention: l'OS peut deja utiliser ce raccourci. Pour le liberer, allez dans Parametres > Clavier > Raccourcis clavier."
+            label="Le système peut déjà utiliser ce raccourci. Pour le libérer, ouvrez Paramètres > Clavier > Raccourcis clavier."
         )
         shortcut_warning.set_wrap(True)
         shortcut_warning.set_xalign(0)
         shortcut_warning.add_css_class("settings-warning")
-        root.append(shortcut_warning)
+        content.append(shortcut_warning)
 
         tools = paste_tool_name()
         paste_note = tools if tools else "non disponible, installer xdotool sur X11 ou wtype sur Wayland"
-        tray_note = "disponible" if app.tray and app.tray.available else "non detecte"
         note = Gtk.Label(
-            label=f"Outil collage auto: {paste_note}. Barre systeme: {tray_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
+            label=f"Outil de collage automatique : {paste_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
         )
         note.set_wrap(True)
         note.set_xalign(0)
         note.add_css_class("settings-note")
-        root.append(note)
+        content.append(note)
+
+    def section(self, root: Gtk.Box, label: str) -> None:
+        title = Gtk.Label(label=label)
+        title.set_xalign(0)
+        title.set_margin_top(12)
+        title.add_css_class("section-title")
+        root.append(title)
 
     def entry(self, root, label: str, key: str) -> Gtk.Entry:
         row = self.row(root, label)
@@ -1019,8 +1135,10 @@ class SettingsWindow(Gtk.Window):
 
     def row(self, root, label: str) -> Gtk.Box:
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        row.add_css_class("settings-row")
         text = Gtk.Label(label=label)
         text.set_xalign(0)
+        text.set_wrap(True)
         text.set_hexpand(True)
         row.append(text)
         root.append(row)
@@ -1047,6 +1165,17 @@ class SettingsWindow(Gtk.Window):
         else:
             self.feedback.set_text("Impossible de modifier l'autostart.")
             self.app.set_status("Erreur autostart.")
+
+    def on_tray_changed(self, widget: Gtk.Switch, _param) -> None:
+        enabled = widget.get_active()
+        available = self.app.set_tray_enabled(enabled)
+        self.tray_status.set_text(f"{self.app.tray_label()} · {self.app.tray_detail()}")
+        if enabled and not available:
+            self.feedback.set_text("Indicateur système non disponible. Koplyx restera visible pour rester accessible.")
+        elif enabled:
+            self.feedback.set_text("Indicateur système actif. Koplyx peut rester en arrière-plan.")
+        else:
+            self.feedback.set_text("Indicateur système désactivé. La fenêtre restera accessible.")
 
 
 class ShortcutCaptureDialog(Gtk.Window):
@@ -1207,18 +1336,21 @@ class ShortcutCaptureDialog(Gtk.Window):
 
 class TrayIndicator:
     MENU_PATH = "/Menu"
-    MENU_SETTINGS_ID = 1
-    MENU_QUIT_ID = 2
+    MENU_SHOW_ID = 1
+    MENU_SETTINGS_ID = 2
+    MENU_QUIT_ID = 3
 
     def __init__(self, app: "KoplyxApplication") -> None:
         self.app = app
         self.available = False
+        self.error = ""
         try:
             import dbus
             import dbus.service
             from dbus.mainloop.glib import DBusGMainLoop
         except Exception:
             self.dbus = None
+            self.error = "La bibliothèque D-Bus n'est pas disponible."
             return
 
         self.dbus = dbus
@@ -1226,8 +1358,10 @@ class TrayIndicator:
         try:
             self.bus = dbus.SessionBus()
             if not self.bus.name_has_owner("org.kde.StatusNotifierWatcher"):
+                self.error = "Aucun hôte d'indicateurs système n'est détecté."
                 return
         except Exception:
+            self.error = "La session D-Bus est indisponible."
             return
 
         class DBusMenu(dbus.service.Object):
@@ -1256,7 +1390,8 @@ class TrayIndicator:
                 )
                 children = dbus.Array(
                     [
-                        self.menu_item(TrayIndicator.MENU_SETTINGS_ID, "Parametres"),
+                        self.menu_item(TrayIndicator.MENU_SHOW_ID, "Afficher Koplyx"),
+                        self.menu_item(TrayIndicator.MENU_SETTINGS_ID, "Paramètres"),
                         self.menu_item(TrayIndicator.MENU_QUIT_ID, "Quitter Koplyx"),
                     ],
                     signature="v",
@@ -1271,7 +1406,8 @@ class TrayIndicator:
             def GetGroupProperties(self, ids, _property_names):
                 rows = []
                 labels = {
-                    TrayIndicator.MENU_SETTINGS_ID: "Parametres",
+                    TrayIndicator.MENU_SHOW_ID: "Afficher Koplyx",
+                    TrayIndicator.MENU_SETTINGS_ID: "Paramètres",
                     TrayIndicator.MENU_QUIT_ID: "Quitter Koplyx",
                 }
                 for item_id in ids:
@@ -1298,8 +1434,10 @@ class TrayIndicator:
             @dbus.service.method("com.canonical.dbusmenu", in_signature="is", out_signature="v")
             def GetProperty(self, item_id, prop):
                 if prop == "label":
+                    if int(item_id) == TrayIndicator.MENU_SHOW_ID:
+                        return dbus.String("Afficher Koplyx")
                     if int(item_id) == TrayIndicator.MENU_SETTINGS_ID:
-                        return dbus.String("Parametres")
+                        return dbus.String("Paramètres")
                     if int(item_id) == TrayIndicator.MENU_QUIT_ID:
                         return dbus.String("Quitter Koplyx")
                 if prop in ("enabled", "visible"):
@@ -1310,7 +1448,9 @@ class TrayIndicator:
             def Event(self, item_id, event_id, _data, _timestamp):
                 if event_id != "clicked":
                     return
-                if int(item_id) == TrayIndicator.MENU_SETTINGS_ID:
+                if int(item_id) == TrayIndicator.MENU_SHOW_ID:
+                    GLib.idle_add(self.owner.app.show_from_tray)
+                elif int(item_id) == TrayIndicator.MENU_SETTINGS_ID:
                     GLib.idle_add(self.owner.app.open_settings_from_tray)
                 elif int(item_id) == TrayIndicator.MENU_QUIT_ID:
                     GLib.idle_add(self.owner.app.quit_from_tray)
@@ -1370,7 +1510,7 @@ class TrayIndicator:
 
             @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii", out_signature="")
             def ContextMenu(self, _x, _y):
-                GLib.idle_add(self.owner.app.toggle_window)
+                return
 
             @dbus.service.method("org.kde.StatusNotifierItem", in_signature="is", out_signature="")
             def Scroll(self, _delta, _orientation):
@@ -1422,15 +1562,18 @@ class TrayIndicator:
             def Set(self, _interface, _prop, _value):
                 return
 
-        self.bus_name = dbus.service.BusName("dev.limax.koplyx.StatusNotifierItem", self.bus)
-        self.menu = DBusMenu(self)
-        self.item = StatusNotifierItem(self)
-        watcher = self.bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
-        watcher.RegisterStatusNotifierItem(
-            "dev.limax.koplyx.StatusNotifierItem",
-            dbus_interface="org.kde.StatusNotifierWatcher",
-        )
-        self.available = True
+        try:
+            self.bus_name = dbus.service.BusName("dev.limax.koplyx.StatusNotifierItem", self.bus)
+            self.menu = DBusMenu(self)
+            self.item = StatusNotifierItem(self)
+            watcher = self.bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
+            watcher.RegisterStatusNotifierItem(
+                "dev.limax.koplyx.StatusNotifierItem",
+                dbus_interface="org.kde.StatusNotifierWatcher",
+            )
+            self.available = True
+        except Exception:
+            self.error = "L'enregistrement de l'indicateur système a échoué."
 
 
 class KoplyxApplication(Gtk.Application):
@@ -1453,8 +1596,7 @@ class KoplyxApplication(Gtk.Application):
         apply_css()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.on_shutdown_signal)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.on_shutdown_signal)
-        if self.config.get("show_tray"):
-            self.tray = TrayIndicator(self)
+        self.sync_tray()
 
     def on_shutdown_signal(self) -> bool:
         self.quit()
@@ -1464,11 +1606,21 @@ class KoplyxApplication(Gtk.Application):
         self.ensure_window()
         if not self.config.get("start_hidden"):
             self.window.present_focused()
+        elif self.background_mode_active():
+            self.set_status("Koplyx est actif en arrière-plan. Utilisez l'indicateur système pour l'afficher.")
+        else:
+            self.set_status("Indicateur système indisponible : Koplyx reste visible pour rester accessible.")
+            self.window.present_focused()
 
     def do_command_line(self, command_line) -> int:
         args = command_line.get_arguments()[1:]
         self.ensure_window()
         if "--hidden" in args:
+            if self.background_mode_active():
+                self.set_status("Koplyx est actif en arrière-plan. Utilisez l'indicateur système pour l'afficher.")
+            else:
+                self.set_status("Indicateur système indisponible : Koplyx reste visible pour rester accessible.")
+                self.window.present_focused()
             return 0
         if "--toggle" in args:
             self.toggle_window()
@@ -1484,10 +1636,17 @@ class KoplyxApplication(Gtk.Application):
             self.refresh()
 
     def toggle_window(self) -> None:
+        self.ensure_window()
         if self.window.is_visible():
             self.sleep_to_tray()
         else:
             self.window.present_focused()
+
+    def show_from_tray(self) -> bool:
+        self.ensure_window()
+        self.window.present_focused()
+        self.set_status("Koplyx est ouvert.")
+        return GLib.SOURCE_REMOVE
 
     def open_settings_from_tray(self) -> bool:
         self.ensure_window()
@@ -1499,10 +1658,41 @@ class KoplyxApplication(Gtk.Application):
         self.quit()
         return GLib.SOURCE_REMOVE
 
-    def sleep_to_tray(self) -> None:
+    def background_mode_active(self) -> bool:
+        return bool(self.tray and self.tray.available)
+
+    def tray_label(self) -> str:
+        return "Arrière-plan actif" if self.background_mode_active() else "Fenêtre visible"
+
+    def tray_detail(self) -> str:
+        if self.background_mode_active():
+            return "Indicateur système connecté"
+        if not self.config.get("show_tray"):
+            return "Indicateur système désactivé"
+        if self.tray and self.tray.error:
+            return self.tray.error
+        return "Indicateur système indisponible"
+
+    def sync_tray(self) -> bool:
+        self.tray = TrayIndicator(self) if self.config.get("show_tray") else None
+        return self.background_mode_active()
+
+    def set_tray_enabled(self, enabled: bool) -> bool:
+        self.config.set("show_tray", enabled)
+        available = self.sync_tray()
+        self.refresh()
+        return available if enabled else True
+
+    def sleep_to_tray(self) -> bool:
+        if not self.background_mode_active():
+            self.set_status("Indicateur système indisponible : la fenêtre reste ouverte.")
+            if self.window:
+                self.window.present_focused()
+            return False
         if self.window:
             self.window.hide()
-        self.set_status("Koplyx reste actif dans la barre systeme.")
+        self.set_status("Koplyx reste actif dans la barre système.")
+        return True
 
     def sync_autostart(self) -> None:
         if self.config.get("autostart_enabled"):
@@ -1605,8 +1795,7 @@ class KoplyxApplication(Gtk.Application):
             self.set_status("Fichier restaure dans le presse-papiers." if restored else "Restauration fichier impossible.")
         else:
             restored = False
-        if self.window:
-            self.window.hide()
+        self.sleep_to_tray()
         if restored and self.config.get("auto_paste") and kind in ("text", "image"):
             GLib.timeout_add(120, self.activate_then_paste)
 
@@ -1729,124 +1918,238 @@ def apply_css() -> None:
       letter-spacing: 0;
     }
     window, .koplyx-window, .settings-window {
-      background: #111614;
-      color: #eef3ef;
+      background: #080b09;
+      color: #f4fff7;
+    }
+    .app-shell, .settings-shell {
+      background: linear-gradient(145deg, #080b09 0%, #101812 48%, #0a0f0b 100%);
+    }
+    .hero, .settings-hero {
+      background: #111b14;
+      border: 1px solid #294533;
+      border-radius: 18px;
+    }
+    .hero {
+      margin: 0;
+      padding: 18px;
+    }
+    .settings-hero {
+      padding: 18px;
+    }
+    .eyebrow, .search-label, .section-title {
+      color: #72d99c;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
     }
     .brand {
-      font-size: 20px;
-      font-weight: 700;
-      color: #dff7ea;
+      color: #f7fff9;
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .subtitle {
+      color: #afc2b4;
+      font-size: 13px;
+    }
+    .header-actions {
+      margin-top: 2px;
+    }
+    .search-panel {
+      background: #101812;
+      border: 1px solid #294533;
+      border-radius: 14px;
+      padding: 12px;
     }
     searchentry, entry, spinbutton {
-      background: #1a211f;
-      color: #eef3ef;
-      border: 1px solid #2a3531;
-      border-radius: 8px;
-      min-height: 36px;
+      background: #090e0b;
+      color: #f5fff7;
+      border: 1px solid #31563e;
+      border-radius: 10px;
+      min-height: 40px;
+      caret-color: #83ebb0;
+    }
+    searchentry:focus, entry:focus, spinbutton:focus-within {
+      border-color: #4dcc7f;
+      box-shadow: 0 0 0 2px alpha(#4dcc7f, 0.16);
+    }
+    .history-scroller {
+      background: transparent;
     }
     .history-row {
-      background: #171d1b;
-      border-bottom: 1px solid #24302c;
+      background: #101812;
+      border: 1px solid #284431;
+      border-radius: 14px;
+      margin: 0 0 8px 0;
     }
     .history-row:hover {
-      background: #1d2723;
+      background: #17231a;
+      border-color: #4d9b68;
     }
     .type-box {
-      background: #20312b;
-      border-radius: 8px;
+      background: #153d2a;
+      border: 1px solid #2f8555;
+      border-radius: 12px;
+      min-width: 48px;
+      min-height: 48px;
+      padding: 0;
     }
     .type-icon {
-      color: #73e6a2;
+      color: #d7ffe5;
     }
     .thumb {
-      background: #20312b;
-      border-radius: 8px;
+      background: #153d2a;
+      border-radius: 12px;
     }
-    .preview {
-      color: #f2f6f2;
+    .history-title {
+      color: #f4fff7;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
     }
     .meta, .status, .settings-note {
-      color: #8fa099;
+      color: #a8bdad;
       font-size: 12px;
     }
     .settings-feedback {
-      color: #73e6a2;
+      color: #8cebb4;
       font-size: 12px;
+      font-weight: 600;
     }
     .settings-warning {
-      color: #d6b46a;
+      color: #d2e7d7;
       font-size: 11px;
     }
     .shortcut-value {
-      color: #dff7ea;
+      color: #d9ffe6;
       font-weight: 700;
-      margin-right: 4px;
+      margin-right: 8px;
     }
     .shortcut-dialog-value {
-      background: #20312b;
-      border: 1px solid #2fa862;
-      border-radius: 8px;
-      color: #dff7ea;
+      background: #143522;
+      border: 1px solid #46bd73;
+      border-radius: 14px;
+      color: #effff4;
       font-size: 24px;
       font-weight: 800;
       padding: 18px;
     }
-    .empty {
-      color: #8fa099;
-      font-size: 14px;
+    .empty-state {
+      margin-top: 86px;
+      margin-bottom: 86px;
+    }
+    .empty-icon {
+      color: #64cf8e;
+    }
+    .empty-title {
+      color: #effff4;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .empty-detail {
+      color: #a4b9a9;
+      font-size: 13px;
     }
     button {
-      border-radius: 8px;
-      min-height: 34px;
-      padding: 6px 10px;
-      background: #202925;
-      color: #edf5ef;
-      border: 1px solid #314039;
+      border-radius: 10px;
+      min-height: 36px;
+      padding: 6px 12px;
+      background: #18251b;
+      color: #edf9f0;
+      border: 1px solid #31523a;
     }
     button:hover {
-      background: #28352f;
+      background: #203526;
+      border-color: #57a872;
+    }
+    button:active {
+      background: #111c14;
+    }
+    .icon-button {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 6px;
+      background: #142018;
+      color: #c7f6d6;
+    }
+    .danger-button:hover {
+      background: #2a211e;
+      border-color: #806057;
+      color: #fff0ea;
+    }
+    .restore-button, .primary {
+      background: #1e8d50;
+      border-color: #52d582;
+      color: #f7fff9;
+      font-weight: 700;
+    }
+    .restore-button:hover, .primary:hover {
+      background: #27aa62;
+      border-color: #8af0af;
+    }
+    .is-pinned {
+      background: #1c3524;
+      border-color: #4a9b66;
+      color: #c6ffd9;
     }
     .tabs {
-      border-bottom: 1px solid #24302c;
-      padding-bottom: 8px;
+      background: #0d130e;
+      border: 1px solid #294332;
+      border-radius: 12px;
+      padding: 5px;
     }
     .tabs button {
-      min-height: 30px;
-      padding: 5px 12px;
+      min-height: 32px;
+      padding: 5px 14px;
       background: transparent;
       border-color: transparent;
-      color: #9dadA6;
+      color: #9eb4a4;
       font-weight: 600;
     }
     .tabs button:hover {
-      background: #1d2723;
-      color: #eef3ef;
+      background: #1a2c1e;
+      color: #effff4;
     }
     .tabs .tab-active {
-      background: #20312b;
-      border-color: #2fa862;
-      color: #dff7ea;
-    }
-    .flat-icon {
-      background: transparent;
-      border-color: transparent;
-      color: #aebdb6;
-      padding: 6px;
-    }
-    .accent-icon, .primary {
-      background: #1f7a49;
-      border-color: #2fa862;
-      color: #f4fff7;
+      background: #1c8d50;
+      border-color: #56d784;
+      color: #f6fff8;
     }
     .settings-title {
-      font-size: 22px;
+      font-size: 25px;
+      font-weight: 800;
+      color: #f4fff7;
+    }
+    .settings-row {
+      background: #101812;
+      border: 1px solid #284431;
+      border-radius: 12px;
+      min-height: 44px;
+      padding: 8px 12px;
+    }
+    .status-panel {
+      background: #0d150f;
+      border: 1px solid #294533;
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .status-icon {
+      color: #72d99c;
+    }
+    .tray-badge {
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
       font-weight: 700;
-      color: #dff7ea;
+    }
+    .tray-active {
+      background: #173d25;
+      color: #a7f6c2;
+    }
+    .tray-warning {
+      background: #222b23;
+      color: #d4e2d6;
     }
     switch:checked {
-      background: #1f7a49;
+      background: #2baf61;
     }
     """
     provider = Gtk.CssProvider()

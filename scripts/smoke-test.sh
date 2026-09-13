@@ -12,6 +12,13 @@ print("deps ok")
 PY
 
 /usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
+/usr/bin/python3 tests/test_core.py
+
+if command -v dbus-run-session >/dev/null 2>&1 && command -v xvfb-run >/dev/null 2>&1; then
+  dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_tray_integration.py
+else
+  printf '%s\n' "tray integration skipped: dbus-run-session or xvfb-run missing"
+fi
 
 if command -v xdotool >/dev/null 2>&1 || command -v wtype >/dev/null 2>&1; then
   printf '%s\n' "auto paste tool ok"

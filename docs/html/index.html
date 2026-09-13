@@ -139,6 +139,7 @@ koplyx --toggle
 <p>Si le raccourci ne repond pas, il peut deja etre reserve par l&#x27;OS. Ouvrir <code>Parametres &gt; Clavier &gt; Raccourcis clavier</code> pour changer ou liberer le raccourci systeme.</p>
 <h2>Fonctionnement en arriere-plan</h2>
 <p>Koplyx installe son autostart utilisateur par defaut et se lance avec <code>koplyx --hidden</code> au demarrage de session. Fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser <code>Quitter Koplyx</code> dans le menu de la barre systeme.</p>
+<p>Le mode cache n&#x27;est actif que lorsqu&#x27;un hote <code>StatusNotifierItem</code> est reellement disponible dans la session. Sinon, Koplyx conserve sa fenetre visible et explique le motif : aucune application ne peut devenir inaccessible parce que la barre systeme est absente. L&#x27;indicateur propose les actions <code>Afficher Koplyx</code>, <code>Parametres</code> et <code>Quitter Koplyx</code>.</p>
 <p>L&#x27;autostart peut etre desactive dans les parametres avec <code>Lancer Koplyx au demarrage</code>. Dans certains environnements sandbox, l&#x27;ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d&#x27;erreur.</p>
 <h2>Installation utilisateur</h2>
 <pre><code>
@@ -157,6 +158,7 @@ sha256sum -c SHA256SUMS
 </code></pre>
 <p>La checklist de publication est dans <code>docs/PUBLIC_RELEASE.md</code>.</p>
 <p>Les versions HTML statiques de la documentation sont dans <code>docs/html/</code>.</p>
+<p>Les changements de version sont résumés dans <code>CHANGELOG.md</code>.</p>
 <h2>Contribuer</h2>
 <p>Les contributions sont bienvenues pour les corrections de bugs, la documentation, le packaging Linux et les ameliorations ciblees de l&#x27;experience utilisateur. Lire <code>CONTRIBUTING.md</code> avant d&#x27;ouvrir une issue ou une pull request.</p>
 <h2>Dependances optionnelles</h2>
