@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.3.2] - 2026-09-13
+
+### Corrigé
+
+- Le Snap embarque désormais les dépendances Python nécessaires et déclare les permissions D-Bus de l'application et de son indicateur système.
+
 ## [0.3.1] - 2026-09-13
 
 ### Corrigé
