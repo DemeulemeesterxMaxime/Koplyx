@@ -1,7 +1,7 @@
 name: koplyx
 title: Koplyx
 base: core24
-version: "0.3.1"
+version: "0.3.2"
 summary: Local encrypted clipboard history
 description: |
   Koplyx is a Linux clipboard history app for text, images, and copied files.
@@ -19,6 +19,16 @@ icon: assets/icons/dev.limax.koplyx.svg
 grade: stable
 confinement: strict
 
+plugs:
+  app-id:
+    interface: dbus
+    bus: session
+    name: dev.limax.koplyx
+  status-notifier:
+    interface: dbus
+    bus: session
+    name: dev.limax.koplyx.StatusNotifierItem
+
 platforms:
   amd64:
   arm64:
@@ -31,9 +41,11 @@ apps:
     plugs:
       - desktop
       - desktop-legacy
+      - app-id
       - gsettings
       - home
       - password-manager-service
+      - status-notifier
       - unity7
       - wayland
       - x11
@@ -43,11 +55,6 @@ parts:
     plugin: nil
     source: .
     source-type: local
-    stage:
-      - opt/koplyx
-      - bin/koplyx-snap-launcher
-      - usr/share/applications/dev.limax.koplyx.desktop
-      - usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg
     override-build: |
       mkdir -p "$CRAFT_PART_INSTALL/opt/koplyx"
       cp -a \
@@ -69,7 +76,7 @@ parts:
       # L'extension GNOME initialise les chargeurs GdkPixbuf. Ne pas utiliser
       # SNAPCRAFT_ARCH_TRIPLET ici : cette variable n'existe qu'au build.
 
-      exec "${SNAP}/usr/bin/python3" "${SNAP}/opt/koplyx/koplyx/main.py" "$@"
+      exec python3 "${SNAP}/opt/koplyx/koplyx/main.py" "$@"
       EOF
       install -Dm644 "$CRAFT_PART_INSTALL/opt/koplyx/packaging/dev.limax.koplyx.desktop" "$CRAFT_PART_INSTALL/usr/share/applications/dev.limax.koplyx.desktop"
       install -Dm644 "$CRAFT_PART_INSTALL/opt/koplyx/assets/icons/dev.limax.koplyx.svg" "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg"

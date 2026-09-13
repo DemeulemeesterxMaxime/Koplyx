@@ -39,9 +39,10 @@
 - [x] Merger vers `main` après validation de la CI.
 - [x] Créer le tag `v0.3.0` et vérifier la publication des artefacts GitHub.
 
-## Correctif critique Snap 0.3.1
+## Correctif critique Snap 0.3.2
 
 - [x] Identifier l'échec de démarrage depuis le centre d'applications : `SNAPCRAFT_ARCH_TRIPLET` indisponible à l'exécution.
 - [x] Retirer la dépendance de runtime à cette variable de build.
+- [x] Identifier les dépendances Python exclues par le filtre de staging et les permissions D-Bus manquantes.
 - [ ] Valider les tests, l'artefact Snap et le lancement sur une installation Snap propre.
-- [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.1` sur le canal stable.
+- [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.2` sur le canal stable.

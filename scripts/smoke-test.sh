@@ -22,8 +22,8 @@ if printf '%s' "$SNAP_LAUNCHER_OUTPUT" | grep -q 'SNAPCRAFT_ARCH_TRIPLET: parame
   printf '%s\n' "snap launcher depends on a build-only environment variable" >&2
   exit 1
 fi
-if [ "$SNAP_LAUNCHER_CODE" -ne 127 ]; then
-  printf '%s\n' "unexpected snap launcher verification exit: $SNAP_LAUNCHER_CODE" >&2
+if [ "$SNAP_LAUNCHER_CODE" -eq 0 ]; then
+  printf '%s\n' "snap launcher unexpectedly succeeded with an invalid SNAP path" >&2
   exit 1
 fi
 printf '%s\n' "snap launcher runtime environment ok"
