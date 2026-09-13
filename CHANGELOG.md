@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.3.4] - 2026-09-13
+
+### Corrigé
+
+- La publication du correctif de démarrage Snap ne dépend plus d'interfaces D-Bus soumises à une revue manuelle du Store.
+
 ## [0.3.3] - 2026-09-13
 
 ### Corrigé
