@@ -58,6 +58,8 @@ Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Param
 
 Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --hidden` au demarrage de session. Fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser `Quitter Koplyx` dans le menu de la barre systeme.
 
+Le mode cache n'est actif que lorsqu'un hote `StatusNotifierItem` est reellement disponible dans la session. Sinon, Koplyx conserve sa fenetre visible et explique le motif : aucune application ne peut devenir inaccessible parce que la barre systeme est absente. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
+
 L'autostart peut etre desactive dans les parametres avec `Lancer Koplyx au demarrage`. Dans certains environnements sandbox, l'ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d'erreur.
 
 ## Installation utilisateur
@@ -82,6 +84,7 @@ sha256sum -c SHA256SUMS
 
 La checklist de publication est dans `docs/PUBLIC_RELEASE.md`.
 Les versions HTML statiques de la documentation sont dans `docs/html/`.
+Les changements de version sont résumés dans `CHANGELOG.md`.
 
 ## Contribuer
 

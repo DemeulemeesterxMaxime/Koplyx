@@ -19,6 +19,12 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.3.0" date="2026-09-13">
+      <description>
+        <p>Refresh the Koplyx interface with a green, white and black visual identity, centered item icons, clearer cards and structured settings.</p>
+        <p>Make background mode safer by keeping the window accessible when no system tray host is available, and add direct tray actions.</p>
+      </description>
+    </release>
     <release version="0.2.4" date="2026-05-20">
       <description>
         <p>Add decrypted in-app previews for text, image thumbnails, and copied file names without storing sensitive previews in SQLite.</p>
@@ -48,6 +54,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.2.4/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.3.0/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

@@ -1,6 +1,6 @@
 # Publication publique
 
-Koplyx est pret pour une beta publique lorsque la validation locale passe sur la matrice cible.
+Koplyx est pret pour une release publique stable lorsque la validation locale passe sur la matrice cible.
 
 ## Avant publication
 
@@ -33,6 +33,8 @@ sha256sum -c SHA256SUMS
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
 - Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
 - Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme.
+- Verifier que le menu de l'indicateur propose `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`, puis tester ces trois actions.
+- Lancer `koplyx --hidden` sans hote d'indicateurs et verifier que la fenetre reste accessible avec un message explicite.
 - Utiliser `Quitter Koplyx` depuis la barre systeme et verifier que le processus s'arrete.
 - Redemarrer la session et verifier la persistance de l'historique.
 - Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.
@@ -77,8 +79,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.2.4_amd64.snap
-snapcraft upload --release=edge koplyx_0.2.4_amd64.snap
+ls -lh koplyx_0.3.0_amd64.snap
+snapcraft upload --release=stable koplyx_0.3.0_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -148,8 +150,8 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.2.4
-git push origin v0.2.4
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.
