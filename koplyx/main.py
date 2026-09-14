@@ -897,7 +897,10 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.search.grab_focus()
 
     def on_close_request(self, _window) -> bool:
-        self.app.sleep_to_tray()
+        if self.app.background_mode_active():
+            self.app.sleep_to_tray()
+            return True
+        self.app.quit()
         return True
 
     def query(self) -> str:

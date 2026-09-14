@@ -56,9 +56,9 @@ Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Param
 
 ## Fonctionnement en arriere-plan
 
-Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --hidden` au demarrage de session. Fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser `Quitter Koplyx` dans le menu de la barre systeme.
+Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --hidden` au demarrage de session. Lorsque l'indicateur systeme est disponible, fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser `Quitter Koplyx` dans le menu de la barre systeme.
 
-Le mode cache n'est actif que lorsqu'un hote `StatusNotifierItem` est reellement disponible dans la session. Sinon, Koplyx conserve sa fenetre visible et explique le motif : aucune application ne peut devenir inaccessible parce que la barre systeme est absente. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
+Le mode cache n'est actif que lorsqu'un hote `StatusNotifierItem` est reellement disponible dans la session. Sinon, Koplyx conserve sa fenetre visible au demarrage et explique le motif. Dans ce cas, fermer la fenetre avec la croix quitte proprement l'application afin qu'elle ne devienne jamais inaccessible. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
 
 L'autostart peut etre desactive dans les parametres avec `Lancer Koplyx au demarrage`. Dans certains environnements sandbox, l'ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d'erreur.
 
