@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.3.5] - 2026-09-14
+
+### Corrigé
+
+- La croix quitte désormais proprement Koplyx lorsqu'aucun indicateur système n'est disponible, au lieu de laisser la fenêtre ouverte.
+
 ## [0.3.4] - 2026-09-13
 
 ### Corrigé

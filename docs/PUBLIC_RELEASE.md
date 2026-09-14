@@ -32,9 +32,9 @@ sha256sum -c SHA256SUMS
 - Epingler un texte et verifier sa presence dans l'onglet dedie.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
 - Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
-- Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme.
+- Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l'indicateur est disponible.
 - Verifier que le menu de l'indicateur propose `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`, puis tester ces trois actions.
-- Lancer `koplyx --hidden` sans hote d'indicateurs et verifier que la fenetre reste accessible avec un message explicite.
+- Lancer `koplyx --hidden` sans hote d'indicateurs, verifier que la fenetre reste accessible avec un message explicite, puis que la croix quitte proprement le processus.
 - Utiliser `Quitter Koplyx` depuis la barre systeme et verifier que le processus s'arrete.
 - Redemarrer la session et verifier la persistance de l'historique.
 - Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.
@@ -79,8 +79,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.3.4_amd64.snap
-snapcraft upload --release=stable koplyx_0.3.4_amd64.snap
+ls -lh koplyx_0.3.5_amd64.snap
+snapcraft upload --release=stable koplyx_0.3.5_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -150,8 +150,8 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.3.4
-git push origin v0.3.4
+git tag v0.3.5
+git push origin v0.3.5
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

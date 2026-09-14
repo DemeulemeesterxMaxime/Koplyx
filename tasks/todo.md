@@ -46,5 +46,12 @@
 - [x] Identifier les dépendances Python exclues par le filtre de staging et les permissions D-Bus manquantes.
 - [x] Découpler l'ouverture de la fenêtre de l'autorisation D-Bus dans Snap.
 - [x] Retirer les slots D-Bus qui imposent une revue manuelle du Store à la publication.
-- [ ] Valider les tests, l'artefact Snap et le lancement sur une installation Snap propre.
-- [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.4` sur le canal stable.
+- [x] Valider les tests, l'artefact Snap et le lancement sur une installation Snap propre.
+- [x] Ouvrir la pull request, attendre la CI puis publier `v0.3.4` sur le canal stable.
+
+## Correctif de fermeture sans indicateur 0.3.5
+
+- [x] Identifier que la croix consommait toute fermeture, même sans indicateur système disponible.
+- [x] Quitter proprement l'application dans ce cas tout en conservant la réduction dans la barre système quand elle est disponible.
+- [x] Valider la fermeture réelle et les artefacts de distribution.
+- [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.5` sur le canal stable.
