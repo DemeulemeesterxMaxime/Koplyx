@@ -19,9 +19,10 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="0.3.5" date="2026-09-14">
+    <release version="0.4.0" date="2026-09-15">
       <description>
-        <p>La fermeture de la fenêtre quitte maintenant Koplyx lorsque l'indicateur système est indisponible.</p>
+        <p>Le raccourci global contacte désormais l'instance Koplyx déjà ouverte dans le Snap.</p>
+        <p>Le mode caché reste accessible avec le raccourci global lorsque l'indicateur système est indisponible.</p>
       </description>
     </release>
     <release version="0.3.4" date="2026-09-13">
@@ -79,6 +80,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.3.5/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.0/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

@@ -2,6 +2,17 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.0] - 2026-09-15
+
+### Ajouté
+
+- Canal local sécurisé entre instances pour activer la fenêtre Koplyx déjà ouverte depuis le raccourci global dans le Snap.
+
+### Modifié
+
+- Le démarrage caché reste accessible par raccourci global même si l'indicateur système est temporairement indisponible.
+- Le Snap redéclare les interfaces D-Bus nécessaires à l'indicateur de barre système, soumises à la validation du Store.
+
 ## [0.3.5] - 2026-09-14
 
 ### Corrigé

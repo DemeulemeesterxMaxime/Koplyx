@@ -125,7 +125,7 @@ sha256sum -c SHA256SUMS
 <li>Verifier <code>~/.config/autostart/koplyx.desktop</code> et la presence de <code>Exec=koplyx --hidden</code> ou d&#x27;un fallback Python local en mode source.</li>
 <li>Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l&#x27;indicateur est disponible.</li>
 <li>Verifier que le menu de l&#x27;indicateur propose <code>Afficher Koplyx</code>, <code>Parametres</code> et <code>Quitter Koplyx</code>, puis tester ces trois actions.</li>
-<li>Lancer <code>koplyx --hidden</code> sans hote d&#x27;indicateurs, verifier que la fenetre reste accessible avec un message explicite, puis que la croix quitte proprement le processus.</li>
+<li>Lancer <code>koplyx --hidden</code> sans hote d&#x27;indicateurs, verifier que Koplyx reste accessible par raccourci global, puis que la croix masque la fenetre sans arreter le processus.</li>
 <li>Utiliser <code>Quitter Koplyx</code> depuis la barre systeme et verifier que le processus s&#x27;arrete.</li>
 <li>Redemarrer la session et verifier la persistance de l&#x27;historique.</li>
 <li>Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.</li>
@@ -158,8 +158,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.3.5_amd64.snap
-snapcraft upload --release=stable koplyx_0.3.5_amd64.snap
+ls -lh koplyx_0.4.0_amd64.snap
+snapcraft upload --release=stable koplyx_0.4.0_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -210,8 +210,8 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 <p>Tag GitHub :</p>
 <pre><code>
 git push origin main
-git tag v0.3.5
-git push origin v0.3.5
+git tag v0.4.0
+git push origin v0.4.0
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
 <h2>Nettoyage historique Git</h2>
