@@ -13,6 +13,7 @@ PY
 
 /usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
 /usr/bin/python3 tests/test_core.py
+/usr/bin/python3 tests/test_control_socket.py
 
 set +e
 SNAP_LAUNCHER_OUTPUT="$(env -u SNAPCRAFT_ARCH_TRIPLET SNAP=/tmp/koplyx-smoke-missing-snap ./snap/local/koplyx-snap-launcher --version 2>&1)"

@@ -10,6 +10,8 @@ import signal
 import sqlite3
 import shlex
 import shutil
+import socket
+import stat
 import subprocess
 import sys
 import time
@@ -72,6 +74,7 @@ def xdg_path(env_name: str, default_suffix: str) -> Path:
 CONFIG_DIR = xdg_path("XDG_CONFIG_HOME", ".config") / "koplyx"
 DATA_DIR = xdg_path("XDG_DATA_HOME", ".local/share") / "koplyx"
 RUNTIME_DIR = xdg_path("XDG_RUNTIME_DIR", ".cache") / "koplyx"
+CONTROL_SOCKET_PATH = RUNTIME_DIR / "control.sock"
 ICON_NAME = "dev.limax.koplyx"
 
 
@@ -107,6 +110,83 @@ def ensure_private_dir(path: Path) -> None:
         path.chmod(0o700)
     except OSError:
         pass
+
+
+def send_control_command(command: str) -> bool:
+    if command not in {"toggle", "show", "keep-alive"}:
+        return False
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(0.35)
+            client.connect(str(CONTROL_SOCKET_PATH))
+            client.sendall(command.encode("ascii"))
+        return True
+    except OSError:
+        return False
+
+
+class LocalControlServer:
+    """Canal local pour contrôler une instance Snap sans dépendre de D-Bus."""
+
+    def __init__(self, app: "KoplyxApplication") -> None:
+        self.app = app
+        self.socket: socket.socket | None = None
+        self.source_id: int | None = None
+        self.available = False
+
+    def start(self) -> bool:
+        ensure_private_dir(RUNTIME_DIR)
+        if CONTROL_SOCKET_PATH.exists() or CONTROL_SOCKET_PATH.is_socket():
+            if send_control_command("keep-alive"):
+                return False
+            try:
+                if stat.S_ISSOCK(CONTROL_SOCKET_PATH.stat().st_mode):
+                    CONTROL_SOCKET_PATH.unlink()
+                else:
+                    return False
+            except OSError:
+                return False
+        try:
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket.bind(str(CONTROL_SOCKET_PATH))
+            CONTROL_SOCKET_PATH.chmod(0o600)
+            self.socket.listen(4)
+            self.socket.setblocking(False)
+            self.source_id = GLib.io_add_watch(self.socket, GLib.PRIORITY_DEFAULT, GLib.IO_IN, self.on_ready)
+            self.available = True
+            return True
+        except OSError:
+            self.close()
+            return False
+
+    def on_ready(self, _source, _condition) -> bool:
+        if not self.socket:
+            return GLib.SOURCE_REMOVE
+        try:
+            client, _address = self.socket.accept()
+            with client:
+                command = client.recv(32).decode("ascii", errors="ignore")
+        except OSError:
+            return GLib.SOURCE_CONTINUE
+        if command == "toggle":
+            GLib.idle_add(self.app.toggle_window)
+        elif command == "show":
+            GLib.idle_add(self.app.show_from_tray)
+        return GLib.SOURCE_CONTINUE
+
+    def close(self) -> None:
+        if self.source_id is not None:
+            GLib.source_remove(self.source_id)
+            self.source_id = None
+        if self.socket:
+            self.socket.close()
+            self.socket = None
+        try:
+            if CONTROL_SOCKET_PATH.is_socket():
+                CONTROL_SOCKET_PATH.unlink()
+        except OSError:
+            pass
+        self.available = False
 
 
 def harden_local_permissions() -> None:
@@ -897,7 +977,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.search.grab_focus()
 
     def on_close_request(self, _window) -> bool:
-        if self.app.background_mode_active():
+        if self.app.background_access_available():
             self.app.sleep_to_tray()
             return True
         self.app.quit()
@@ -1149,7 +1229,7 @@ class SettingsWindow(Gtk.Window):
 
     def install_shortcut(self, _button) -> None:
         shortcut = self.app.config.get("shortcut")
-        ok = install_gnome_shortcut(shortcut, "koplyx --toggle")
+        ok = install_gnome_shortcut(shortcut, shortcut_command())
         self.feedback.set_text("Raccourci GNOME installe." if ok else "Impossible d'installer le raccourci GNOME.")
         self.app.set_status("Raccourci GNOME installe." if ok else "Erreur raccourci GNOME.")
 
@@ -1586,6 +1666,8 @@ class KoplyxApplication(Gtk.Application):
         # doit jamais empêcher l'ouverture de la fenêtre principale.
         application_id = None if os.environ.get("SNAP") else APP_ID
         super().__init__(application_id=application_id, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+        self.control_server = LocalControlServer(self)
+        self.control_server.start()
         self.config = Config()
         self.crypto = CryptoBox()
         self.store = HistoryStore(self.crypto, self.config)
@@ -1613,8 +1695,8 @@ class KoplyxApplication(Gtk.Application):
         self.ensure_window()
         if not self.config.get("start_hidden"):
             self.window.present_focused()
-        elif self.background_mode_active():
-            self.set_status("Koplyx est actif en arrière-plan. Utilisez l'indicateur système pour l'afficher.")
+        elif self.background_access_available():
+            self.set_status(self.background_status_message())
         else:
             self.set_status("Indicateur système indisponible : Koplyx reste visible pour rester accessible.")
             self.window.present_focused()
@@ -1623,8 +1705,8 @@ class KoplyxApplication(Gtk.Application):
         args = command_line.get_arguments()[1:]
         self.ensure_window()
         if "--hidden" in args:
-            if self.background_mode_active():
-                self.set_status("Koplyx est actif en arrière-plan. Utilisez l'indicateur système pour l'afficher.")
+            if self.background_access_available():
+                self.set_status(self.background_status_message())
             else:
                 self.set_status("Indicateur système indisponible : Koplyx reste visible pour rester accessible.")
                 self.window.present_focused()
@@ -1668,12 +1750,22 @@ class KoplyxApplication(Gtk.Application):
     def background_mode_active(self) -> bool:
         return bool(self.tray and self.tray.available)
 
+    def background_access_available(self) -> bool:
+        return self.background_mode_active() or self.control_server.available
+
+    def background_status_message(self) -> str:
+        if self.background_mode_active():
+            return "Koplyx est actif en arrière-plan. Utilisez l'indicateur système pour l'afficher."
+        return "Koplyx est actif en arrière-plan. Utilisez le raccourci global pour l'afficher."
+
     def tray_label(self) -> str:
-        return "Arrière-plan actif" if self.background_mode_active() else "Fenêtre visible"
+        return "Arrière-plan actif" if self.background_access_available() else "Fenêtre visible"
 
     def tray_detail(self) -> str:
         if self.background_mode_active():
             return "Indicateur système connecté"
+        if self.control_server.available:
+            return "Raccourci global prêt"
         if not self.config.get("show_tray"):
             return "Indicateur système désactivé"
         if self.tray and self.tray.error:
@@ -1691,14 +1783,14 @@ class KoplyxApplication(Gtk.Application):
         return available if enabled else True
 
     def sleep_to_tray(self) -> bool:
-        if not self.background_mode_active():
+        if not self.background_access_available():
             self.set_status("Indicateur système indisponible : la fenêtre reste ouverte.")
             if self.window:
                 self.window.present_focused()
             return False
         if self.window:
             self.window.hide()
-        self.set_status("Koplyx reste actif dans la barre système.")
+        self.set_status(self.background_status_message())
         return True
 
     def sync_autostart(self) -> None:
@@ -1860,6 +1952,13 @@ def install_gnome_shortcut(shortcut: str, command: str) -> bool:
     ok = run_gsettings(["gsettings", "set", schema + ":" + binding, "command", command]) and ok
     ok = run_gsettings(["gsettings", "set", schema + ":" + binding, "binding", shortcut]) and ok
     return ok
+
+
+def shortcut_command() -> str:
+    if os.environ.get("SNAP"):
+        return "/snap/bin/koplyx --toggle"
+    installed = shutil.which("koplyx")
+    return f"{shlex.quote(installed)} --toggle" if installed else f"/usr/bin/python3 {shlex.quote(str(PROJECT_ROOT / 'koplyx/main.py'))} --toggle"
 
 
 def desktop_entry(command: str) -> str:
@@ -2170,7 +2269,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Koplyx clipboard history")
     parser.add_argument("--toggle", action="store_true", help="toggle the quick window")
     parser.add_argument("--hidden", action="store_true", help="start in background")
-    parser.parse_known_args()
+    args, _unknown = parser.parse_known_args()
+    if args.toggle and send_control_command("toggle"):
+        return 0
+    if not args.hidden and not args.toggle and send_control_command("show"):
+        return 0
+    if args.hidden and send_control_command("keep-alive"):
+        return 0
     app = KoplyxApplication()
     try:
         return app.run(sys.argv)

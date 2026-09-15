@@ -42,10 +42,10 @@ Les dossiers locaux `~/.config/koplyx` et `~/.local/share/koplyx` sont durcis en
 
 ## Raccourci global
 
-Le raccourci par defaut est `<Ctrl><Alt>V`. Dans les parametres, le bouton `Installer raccourci GNOME` configure un custom keybinding GNOME qui lance :
+Le raccourci par defaut est `<Ctrl><Alt>V`. Dans les parametres, le bouton `Installer raccourci GNOME` configure un custom keybinding GNOME qui lance l'instance deja ouverte, ou Koplyx si elle n'est pas encore demarree :
 
 ```bash
-koplyx --toggle
+/snap/bin/koplyx --toggle
 ```
 
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
@@ -58,7 +58,7 @@ Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Param
 
 Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --hidden` au demarrage de session. Lorsque l'indicateur systeme est disponible, fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser `Quitter Koplyx` dans le menu de la barre systeme.
 
-Le mode cache n'est actif que lorsqu'un hote `StatusNotifierItem` est reellement disponible dans la session. Sinon, Koplyx conserve sa fenetre visible au demarrage et explique le motif. Dans ce cas, fermer la fenetre avec la croix quitte proprement l'application afin qu'elle ne devienne jamais inaccessible. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
+Le mode cache utilise en priorite un hote `StatusNotifierItem` pour placer Koplyx dans la barre systeme. Si cet hote est temporairement indisponible, Koplyx reste accessible par son raccourci global : la croix le masque alors sans interrompre la surveillance du presse-papiers. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
 
 L'autostart peut etre desactive dans les parametres avec `Lancer Koplyx au demarrage`. Dans certains environnements sandbox, l'ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d'erreur.
 

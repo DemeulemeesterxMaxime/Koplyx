@@ -55,3 +55,11 @@
 - [x] Quitter proprement l'application dans ce cas tout en conservant la réduction dans la barre système quand elle est disponible.
 - [x] Valider la fermeture réelle et les artefacts de distribution.
 - [ ] Ouvrir la pull request, attendre la CI puis publier `v0.3.5` sur le canal stable.
+
+## Mode arrière-plan et raccourci global 0.4.0
+
+- [x] Identifier que le Snap sans identifiant D-Bus lançait une nouvelle instance pour `--toggle`.
+- [x] Ajouter un canal local entre instances afin que le raccourci active l'instance existante.
+- [x] Rétablir l'indicateur système dans le Snap avec les permissions D-Bus requises par le Store.
+- [x] Tester le démarrage caché, le raccourci et la réduction sur une session graphique isolée.
+- [ ] Ouvrir la pull request, attendre la CI et soumettre la publication stable à la revue Snap si nécessaire.
