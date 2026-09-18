@@ -1,7 +1,7 @@
 name: koplyx
 title: Koplyx
 base: core24
-version: "0.4.2"
+version: "0.4.3"
 summary: Local encrypted clipboard history
 description: |
   Koplyx is a Linux clipboard history app for text, images, and copied files.
@@ -94,6 +94,7 @@ parts:
       - dbus-user-session
       - gir1.2-gdkpixbuf-2.0
       - gir1.2-gtk-4.0
+      - gnome-settings-daemon-common
       - python3
       - python3-cryptography
       - python3-dbus

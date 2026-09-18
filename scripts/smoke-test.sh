@@ -21,6 +21,11 @@ if ! grep -q 'name: org\.kde\.StatusNotifierWatcher' snap/snapcraft.yaml; then
   exit 1
 fi
 
+if ! grep -q '^      - gnome-settings-daemon-common$' snap/snapcraft.yaml; then
+  printf '%s\n' "Snap GNOME shortcut schemas missing" >&2
+  exit 1
+fi
+
 set +e
 SNAP_LAUNCHER_OUTPUT="$(env -u SNAPCRAFT_ARCH_TRIPLET SNAP=/tmp/koplyx-smoke-missing-snap ./snap/local/koplyx-snap-launcher --version 2>&1)"
 SNAP_LAUNCHER_CODE=$?
