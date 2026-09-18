@@ -83,3 +83,10 @@
 - [x] Mettre à jour la version centralisée, les métadonnées, la documentation et le changelog.
 - [ ] Créer la pull request et attendre la CI complète.
 - [ ] Merger vers `main`, créer le tag `v0.4.2` et vérifier la publication Snap stable.
+
+## Correctif Snap du raccourci automatique 0.4.3
+
+- [x] Identifier l'absence des schémas GNOME dans le Snap strict publié.
+- [ ] Embarquer le paquet de schémas requis et empêcher sa régression avec le smoke test.
+- [ ] Valider le Snap publié avec la modification réelle du raccourci GNOME.
+- [ ] Ouvrir la pull request, attendre la CI, merger et publier sur `latest/stable`.

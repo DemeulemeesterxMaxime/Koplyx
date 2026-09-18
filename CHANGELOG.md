@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.3] - 2026-09-19
+
+### Corrigé
+
+- Le Snap strict embarque maintenant les schémas GNOME requis pour appliquer automatiquement le raccourci global.
+
 ## [0.4.2] - 2026-09-19
 
 ### Modifié
