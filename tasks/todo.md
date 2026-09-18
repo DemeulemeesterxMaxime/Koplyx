@@ -63,3 +63,10 @@
 - [x] Rétablir l'indicateur système dans le Snap avec les permissions D-Bus requises par le Store.
 - [x] Tester le démarrage caché, le raccourci et la réduction sur une session graphique isolée.
 - [ ] Ouvrir la pull request, attendre la CI et soumettre la publication stable à la revue Snap si nécessaire.
+
+## Correctif watcher Snap 0.4.1
+
+- [x] Diagnostiquer le refus AppArmor vers `org.kde.StatusNotifierWatcher` sur la révision 10 installée.
+- [x] Déclarer le plug D-Bus du watcher dans le manifeste Snap.
+- [ ] Tester l'enregistrement réel de l'indicateur, la réduction et le raccourci après publication.
+- [ ] Ouvrir la pull request, attendre la CI et soumettre la release au Store.
