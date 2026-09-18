@@ -16,8 +16,13 @@ PY
 /usr/bin/python3 tests/test_control_socket.py
 /usr/bin/python3 tests/test_shortcut_installation.py
 
-if ! grep -q 'name: org\.kde\.StatusNotifierWatcher' snap/snapcraft.yaml; then
-  printf '%s\n' "Snap watcher D-Bus access missing" >&2
+if ! grep -q 'MENU_PATH = "/StatusNotifierItem/menu"' koplyx/main.py; then
+  printf '%s\n' "Snap indicator menu does not use the standard D-Bus path" >&2
+  exit 1
+fi
+
+if ! grep -q 'org.kde.StatusNotifierItem-' koplyx/main.py; then
+  printf '%s\n' "Snap indicator does not use the standard D-Bus service name" >&2
   exit 1
 fi
 

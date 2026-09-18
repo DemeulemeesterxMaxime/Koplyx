@@ -19,9 +19,9 @@ from gi.repository import GLib
 
 WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher"
 WATCHER_PATH = "/StatusNotifierWatcher"
-ITEM_BUS_NAME = "dev.limax.koplyx.StatusNotifierItem"
+ITEM_BUS_NAME_PREFIX = "org.kde.StatusNotifierItem-"
 ITEM_PATH = "/StatusNotifierItem"
-MENU_PATH = "/Menu"
+MENU_PATH = "/StatusNotifierItem/menu"
 TRAY_HOST = """
 import os
 from pathlib import Path
@@ -101,14 +101,15 @@ def main() -> int:
                 return GLib.SOURCE_REMOVE
             return GLib.SOURCE_CONTINUE
         try:
-            item = bus.get_object(ITEM_BUS_NAME, ITEM_PATH)
+            assert watcher.registered_item.startswith(ITEM_BUS_NAME_PREFIX)
+            item = bus.get_object(watcher.registered_item, ITEM_PATH)
             properties = dbus.Interface(item, "org.freedesktop.DBus.Properties")
             values = properties.GetAll("org.kde.StatusNotifierItem")
             assert str(values["Id"]) == "koplyx"
             assert str(values["Title"]) == "Koplyx"
             assert str(values["Status"]) == "Active"
 
-            menu = bus.get_object(ITEM_BUS_NAME, MENU_PATH)
+            menu = bus.get_object(watcher.registered_item, MENU_PATH)
             menu_api = dbus.Interface(menu, "com.canonical.dbusmenu")
             _revision, layout = menu_api.GetLayout(0, -1, [])
             assert "Afficher Koplyx" in str(layout)

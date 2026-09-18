@@ -60,7 +60,7 @@ Koplyx installe son autostart utilisateur par defaut et se lance avec `koplyx --
 
 Le mode cache utilise en priorite un hote `StatusNotifierItem` pour placer Koplyx dans la barre systeme. Si cet hote est temporairement indisponible, Koplyx reste accessible par son raccourci global : la croix le masque alors sans interrompre la surveillance du presse-papiers. L'indicateur propose les actions `Afficher Koplyx`, `Parametres` et `Quitter Koplyx`.
 
-L'autostart peut etre desactive dans les parametres avec `Lancer Koplyx au demarrage`. Dans certains environnements sandbox, l'ecriture du fichier autostart utilisateur peut etre refusee ; Koplyx reste utilisable et affiche un statut d'erreur.
+L'autostart peut être activé ou désactivé directement avec `Lancer Koplyx au démarrage`. Dans certains environnements sandbox, l'écriture du fichier autostart utilisateur peut être refusée ; Koplyx reste utilisable et affiche un statut d'erreur.
 
 ## Installation utilisateur
 

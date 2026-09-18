@@ -19,6 +19,14 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.4" date="2026-09-19">
+      <description>
+        <ul>
+          <li>Le menu de l'indicateur Snap fonctionne dans la barre système GNOME.</li>
+          <li>Le bouton autostart redondant est retiré des paramètres.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.3" date="2026-09-19">
       <description>
         <ul>
@@ -101,6 +109,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.3/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.4/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>
