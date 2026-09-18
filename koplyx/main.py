@@ -1141,9 +1141,6 @@ class SettingsWindow(Gtk.Window):
         self.auto_paste = self.switch(content, "Coller automatiquement après un clic", "auto_paste")
         self.show_tray = self.switch(content, "Afficher dans la barre système", "show_tray", self.on_tray_changed)
         self.autostart = self.switch(content, "Lancer Koplyx au démarrage", "autostart_enabled", self.on_autostart_changed)
-        autostart = Gtk.Button(label="Réparer l'autostart")
-        autostart.connect("clicked", self.install_autostart)
-        content.append(autostart)
 
         self.feedback = Gtk.Label()
         self.feedback.set_wrap(True)
@@ -1249,12 +1246,6 @@ class SettingsWindow(Gtk.Window):
         row.append(text)
         root.append(row)
         return row
-
-    def install_autostart(self, _button) -> None:
-        ok = self.app.set_autostart_enabled(True)
-        self.autostart.set_active(ok)
-        self.feedback.set_text("Autostart active." if ok else "Impossible d'activer l'autostart.")
-        self.app.set_status("Autostart active." if ok else "Erreur autostart.")
 
     def on_autostart_changed(self, widget: Gtk.Switch, _param) -> None:
         active = widget.get_active()
@@ -1435,7 +1426,7 @@ class ShortcutCaptureDialog(Gtk.Window):
 
 
 class TrayIndicator:
-    MENU_PATH = "/Menu"
+    MENU_PATH = "/StatusNotifierItem/menu"
     MENU_SHOW_ID = 1
     MENU_SETTINGS_ID = 2
     MENU_QUIT_ID = 3
@@ -1665,12 +1656,13 @@ class TrayIndicator:
                 return
 
         try:
-            self.bus_name = dbus.service.BusName("dev.limax.koplyx.StatusNotifierItem", self.bus)
+            self.service_name = f"org.kde.StatusNotifierItem-{os.getpid()}-1"
+            self.bus_name = dbus.service.BusName(self.service_name, self.bus)
             self.menu = DBusMenu(self)
             self.item = StatusNotifierItem(self)
             watcher = self.bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
             watcher.RegisterStatusNotifierItem(
-                "dev.limax.koplyx.StatusNotifierItem",
+                self.service_name,
                 dbus_interface="org.kde.StatusNotifierWatcher",
             )
             self.available = True

@@ -1,7 +1,7 @@
 name: koplyx
 title: Koplyx
 base: core24
-version: "0.4.3"
+version: "0.4.4"
 summary: Local encrypted clipboard history
 description: |
   Koplyx is a Linux clipboard history app for text, images, and copied files.
@@ -19,22 +19,6 @@ icon: assets/icons/dev.limax.koplyx.svg
 grade: stable
 confinement: strict
 
-slots:
-  app-id:
-    interface: dbus
-    bus: session
-    name: dev.limax.koplyx
-  status-notifier:
-    interface: dbus
-    bus: session
-    name: dev.limax.koplyx.StatusNotifierItem
-
-plugs:
-  status-notifier-watcher:
-    interface: dbus
-    bus: session
-    name: org.kde.StatusNotifierWatcher
-
 platforms:
   amd64:
   arm64:
@@ -50,13 +34,9 @@ apps:
       - gsettings
       - home
       - password-manager-service
-      - status-notifier-watcher
       - unity7
       - wayland
       - x11
-    slots:
-      - app-id
-      - status-notifier
 parts:
   koplyx:
     plugin: nil

@@ -2,6 +2,16 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.4] - 2026-09-19
+
+### Corrigé
+
+- L'indicateur Snap publie maintenant son menu avec le nom et le chemin D-Bus standard attendus par GNOME, ce qui rétablit les actions Afficher Koplyx, Paramètres et Quitter Koplyx.
+
+### Modifié
+
+- Le bouton redondant `Réparer l'autostart` est retiré des paramètres.
+
 ## [0.4.3] - 2026-09-19
 
 ### Corrigé

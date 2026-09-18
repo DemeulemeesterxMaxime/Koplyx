@@ -90,3 +90,16 @@
 - [ ] Embarquer le paquet de schémas requis et empêcher sa régression avec le smoke test.
 - [ ] Valider le Snap publié avec la modification réelle du raccourci GNOME.
 - [ ] Ouvrir la pull request, attendre la CI, merger et publier sur `latest/stable`.
+
+## Correctif du menu d'indicateur Snap
+
+- [x] Identifier que l'hôte AppIndicators GNOME exige le chemin D-Bus standard `/StatusNotifierItem/menu`.
+- [x] Passer au nom et au chemin StatusNotifierItem standard, puis retirer le bouton autostart redondant.
+- [x] Ajouter les tests de régression et valider les contrôles automatisés du menu.
+- [ ] Valider le menu réel sur le Snap publié.
+
+## Release corrective 0.4.4
+
+- [x] Mettre à jour la version centralisée, les métadonnées, la documentation et le changelog.
+- [ ] Créer la pull request et attendre la CI complète.
+- [ ] Merger vers `main`, créer le tag `v0.4.4` et vérifier la publication Snap stable.
