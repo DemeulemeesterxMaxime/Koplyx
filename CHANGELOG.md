@@ -2,6 +2,12 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.1] - 2026-09-18
+
+### Corrigé
+
+- Le Snap reçoit l'accès D-Bus au watcher d'indicateurs système, nécessaire pour afficher Koplyx dans la barre système GNOME.
+
 ## [0.4.0] - 2026-09-15
 
 ### Ajouté
