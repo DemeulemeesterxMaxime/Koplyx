@@ -19,6 +19,15 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.2" date="2026-09-19">
+      <description>
+        <ul>
+          <li>Le raccourci GNOME est synchronisé automatiquement après chaque modification.</li>
+          <li>Les actions Paramètres et Quitter de l'indicateur système sont vérifiées.</li>
+          <li>La section d'accès rapide des paramètres est plus lisible.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.1" date="2026-09-18">
       <description>
         <p>Le Snap peut désormais contacter le watcher d'indicateurs système pour afficher Koplyx dans la barre système.</p>
@@ -85,6 +94,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.1/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.2/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

@@ -3,7 +3,8 @@
 ## À valider sur X11
 
 - Vérifier la nouvelle hiérarchie visuelle avec un historique texte, image et fichiers.
-- Fermer la fenêtre, utiliser `Afficher Koplyx` depuis l'indicateur, puis ouvrir les paramètres et quitter.
+- Fermer la fenêtre, faire un clic droit sur l'indicateur, puis vérifier `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`.
+- Modifier le raccourci dans Koplyx, vérifier qu'il est immédiatement visible dans les raccourcis GNOME, puis l'utiliser pour afficher et masquer l'application.
 - Restaurer une copie texte dans une autre application et confirmer le collage automatique.
 
 ## À valider sur Wayland

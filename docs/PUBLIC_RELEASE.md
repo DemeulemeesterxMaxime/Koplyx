@@ -79,8 +79,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.4.1_amd64.snap
-snapcraft upload --release=stable koplyx_0.4.1_amd64.snap
+ls -lh koplyx_0.4.2_amd64.snap
+snapcraft upload --release=stable koplyx_0.4.2_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -150,8 +150,8 @@ Tag GitHub :
 
 ```bash
 git push origin main
-git tag v0.4.1
-git push origin v0.4.1
+git tag v0.4.2
+git push origin v0.4.2
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

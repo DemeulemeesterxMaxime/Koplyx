@@ -2,6 +2,14 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.2] - 2026-09-19
+
+### Modifié
+
+- Le raccourci global GNOME est maintenant synchronisé automatiquement au démarrage et après chaque modification dans Koplyx.
+- La page Paramètres présente l'accès rapide dans une carte plus lisible, avec l'état du raccourci.
+- L'indicateur système expose les actions Afficher Koplyx, Paramètres et Quitter Koplyx avec une validation D-Bus complète.
+
 ## [0.4.1] - 2026-09-18
 
 ### Corrigé

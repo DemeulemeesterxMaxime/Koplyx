@@ -26,7 +26,7 @@ cd Koplyx
 - Purge par nombre d'entrees, age et taille totale.
 - Parametres integres.
 - Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.
-- Installation optionnelle du raccourci GNOME.
+- Installation et synchronisation automatiques du raccourci GNOME.
 - Demarrage automatique en arriere-plan par defaut.
 - Fermeture de la fenetre en mise en veille, avec acces maintenu depuis la barre systeme.
 
@@ -42,7 +42,7 @@ Les dossiers locaux `~/.config/koplyx` et `~/.local/share/koplyx` sont durcis en
 
 ## Raccourci global
 
-Le raccourci par defaut est `<Ctrl><Alt>V`. Dans les parametres, le bouton `Installer raccourci GNOME` configure un custom keybinding GNOME qui lance l'instance deja ouverte, ou Koplyx si elle n'est pas encore demarree :
+Le raccourci par defaut est `<Ctrl><Alt>V`. Koplyx configure automatiquement le raccourci GNOME au démarrage et après chaque modification. Il lance l'instance déjà ouverte, ou Koplyx si elle n'est pas encore démarrée :
 
 ```bash
 /snap/bin/koplyx --toggle
@@ -50,7 +50,7 @@ Le raccourci par defaut est `<Ctrl><Alt>V`. Dans les parametres, le bouton `Inst
 
 Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.
 
-Pour modifier la combinaison dans Koplyx : ouvrir les parametres, cliquer `Modifier`, cliquer `Demarrer` pour vider l'ancienne combinaison, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le bouton `Fn` est affiche comme aide, mais GNOME ne peut generalement pas enregistrer `Fn` comme modificateur.
+Pour modifier la combinaison dans Koplyx : ouvrir les paramètres, cliquer `Modifier`, cliquer `Démarrer` pour vider l'ancienne combinaison, choisir si besoin `Ctrl`, `Alt` ou `Super`, appuyer sur la touche principale, puis cliquer `Valider`. Le raccourci est alors appliqué immédiatement. Le bouton `Fn` est affiché comme aide, mais GNOME ne peut généralement pas enregistrer `Fn` comme modificateur.
 
 Si le raccourci ne repond pas, il peut deja etre reserve par l'OS. Ouvrir `Parametres > Clavier > Raccourcis clavier` pour changer ou liberer le raccourci systeme.
 
