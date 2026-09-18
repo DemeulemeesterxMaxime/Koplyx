@@ -112,27 +112,49 @@ def main() -> int:
             menu_api = dbus.Interface(menu, "com.canonical.dbusmenu")
             _revision, layout = menu_api.GetLayout(0, -1, [])
             assert "Afficher Koplyx" in str(layout)
+            assert "Paramètres" in str(layout)
             assert "Quitter Koplyx" in str(layout)
-
-            item_api = dbus.Interface(item, "org.kde.StatusNotifierItem")
-            item_api.Activate(0, 0)
         except Exception as error:
             failure = f"Indicateur système invalide : {error}"
             loop.quit()
             return GLib.SOURCE_REMOVE
 
-        def verify_action() -> bool:
-            nonlocal failure
-            if action_path.exists() and action_path.read_text(encoding="utf-8") == "toggle":
+        actions = [
+            ("toggle", lambda: dbus.Interface(item, "org.kde.StatusNotifierItem").Activate(0, 0)),
+            ("settings", lambda: menu_api.Event(2, "clicked", dbus.String(""), 0)),
+            ("quit", lambda: menu_api.Event(3, "clicked", dbus.String(""), 0)),
+        ]
+        action_index = 0
+
+        def dispatch_next_action() -> bool:
+            nonlocal action_index, failure
+            if action_index >= len(actions):
                 loop.quit()
                 return GLib.SOURCE_REMOVE
+            expected, dispatch = actions[action_index]
+            action_path.unlink(missing_ok=True)
+            try:
+                dispatch()
+            except Exception as error:
+                failure = f"Impossible de déclencher l'action {expected} du menu : {error}"
+                loop.quit()
+                return GLib.SOURCE_REMOVE
+            GLib.timeout_add(50, verify_action, expected)
+            return GLib.SOURCE_REMOVE
+
+        def verify_action(expected: str) -> bool:
+            nonlocal action_index, failure
+            if action_path.exists() and action_path.read_text(encoding="utf-8") == expected:
+                action_index += 1
+                GLib.idle_add(dispatch_next_action)
+                return GLib.SOURCE_REMOVE
             if time.monotonic() >= deadline:
-                failure = "L'action de l'indicateur n'a pas été transmise à Koplyx."
+                failure = f"L'action {expected} de l'indicateur n'a pas été transmise à Koplyx."
                 loop.quit()
                 return GLib.SOURCE_REMOVE
             return GLib.SOURCE_CONTINUE
 
-        GLib.timeout_add(50, verify_action)
+        GLib.idle_add(dispatch_next_action)
         return GLib.SOURCE_REMOVE
 
     GLib.timeout_add(50, verify_registration)

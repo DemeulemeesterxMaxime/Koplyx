@@ -70,3 +70,16 @@
 - [x] Déclarer le plug D-Bus du watcher dans le manifeste Snap.
 - [ ] Tester l'enregistrement réel de l'indicateur, la réduction et le raccourci après publication.
 - [ ] Ouvrir la pull request, attendre la CI et soumettre la release au Store.
+
+## Ergonomie de l'indicateur et du raccourci
+
+- [ ] Vérifier manuellement le menu clic droit de l'indicateur et ses actions Paramètres et Quitter sur le bureau cible.
+- [x] Installer ou synchroniser automatiquement le raccourci GNOME à chaque modification valide.
+- [x] Supprimer le bouton d'installation devenu inutile et rendre la page Paramètres plus lisible.
+- [x] Ajouter les tests ciblés, exécuter la validation complète et documenter le test manuel du raccourci GNOME.
+
+## Release corrective 0.4.2
+
+- [x] Mettre à jour la version centralisée, les métadonnées, la documentation et le changelog.
+- [ ] Créer la pull request et attendre la CI complète.
+- [ ] Merger vers `main`, créer le tag `v0.4.2` et vérifier la publication Snap stable.

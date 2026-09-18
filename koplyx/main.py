@@ -1118,11 +1118,17 @@ class SettingsWindow(Gtk.Window):
         scroller.set_child(content)
 
         self.section(content, "ACCÈS RAPIDE")
-        self.shortcut = self.shortcut_row(content, "Raccourci global", "shortcut")
-        install = Gtk.Button(label="Installer le raccourci GNOME")
-        install.add_css_class("primary")
-        install.connect("clicked", self.install_shortcut)
-        content.append(install)
+        shortcut_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        shortcut_card.add_css_class("settings-card")
+        shortcut_card.set_margin_bottom(6)
+        content.append(shortcut_card)
+        self.shortcut = self.shortcut_row(shortcut_card, "Raccourci global", "shortcut")
+        self.shortcut_state = Gtk.Label()
+        self.shortcut_state.set_xalign(0)
+        self.shortcut_state.set_wrap(True)
+        self.shortcut_state.add_css_class("shortcut-state")
+        shortcut_card.append(self.shortcut_state)
+        self.update_shortcut_state(app.shortcut_sync_ok)
 
         self.section(content, "HISTORIQUE")
         self.max_items = self.spin(content, "Nombre max d'entrées", "max_items", 10, 10000)
@@ -1146,7 +1152,7 @@ class SettingsWindow(Gtk.Window):
         content.append(self.feedback)
 
         shortcut_warning = Gtk.Label(
-            label="Le système peut déjà utiliser ce raccourci. Pour le libérer, ouvrez Paramètres > Clavier > Raccourcis clavier."
+            label="Le raccourci est appliqué automatiquement à GNOME. En cas de conflit, modifiez-le dans Paramètres > Clavier > Raccourcis clavier."
         )
         shortcut_warning.set_wrap(True)
         shortcut_warning.set_xalign(0)
@@ -1195,8 +1201,25 @@ class SettingsWindow(Gtk.Window):
     def on_shortcut_dialog_done(self, key: str, value_label: Gtk.Label, shortcut: str) -> None:
         self.app.config.set(key, shortcut)
         value_label.set_text(accelerator_label(shortcut))
-        self.feedback.set_text(f"Raccourci pret: {accelerator_label(shortcut)}.")
-        self.app.set_status("Raccourci modifie. Cliquez Installer raccourci GNOME pour l'appliquer.")
+        ok = self.app.sync_global_shortcut()
+        self.update_shortcut_state(ok)
+        if ok:
+            self.feedback.set_text(f"Raccourci appliqué automatiquement : {accelerator_label(shortcut)}.")
+            self.app.set_status("Raccourci global appliqué.")
+        else:
+            self.feedback.set_text("Raccourci enregistré, mais GNOME n'a pas pu l'appliquer.")
+            self.app.set_status("Erreur de configuration du raccourci GNOME.")
+
+    def update_shortcut_state(self, synced: bool) -> None:
+        shortcut = accelerator_label(self.app.config.get("shortcut"))
+        if synced:
+            self.shortcut_state.set_text(f"Actif dans GNOME : {shortcut}")
+            self.shortcut_state.remove_css_class("shortcut-state-error")
+            self.shortcut_state.add_css_class("shortcut-state-ok")
+        else:
+            self.shortcut_state.set_text("À configurer dans les réglages clavier de GNOME.")
+            self.shortcut_state.remove_css_class("shortcut-state-ok")
+            self.shortcut_state.add_css_class("shortcut-state-error")
 
     def spin(self, root, label: str, key: str, minimum: int, maximum: int) -> Gtk.SpinButton:
         row = self.row(root, label)
@@ -1226,12 +1249,6 @@ class SettingsWindow(Gtk.Window):
         row.append(text)
         root.append(row)
         return row
-
-    def install_shortcut(self, _button) -> None:
-        shortcut = self.app.config.get("shortcut")
-        ok = install_gnome_shortcut(shortcut, shortcut_command())
-        self.feedback.set_text("Raccourci GNOME installe." if ok else "Impossible d'installer le raccourci GNOME.")
-        self.app.set_status("Raccourci GNOME installe." if ok else "Erreur raccourci GNOME.")
 
     def install_autostart(self, _button) -> None:
         ok = self.app.set_autostart_enabled(True)
@@ -1455,6 +1472,7 @@ class TrayIndicator:
             def menu_item(self, item_id: int, label: str) -> "dbus.Struct":
                 props = dbus.Dictionary(
                     {
+                        "type": dbus.String("standard"),
                         "label": dbus.String(label),
                         "enabled": dbus.Boolean(True),
                         "visible": dbus.Boolean(True),
@@ -1502,6 +1520,7 @@ class TrayIndicator:
                                     dbus.Int32(item_id),
                                     dbus.Dictionary(
                                         {
+                                            "type": dbus.String("standard"),
                                             "label": dbus.String(label),
                                             "enabled": dbus.Boolean(True),
                                             "visible": dbus.Boolean(True),
@@ -1676,12 +1695,14 @@ class KoplyxApplication(Gtk.Application):
         self.tray: TrayIndicator | None = None
         self.previous_window_id: str | None = None
         self.status_message = ""
+        self.shortcut_sync_ok = False
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
         Gtk.Window.set_default_icon_name(ICON_NAME)
         repair_user_desktop_files()
         self.sync_autostart()
+        self.shortcut_sync_ok = self.sync_global_shortcut()
         apply_css()
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.on_shutdown_signal)
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.on_shutdown_signal)
@@ -1775,6 +1796,10 @@ class KoplyxApplication(Gtk.Application):
     def sync_tray(self) -> bool:
         self.tray = TrayIndicator(self) if self.config.get("show_tray") else None
         return self.background_mode_active()
+
+    def sync_global_shortcut(self) -> bool:
+        self.shortcut_sync_ok = install_gnome_shortcut(self.config.get("shortcut"), shortcut_command())
+        return self.shortcut_sync_ok
 
     def set_tray_enabled(self, enabled: bool) -> bool:
         self.config.set("show_tray", enabled)
@@ -2230,6 +2255,27 @@ def apply_css() -> None:
       border-radius: 12px;
       min-height: 44px;
       padding: 8px 12px;
+    }
+    .settings-card {
+      background: #0d160f;
+      border: 1px solid #315a3f;
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .settings-card .settings-row {
+      margin: 0;
+      border-color: #3b6649;
+    }
+    .shortcut-state {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 4px;
+    }
+    .shortcut-state-ok {
+      color: #94efb7;
+    }
+    .shortcut-state-error {
+      color: #ffd2bd;
     }
     .status-panel {
       background: #0d150f;
