@@ -2,6 +2,13 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.5] - 2026-09-21
+
+### Corrigé
+
+- Un clic simple sur une carte de l'historique restaure désormais immédiatement la copie dans le presse-papiers.
+- Le smoke test vérifie ce parcours d'interaction GTK sous affichage virtuel.
+
 ## [0.4.4] - 2026-09-19
 
 ### Corrigé

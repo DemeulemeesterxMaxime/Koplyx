@@ -3,6 +3,7 @@
 ## À valider sur X11
 
 - Vérifier la nouvelle hiérarchie visuelle avec un historique texte, image et fichiers.
+- Cliquer une seule fois sur une carte de l'historique et vérifier que la copie est restaurée, sans déclencher les actions épingler ou supprimer.
 - Fermer la fenêtre, faire un clic droit sur l'indicateur, puis vérifier `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`.
 - Vérifier que le menu d'indicateur Snap apparaît bien depuis l'icône, sans nécessiter l'ouverture de la fenêtre.
 - Modifier le raccourci dans Koplyx, vérifier qu'il est immédiatement visible dans les raccourcis GNOME, puis l'utiliser pour afficher et masquer l'application.

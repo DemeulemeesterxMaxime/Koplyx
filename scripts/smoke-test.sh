@@ -16,6 +16,12 @@ PY
 /usr/bin/python3 tests/test_control_socket.py
 /usr/bin/python3 tests/test_shortcut_installation.py
 
+if command -v xvfb-run >/dev/null 2>&1; then
+  xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py
+else
+  printf '%s\n' "history interaction skipped: xvfb-run missing"
+fi
+
 if ! grep -q 'MENU_PATH = "/StatusNotifierItem/menu"' koplyx/main.py; then
   printf '%s\n' "Snap indicator menu does not use the standard D-Bus path" >&2
   exit 1
