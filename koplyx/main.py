@@ -947,6 +947,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
 
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.listbox.set_activate_on_single_click(True)
         self.listbox.connect("row-activated", self.on_row_activated)
         self.listbox.add_css_class("history-list")
         scroller.set_child(self.listbox)

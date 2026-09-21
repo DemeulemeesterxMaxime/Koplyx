@@ -1,5 +1,17 @@
 # État des tâches
 
+## Release corrective 0.4.5
+
+- [x] Mettre à jour la version centralisée, AppStream, Flatpak et le changelog pour le correctif de restauration au clic.
+- [x] Valider les tests, le build des artefacts et les métadonnées de packaging.
+- [ ] Créer la pull request, attendre la CI complète, merger vers `main` et vérifier l'état distant.
+
+## Correctif clic simple dans l'historique
+
+- [x] Reproduire le parcours d'activation d'une ligne et identifier pourquoi le clic simple ne restaure pas l'élément.
+- [x] Activer explicitement la restauration au clic simple tout en préservant les actions des boutons de ligne.
+- [x] Ajouter une régression automatisée et documenter la vérification manuelle.
+
 ## Audit initial du projet
 
 - [x] État du dépôt documenté le 2026-09-13.
