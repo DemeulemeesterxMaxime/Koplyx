@@ -2,9 +2,14 @@
 
 ## Épinglage, affichage et collage direct
 
+- [x] Remplacer le collage XTEST sous Wayland par une session clavier du portail, avec autorisation explicite et réutilisable.
+- [x] Restreindre le style des boutons au contenu pour préserver les contrôles natifs de fenêtre.
+- [x] Tester les erreurs, refus et collages successifs simulés ; vérifier la création/sélection clavier sur le portail GNOME réel et reconstruire les artefacts.
+- [ ] Valider l'insertion réelle au curseur après autorisation dans l'instance locale et obtenir le retour utilisateur avant push.
+
 - [x] Ajouter le filtre global persistant des éléments épinglés avec trois modes d'affichage.
 - [x] Afficher tous les types dans l'onglet des éléments épinglés et tronquer les textes sur une ligne.
-- [x] Coller directement l'élément sélectionné dans la fenêtre précédente.
+- [ ] Valider le collage direct sur le bureau réel après autorisation GNOME.
 - [x] Mettre à jour la documentation et les tests.
 
 ## README orienté distribution et contributions

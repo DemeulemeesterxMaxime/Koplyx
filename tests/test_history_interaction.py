@@ -9,6 +9,7 @@ import sys
 import tempfile
 from unittest.mock import patch
 from pathlib import Path
+from uuid import uuid4
 
 
 TEST_HOME = tempfile.mkdtemp(prefix="koplyx-history-ui-")
@@ -72,6 +73,10 @@ def test_restore_pastes_to_previous_window_without_new_history_item() -> None:
     try:
         app.store.add("text", "text/plain", b"coller ici", "aperçu")
         item = app.store.list()[0]
+        app.store.add("text", "text/plain", b"plus recent", "aperçu")
+        app.store.conn.execute("UPDATE items SET created_at = created_at - 60 WHERE id = ?", (item.id,))
+        app.store.conn.commit()
+        before = [(entry.id, entry.created_at) for entry in app.store.recent()]
         callbacks = []
 
         class FakeWatcher:
@@ -83,21 +88,35 @@ def test_restore_pastes_to_previous_window_without_new_history_item() -> None:
 
         watcher = FakeWatcher()
         app.watcher = watcher
+        app.portal_keyboard.ready = True
         app.previous_window_id = "target-window"
         app.sleep_to_tray = lambda: True
         with patch.object(koplyx_main.GLib, "timeout_add", side_effect=lambda _delay, callback: callbacks.append(callback) or 1):
             app.restore_item(item.id)
 
         assert watcher.text == "coller ici"
-        assert len(app.store.recent()) == 1
+        assert [(entry.id, entry.created_at) for entry in app.store.recent()] == before
         assert len(callbacks) == 1
 
         with patch.object(koplyx_main.GLib, "timeout_add", side_effect=lambda _delay, callback: callbacks.append(callback) or 1), patch.object(
-            koplyx_main, "activate_x11_window", return_value=False
-        ), patch.object(koplyx_main, "paste_clipboard_now", return_value=True):
+            koplyx_main, "activate_x11_window", return_value=True
+        ), patch.object(koplyx_main, "paste_clipboard_now", return_value=True), patch.object(
+            app.portal_keyboard, "paste", return_value=True
+        ):
             callbacks.pop(0)()
             assert len(callbacks) == 1
             callbacks.pop(0)()
+
+        app.portal_keyboard.ready = False
+        callbacks.clear()
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch.object(
+            app.portal_keyboard, "prepare"
+        ) as prepare, patch.object(koplyx_main.GLib, "timeout_add") as schedule:
+            app.restore_item(item.id)
+            prepare.assert_called_once()
+            schedule.assert_not_called()
+        assert watcher.text == "coller ici"
+        assert [(entry.id, entry.created_at) for entry in app.store.recent()] == before
     finally:
         app.quit()
         app.store.conn.close()
@@ -113,7 +132,12 @@ def iter_children(widget):
 
 
 def new_test_app() -> KoplyxApplication:
-    return KoplyxApplication()
+    app = KoplyxApplication()
+    app.set_flags(koplyx_main.Gio.ApplicationFlags.NON_UNIQUE)
+    app.set_application_id("dev.limax.koplyx.Test" + uuid4().hex)
+    with patch.object(app, "sync_autostart"), patch.object(app, "sync_global_shortcut"), patch.object(app, "sync_tray"):
+        assert app.register(None)
+    return app
 
 
 if __name__ == "__main__":

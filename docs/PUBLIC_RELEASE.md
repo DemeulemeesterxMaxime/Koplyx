@@ -22,6 +22,8 @@ sha256sum -c SHA256SUMS
 
 ## Verification manuelle
 
+- Sous Wayland, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande pendant la même exécution. Tester également le refus et la révocation de l'autorisation.
+- Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
 - Copier/coller un texte et verifier son apparition dans l'historique avec un extrait lisible.
 - Copier un texte long et verifier que sa carte reste sur une seule ligne avec une ellipse et une infobulle.

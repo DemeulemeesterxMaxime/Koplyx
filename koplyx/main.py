@@ -36,6 +36,7 @@ from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 from cryptography.fernet import Fernet, InvalidToken
 
 from koplyx import APP_ID, APP_NAME
+from koplyx.portal_keyboard import PortalKeyboard
 
 
 POLL_INTERVAL_MS = 900
@@ -304,10 +305,7 @@ def command_exists(command: str) -> bool:
 def paste_tool_name() -> str | None:
     session = os.environ.get("XDG_SESSION_TYPE", "").lower()
     if session == "wayland":
-        if command_exists("wtype"):
-            return "wtype"
-        if command_exists("ydotool"):
-            return "ydotool"
+        return "Portail du bureau (autorisation clavier)"
     if command_exists("xdotool"):
         return "xdotool"
     return None
@@ -355,10 +353,6 @@ def paste_clipboard_now() -> bool:
     tool = paste_tool_name()
     if tool == "xdotool":
         return subprocess.run(["xdotool", "key", "--clearmodifiers", "ctrl+v"], check=False).returncode == 0
-    if tool == "wtype":
-        return subprocess.run(["wtype", "-M", "ctrl", "v", "-m", "ctrl"], check=False).returncode == 0
-    if tool == "ydotool":
-        return subprocess.run(["ydotool", "key", "29:1", "47:1", "47:0", "29:0"], check=False).returncode == 0
     return False
 
 
@@ -1018,6 +1012,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.status = Gtk.Label()
         self.status.set_xalign(0)
         self.status.set_hexpand(True)
+        self.status.set_wrap(True)
         self.status.add_css_class("status")
         footer.append(self.status)
         self.tray_badge = Gtk.Label()
@@ -1065,6 +1060,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
 
     def pinned_filter_popover(self) -> Gtk.Popover:
         popover = Gtk.Popover()
+        popover.add_css_class("pinned-filter-popover")
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         content.set_margin_top(8)
         content.set_margin_bottom(8)
@@ -1229,6 +1225,19 @@ class SettingsWindow(Gtk.Window):
         self.feedback.add_css_class("settings-feedback")
         content.append(self.feedback)
 
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+            authorize = Gtk.Button(label="Autoriser le collage dans les autres applications")
+            authorize.connect("clicked", lambda _b: app.authorize_paste(self.feedback.set_text))
+            content.append(authorize)
+            explanation = Gtk.Label(label=(
+                "GNOME peut nommer cette autorisation « Bureau à distance ». "
+                "Koplyx demande seulement le clavier pour Ctrl+V, sans partager l'écran. "
+                "L'autorisation reste active jusqu'à la fermeture de Koplyx."
+            ))
+            explanation.set_wrap(True)
+            explanation.set_xalign(0)
+            content.append(explanation)
+
         shortcut_warning = Gtk.Label(
             label="Le raccourci est appliqué automatiquement à GNOME. En cas de conflit, modifiez-le dans Paramètres > Clavier > Raccourcis clavier."
         )
@@ -1361,6 +1370,7 @@ class ShortcutCaptureDialog(Gtk.Window):
         self.on_done = None
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        root.add_css_class("shortcut-shell")
         root.set_margin_top(20)
         root.set_margin_bottom(18)
         root.set_margin_start(20)
@@ -1767,6 +1777,7 @@ class KoplyxApplication(Gtk.Application):
         self.watcher: ClipboardWatcher | None = None
         self.tray: TrayIndicator | None = None
         self.previous_window_id: str | None = None
+        self.portal_keyboard = PortalKeyboard()
         self.status_message = ""
         self.shortcut_sync_ok = False
 
@@ -1784,6 +1795,10 @@ class KoplyxApplication(Gtk.Application):
     def on_shutdown_signal(self) -> bool:
         self.quit()
         return GLib.SOURCE_REMOVE
+
+    def do_shutdown(self) -> None:
+        self.portal_keyboard.close()
+        Gtk.Application.do_shutdown(self)
 
     def do_activate(self) -> None:
         self.ensure_window()
@@ -1908,6 +1923,7 @@ class KoplyxApplication(Gtk.Application):
     def remember_active_window(self) -> None:
         window_id = x11_active_window()
         if not window_id:
+            self.previous_window_id = None
             return
         if x11_window_pid(window_id) == os.getpid():
             return
@@ -2029,25 +2045,48 @@ class KoplyxApplication(Gtk.Application):
         else:
             restored = False
         if restored:
-            self.sleep_to_tray()
-            GLib.timeout_add(120, self.activate_then_paste)
+            if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and not self.portal_keyboard.ready:
+                self.authorize_paste()
+                return
+            if self.sleep_to_tray():
+                GLib.timeout_add(120, self.activate_then_paste)
         else:
             self.set_status("Restauration impossible.")
 
+    def authorize_paste(self, feedback=None) -> None:
+        def update(_ok, message):
+            self.set_status(message)
+            if feedback:
+                feedback(message)
+        update(False, "Autorisez le clavier dans la demande du bureau pour activer le collage direct.")
+        self.portal_keyboard.prepare(update)
+
     def activate_then_paste(self) -> bool:
-        activate_x11_window(self.previous_window_id)
-        # Masquer Koplyx rend généralement le focus à la fenêtre précédente,
-        # notamment pour les applications Wayland natives. Le collage doit
-        # donc être tenté même si xdotool ne peut pas réactiver cette fenêtre.
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "x11":
+            if not activate_x11_window(self.previous_window_id):
+                self.paste_failed("Fenêtre cible introuvable : contenu restauré, utilisez Ctrl+V.")
+                return GLib.SOURCE_REMOVE
         GLib.timeout_add(180, self.try_auto_paste)
         return GLib.SOURCE_REMOVE
 
     def try_auto_paste(self) -> bool:
-        if paste_clipboard_now():
-            self.set_status("Contenu colle dans la fenetre active.")
+        if self.window and self.window.is_active():
+            self.paste_failed("Koplyx a encore le focus. Sélectionnez le champ cible puis réessayez.")
+            return GLib.SOURCE_REMOVE
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+            sent = self.portal_keyboard.paste()
         else:
-            self.set_status("Copie restauree. Collage auto impossible: xdotool indisponible ou refuse.")
+            sent = paste_clipboard_now()
+        if sent:
+            self.set_status("Commande de collage envoyée à la fenêtre active.")
+        else:
+            self.paste_failed("Collage non autorisé ou indisponible. Contenu restauré : utilisez Ctrl+V.")
         return GLib.SOURCE_REMOVE
+
+    def paste_failed(self, message: str) -> None:
+        self.set_status(message)
+        if self.window:
+            self.window.present()
 
 
 def run_gsettings(args: list[str]) -> bool:
@@ -2094,6 +2133,13 @@ def install_gnome_shortcut(shortcut: str, command: str) -> bool:
 def shortcut_command() -> str:
     if os.environ.get("SNAP"):
         return "/snap/bin/koplyx --toggle"
+    if (PROJECT_ROOT / ".git").exists():
+        # Une session source doit rouvrir son propre profil, même si le Snap est installé.
+        environment = " ".join(
+            shlex.quote(f"{key}={os.environ[key]}")
+            for key in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_RUNTIME_DIR") if key in os.environ
+        )
+        return f"env {environment} {shlex.quote(str(PROJECT_ROOT / 'bin/koplyx'))} --toggle"
     installed = shutil.which("koplyx")
     return f"{shlex.quote(installed)} --toggle" if installed else f"/usr/bin/python3 {shlex.quote(str(PROJECT_ROOT / 'koplyx/main.py'))} --toggle"
 
@@ -2291,7 +2337,7 @@ def apply_css() -> None:
       color: #a4b9a9;
       font-size: 13px;
     }
-    button {
+    .app-shell button, .settings-shell button, .shortcut-shell button, .pinned-filter-popover button {
       border-radius: 10px;
       min-height: 36px;
       padding: 6px 12px;
@@ -2299,36 +2345,36 @@ def apply_css() -> None:
       color: #edf9f0;
       border: 1px solid #31523a;
     }
-    button:hover {
+    .app-shell button:hover, .settings-shell button:hover, .shortcut-shell button:hover, .pinned-filter-popover button:hover {
       background: #203526;
       border-color: #57a872;
     }
-    button:active {
+    .app-shell button:active, .settings-shell button:active, .shortcut-shell button:active, .pinned-filter-popover button:active {
       background: #111c14;
     }
-    .icon-button {
+    button.icon-button {
       min-width: 36px;
       min-height: 36px;
       padding: 6px;
       background: #142018;
       color: #c7f6d6;
     }
-    .danger-button:hover {
+    button.danger-button:hover {
       background: #2a211e;
       border-color: #806057;
       color: #fff0ea;
     }
-    .restore-button, .primary {
+    button.restore-button, button.primary {
       background: #1e8d50;
       border-color: #52d582;
       color: #f7fff9;
       font-weight: 700;
     }
-    .restore-button:hover, .primary:hover {
+    button.restore-button:hover, button.primary:hover {
       background: #27aa62;
       border-color: #8af0af;
     }
-    .is-pinned {
+    button.is-pinned {
       background: #1c3524;
       border-color: #4a9b66;
       color: #c6ffd9;

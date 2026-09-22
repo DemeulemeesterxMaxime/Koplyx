@@ -16,6 +16,9 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
 ### Corrigé
 
+- Le collage Wayland utilise une session clavier autorisée et réutilisée, au lieu de relancer `xdotool` et sa demande de connexion à distance à chaque clic.
+- Les boutons natifs réduire, agrandir et fermer conservent les dimensions et le style du bureau.
+- Le raccourci d'une exécution depuis les sources rouvre le même profil local, même si le Snap est installé.
 - Une entrée locale impossible à déchiffrer ne bloque plus l'ouverture de l'historique.
 
 ## [0.4.5] - 2026-09-21
