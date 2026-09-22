@@ -33,7 +33,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Pango", "1.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 from koplyx import APP_ID, APP_NAME
 
@@ -624,7 +624,10 @@ class HistoryStore:
         if not row:
             return None
         kind, mime, encrypted = row
-        return kind, mime, self.crypto.decrypt(encrypted)
+        try:
+            return kind, mime, self.crypto.decrypt(encrypted)
+        except InvalidToken:
+            return None
 
     def delete(self, item_id: int) -> None:
         self.conn.execute("DELETE FROM items WHERE id = ?", (item_id,))

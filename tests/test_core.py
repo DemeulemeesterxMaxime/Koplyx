@@ -18,6 +18,8 @@ os.environ["XDG_DATA_HOME"] = f"{TEST_HOME}/data"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from cryptography.fernet import Fernet
+
 from koplyx.main import Config, CryptoBox, HistoryStore, file_title_from_uris, private_preview, text_content, text_excerpt, text_tooltip
 
 
@@ -104,6 +106,16 @@ class HistoryStoreTests(unittest.TestCase):
         migrated = self.store.recent(pinned_only=True)
         self.assertEqual(len(migrated), 1)
         self.assertEqual(migrated[0].pinned_position, "top")
+
+    def test_invalid_payload_does_not_break_history_rendering(self) -> None:
+        self.store.add("text", "text/plain", b"ancienne cle", "aperçu")
+        item = self.store.list()[0]
+        self.store.conn.execute(
+            "UPDATE items SET encrypted_blob = ? WHERE id = ?",
+            (Fernet.generate_key(), item.id),
+        )
+        self.store.conn.commit()
+        self.assertIsNone(self.store.payload(item.id))
 
     def test_pinned_view_keeps_images_and_files(self) -> None:
         self.store.add("image", "image/png", b"image", "aperçu")

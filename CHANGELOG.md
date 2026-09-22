@@ -14,6 +14,10 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 - Les textes longs restent sur une seule ligne avec ellipse et infobulle.
 - Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
 
+### Corrigé
+
+- Une entrée locale impossible à déchiffrer ne bloque plus l'ouverture de l'historique.
+
 ## [0.4.5] - 2026-09-21
 
 ### Corrigé
