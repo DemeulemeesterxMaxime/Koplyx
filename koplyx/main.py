@@ -39,6 +39,7 @@ from koplyx import APP_ID, APP_NAME
 from koplyx.portal_keyboard import PortalKeyboard
 from koplyx.system_setup import (
     command_available,
+    helper_path,
     run_privileged,
     xorg_sessions,
 )
@@ -1676,6 +1677,8 @@ class OnboardingWindow(Gtk.Window):
         GLib.idle_add(self.focus_primary_once)
 
     def on_close_request(self, _window) -> bool:
+        if self.app.portal_keyboard.pending:
+            self.app.portal_keyboard.close()
         self.app.onboarding = None
         return False
 
@@ -1692,6 +1695,7 @@ class OnboardingWindow(Gtk.Window):
         self.action_mode = "page"
         self.clear_content()
         self.status.set_text("")
+        self.primary.set_sensitive(True)
         if page == 0:
             self.title_label.set_text("Bienvenue dans Koplyx")
             self.body.set_text(
@@ -1735,9 +1739,9 @@ class OnboardingWindow(Gtk.Window):
         if self.test_index >= len(self.test_plan):
             self.test_backend = "clipboard_only"
             self.title_label.set_text("Dernière solution")
-            self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx peut tout de même restaurer chaque élément dans le presse-papiers pour que vous utilisiez Ctrl+V.")
+            self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx restaurera chaque élément dans le presse-papiers, puis tentera encore Ctrl+V.")
             self.status.set_text("Ce choix n'active aucun accès système.")
-            self.primary.set_label("Utiliser le presse-papiers")
+            self.primary.set_label("Tester le presse-papiers")
             self.secondary.set_label("Retour")
             return
         self.test_backend = self.test_plan[self.test_index]
@@ -1748,11 +1752,12 @@ class OnboardingWindow(Gtk.Window):
             "xorg": "une session graphique classique au prochain redémarrage",
             "ydotool": "une méthode système dédiée au collage",
             "portal": "l'autorisation clavier d'Ubuntu",
+            "clipboard_only": "la restauration du presse-papiers suivie de Ctrl+V",
         }
         description = descriptions.get(self.test_backend, "une autre méthode de collage")
         self.body.set_text(
             f"Nous allons essayer {description}. Placez le curseur dans votre champ texte, puis cliquez sur « Tester cette solution ». "
-            "Si le texte n'apparaît pas, Koplyx passera à la suivante."
+            "Koplyx se masquera pendant quelques secondes pour laisser la fenêtre cible active. Si le texte n'apparaît pas, passez à la suivante."
         )
         if message:
             self.status.set_text(message)
@@ -1760,6 +1765,8 @@ class OnboardingWindow(Gtk.Window):
             self.status.set_text("Ubuntu peut demander votre mot de passe. Koplyx envoie uniquement Ctrl+V et ne lit pas le clavier.")
         elif self.test_backend == "portal":
             self.status.set_text("Ubuntu affichera une autorisation « Bureau à distance ». Aucun écran ne sera partagé.")
+        elif self.test_backend == "clipboard_only":
+            self.status.set_text("Le texte sera remis en première position du presse-papiers, puis Koplyx tentera Ctrl+V.")
         else:
             self.status.set_text("Aucun accès supplémentaire n'est demandé pour cet essai.")
         self.primary.set_label("Tester cette solution")
@@ -1780,6 +1787,9 @@ class OnboardingWindow(Gtk.Window):
         if self.action_mode == "success":
             self.finish_success(self.test_backend)
             return
+        if self.action_mode == "clipboard_fallback":
+            self.finish_success("clipboard_only")
+            return
         if self.action_mode == "failure":
             self.next_test()
             return
@@ -1795,8 +1805,16 @@ class OnboardingWindow(Gtk.Window):
                 self.app.begin_onboarding_test(self, self.test_backend)
 
     def on_secondary(self, _button) -> None:
+        if self.page == 2 and self.test_backend == "portal" and self.app.portal_keyboard.pending:
+            self.app.portal_keyboard.close()
+            self.primary.set_sensitive(True)
+            self.show_test_step("Demande annulée. Vous pouvez réessayer ou passer à la solution suivante.")
+            return
         if self.action_mode == "success":
             self.next_test()
+            return
+        if self.action_mode == "clipboard_fallback":
+            self.close()
             return
         if self.action_mode == "failure":
             self.next_test()
@@ -1821,6 +1839,12 @@ class OnboardingWindow(Gtk.Window):
             self.primary.set_label("Oui, ça fonctionne")
             self.secondary.set_label("Non, essayer la suivante")
             self.action_mode = "success"
+        elif backend == "clipboard_only":
+            self.status.set_text("Le presse-papiers a été restauré, mais aucun outil ne peut envoyer Ctrl+V automatiquement dans cette session.")
+            self.body.set_text("Vous pouvez tout de même garder ce mode : un clic restaurera l'élément en première position et vous pourrez appuyer sur Ctrl+V dans votre fenêtre.")
+            self.primary.set_label("Utiliser le presse-papiers")
+            self.secondary.set_label("Fermer")
+            self.action_mode = "clipboard_fallback"
         else:
             self.status.set_text("Cette solution n'a pas fonctionné dans votre session.")
             self.primary.set_label("Essayer la suivante")
@@ -2216,9 +2240,21 @@ class KoplyxApplication(Gtk.Application):
             plan.append("xwayland")
         if xorg_sessions():
             plan.append("xorg")
-        if command_available("ydotool") and not os.environ.get("SNAP") and not os.environ.get("FLATPAK_ID"):
+        # Le binaire ydotool seul ne suffit pas : l'action demande le helper
+        # root-owned du paquet, puis le groupe udev dédié. Ne montrons pas une
+        # étape qui échouera toujours dans une exécution depuis les sources.
+        if (
+            command_available("ydotool")
+            and helper_path() is not None
+            and not os.environ.get("SNAP")
+            and not os.environ.get("FLATPAK_ID")
+        ):
             plan.append("ydotool")
-        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+        # Le portail reste le dernier essai explicite, y compris sous X11 :
+        # certains bureaux exposent tout de même RemoteDesktop et l'utilisateur
+        # doit pouvoir voir clairement cette option au lieu de terminer sans
+        # jamais rencontrer la demande « Bureau à distance ».
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() in {"wayland", "x11"}:
             plan.append("portal")
         return plan
 
@@ -2246,13 +2282,20 @@ class KoplyxApplication(Gtk.Application):
                 onboarding.status.set_text(message)
                 return
         if backend == "portal":
-            onboarding.status.set_text("Ubuntu va demander l'autorisation clavier. Acceptez-la pour continuer le test.")
+            onboarding.status.set_text(
+                "Une demande Ubuntu « Bureau à distance » doit apparaître maintenant. "
+                "Acceptez uniquement l'accès au clavier pour continuer."
+            )
+            onboarding.primary.set_sensitive(False)
+            onboarding.secondary.set_label("Annuler la demande")
 
             def portal_ready(ok, message):
+                onboarding.primary.set_sensitive(True)
                 if not ok:
                     onboarding.test_result(False, backend)
                     onboarding.status.set_text(message)
                     return
+                onboarding.status.set_text("Autorisation reçue. Choisissez maintenant votre champ texte pendant le test.")
                 self.prepare_onboarding_injection(onboarding, backend)
 
             self.portal_keyboard.prepare(portal_ready)
@@ -2274,7 +2317,9 @@ class KoplyxApplication(Gtk.Application):
             onboarding.hide()
             if self.window:
                 self.window.hide()
-            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding, backend)
+            # L'utilisateur doit pouvoir passer de l'assistant au champ cible
+            # sans que le délai trop court ne rende le test impossible.
+            GLib.timeout_add(3500, self.inject_onboarding_test, onboarding, backend)
 
         try:
             self.watcher.clipboard.read_text_async(None, save_previous)
@@ -2283,19 +2328,28 @@ class KoplyxApplication(Gtk.Application):
             onboarding.hide()
             if self.window:
                 self.window.hide()
-            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding, backend)
+            GLib.timeout_add(3500, self.inject_onboarding_test, onboarding, backend)
 
     def inject_onboarding_test(self, onboarding: OnboardingWindow, backend: str) -> bool:
         self.remember_active_window()
         if backend == "portal":
             sent = bool(self.portal_keyboard.ready and self.portal_keyboard.paste())
             candidates = ["portal"]
+        elif backend == "clipboard_only":
+            # Restaurer le contenu est toujours le premier geste. On tente
+            # ensuite le même Ctrl+V que le mode automatique, sans créer une
+            # nouvelle entrée d'historique. Si aucun outil ne répond, le
+            # presse-papiers reste disponible pour un Ctrl+V manuel.
+            candidates = paste_tool_candidates(self.previous_window_id, "auto")
+            sent = paste_clipboard_now(self.previous_window_id, "auto")
+            used = "clipboard_only"
         else:
             candidates = paste_tool_candidates(self.previous_window_id, backend)
             sent = False
         selected = candidates[0] if candidates else backend
-        used = selected
-        if backend != "portal":
+        if backend != "clipboard_only":
+            used = selected
+        if backend not in {"portal", "clipboard_only"}:
             for candidate in candidates:
                 candidate_backend = {
                     "wtype": "wtype",
@@ -2382,6 +2436,18 @@ class KoplyxApplication(Gtk.Application):
         if self.window:
             self.window.hide()
         self.set_status(self.background_status_message())
+        return True
+
+    def hide_for_paste(self) -> bool:
+        """Masque Koplyx le temps du collage, même sans indicateur système.
+
+        L'absence d'un hôte AppIndicator ne doit pas empêcher le collage :
+        elle empêchait auparavant ``sleep_to_tray`` de planifier Ctrl+V et
+        donnait l'impression que la restauration du presse-papiers ne faisait
+        rien.
+        """
+        if self.window:
+            self.window.hide()
         return True
 
     def sync_autostart(self) -> None:
@@ -2539,7 +2605,7 @@ class KoplyxApplication(Gtk.Application):
                             )
                             return
                         self.set_status(message)
-                        if self.sleep_to_tray():
+                        if self.hide_for_paste():
                             GLib.timeout_add(120, self.activate_then_paste)
 
                     # Avec un jeton persistant valide, le portail réactive la
@@ -2548,10 +2614,17 @@ class KoplyxApplication(Gtk.Application):
                 else:
                     self.set_status("Contenu restauré. Autorisez le portail dans Paramètres pour l'envoyer au curseur.")
                 return
-            if backend != "portal" and not paste_tool_candidates(self.previous_window_id, backend):
+            candidate_backend = "auto" if backend == "clipboard_only" else backend
+            if backend != "portal" and backend != "clipboard_only" and not paste_tool_candidates(
+                self.previous_window_id, candidate_backend
+            ):
                 self.set_status("Contenu restauré dans le presse-papiers. Le backend choisi ne permet pas le collage direct.")
                 return
-            if self.sleep_to_tray():
+            # Le mode presse-papiers doit lui aussi remettre le contenu en
+            # première position puis tenter Ctrl+V. On ne dépend pas de la
+            # présence d'un indicateur pour masquer la fenêtre pendant cette
+            # courte opération.
+            if self.hide_for_paste():
                 GLib.timeout_add(120, self.activate_then_paste)
         else:
             self.set_status("Restauration impossible.")
@@ -2573,7 +2646,7 @@ class KoplyxApplication(Gtk.Application):
     def activate_then_paste(self) -> bool:
         if os.environ.get("XDG_SESSION_TYPE", "").lower() == "x11":
             if not activate_x11_window(self.previous_window_id):
-                self.paste_failed("Fenêtre cible introuvable : contenu restauré, utilisez Ctrl+V.")
+                self.paste_failed("Fenêtre cible introuvable : presse-papiers restauré en première position, utilisez Ctrl+V.")
                 return GLib.SOURCE_REMOVE
         GLib.timeout_add(180, self.try_auto_paste)
         return GLib.SOURCE_REMOVE
@@ -2602,13 +2675,16 @@ class KoplyxApplication(Gtk.Application):
                 self.portal_keyboard.prepare(paste_with_portal)
                 return GLib.SOURCE_REMOVE
         else:
-            sent = paste_clipboard_now(self.previous_window_id, backend)
+            candidate_backend = "auto" if backend == "clipboard_only" else backend
+            sent = paste_clipboard_now(self.previous_window_id, candidate_backend)
         if sent:
             self.set_status("Commande de collage envoyée à la fenêtre active.")
             if self.portal_keyboard.ready:
                 self.portal_keyboard.close()
+            if not self.background_access_available() and self.window:
+                self.window.present_focused()
         else:
-            self.paste_failed("Collage non autorisé ou indisponible. Contenu restauré : utilisez Ctrl+V.")
+            self.paste_failed("Collage non autorisé ou indisponible. Presse-papiers restauré en première position : utilisez Ctrl+V.")
         return GLib.SOURCE_REMOVE
 
     def paste_failed(self, message: str) -> None:

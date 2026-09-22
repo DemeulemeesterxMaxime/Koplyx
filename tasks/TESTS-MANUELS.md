@@ -17,10 +17,10 @@
 
 - Sur un profil réellement neuf, vérifier que l'assistant s'ouvre au premier lancement, synchronise le raccourci GNOME et affiche le diagnostic de session.
 - Dans l'assistant, préparer un champ texte cible, lancer le test actif et confirmer le texte identifiable. Vérifier qu'il n'est pas ajouté à l'historique et que l'ancien presse-papiers revient lorsque le bureau le permet.
-- Déclarer un échec, vérifier que l'assistant propose la solution suivante sans exposer de jargon, puis parcourir les méthodes jusqu'au portail et au mode presse-papiers uniquement. Le portail ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
+- Déclarer un échec, vérifier que l'assistant propose la solution suivante sans exposer de jargon, puis parcourir les méthodes jusqu'à la demande « Bureau à distance » et au mode presse-papiers. Le portail doit annoncer sa demande avant de l'afficher et ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
 - Relancer l'assistant depuis Paramètres et vérifier qu'aucun sélecteur de backend n'est présent : la méthode est mémorisée uniquement après « Oui, ça fonctionne ».
 - Si une session Xorg est disponible, vérifier la sauvegarde GDM, le message de redémarrage, le bouton « Restaurer Wayland » et le refus de restauration après modification externe. Tester aussi `koplyx --restore-display-session`.
-- Si `ydotool` est disponible, vérifier que le bouton demande explicitement `pkexec`, crée uniquement le groupe `ydotool`, installe la règle `/dev/uinput`, n'utilise jamais le groupe `input`, puis demande une reconnexion. Sous Snap ou Flatpak, vérifier que le bouton est désactivé.
+- Si `ydotool` et son helper de paquet sont disponibles, vérifier que le bouton demande explicitement `pkexec`, crée uniquement le groupe `ydotool`, installe la règle `/dev/uinput`, n'utilise jamais le groupe `input`, puis demande une reconnexion. Depuis les sources sans helper, l'étape ne doit pas être proposée. Sous Snap ou Flatpak, vérifier que le bouton est désactivé.
 
 - Vérifier que le raccourci rouvre bien l'instance locale en cours de test, et non le Snap installé.
 - Depuis Paramètres, autoriser le clavier dans la demande du bureau, puis revenir au champ cible et sélectionner une entrée : vérifier le texte effectivement inséré au curseur.
@@ -30,6 +30,7 @@
 - Vérifier que les boutons réduire, agrandir et fermer ont leur apparence native dans l'historique et les paramètres.
 - Vérifier que Koplyx reste accessible lorsque la barre système ou le raccourci global ne sont pas exposés par le compositeur.
 - Tester l'historique, la restauration, l'indicateur éventuel et les limites de collage automatique propres au bureau.
+- En mode presse-papiers, cliquer une entrée et vérifier que son contenu devient le presse-papiers courant, qu'aucune nouvelle entrée d'historique n'est créée et que Koplyx tente Ctrl+V avant d'afficher une consigne manuelle si l'injection est impossible.
 
 ## À valider après installation
 

@@ -11,6 +11,13 @@
 - [x] Mettre à jour le packaging, le README, le changelog et les tests manuels.
 - [ ] Exécuter les tests, les artefacts et le lancement manuel avant tout push.
 
+## Correction du parcours de test du collage direct
+
+- [ ] Rendre le repli presse-papiers réellement actif : restaurer l'élément, le laisser en première position et tenter Ctrl+V, avec un message clair si aucune injection n'est possible.
+- [ ] Ne proposer ydotool que lorsque le helper système est réellement installé, et expliquer la disponibilité depuis un paquet installé.
+- [ ] Rendre la demande « Bureau à distance » visible et diagnosticable, sans session persistante ouverte après le test.
+- [ ] Rejouer les tests et relancer l'application pour validation manuelle avant tout push.
+
 ## Repli de collage silencieux Wayland
 
 - [x] Détecter et essayer les outils dans l'ordre `wtype`, `xdotool` XWayland, `ydotool`, puis le portail.

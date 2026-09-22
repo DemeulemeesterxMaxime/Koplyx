@@ -53,7 +53,10 @@ class PortalKeyboard:
             self._clear_request()
             code, results = parameters.unpack()
             if code != 0:
-                self._fail("Autorisation de collage refusée ou annulée. Vous pouvez réessayer dans les paramètres.")
+                self._fail(
+                    "La demande « Bureau à distance » n'a pas été affichée ou a été refusée. "
+                    "Réessayez depuis l'assistant et vérifiez les demandes de confidentialité du bureau."
+                )
                 return
             callback(results)
 

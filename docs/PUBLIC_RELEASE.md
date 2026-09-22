@@ -7,7 +7,7 @@ Koplyx est pret pour une release publique stable lorsque la validation locale pa
 - Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.
 - Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.
 - Publier les checksums `SHA256SUMS` avec la release.
-- Documenter explicitement les limites Wayland : Koplyx essaie `wtype`, `xdotool` pour XWayland et `ydotool` avant le portail, mais le collage automatique dépend du bureau.
+- Documenter explicitement les limites Wayland : Koplyx essaie `wtype`, `xdotool` pour XWayland et `ydotool` uniquement lorsque le helper du paquet est installé, avant le portail. Le mode presse-papiers restaure l'élément en première position et tente Ctrl+V, mais le collage automatique dépend du bureau.
 - Valider le parcours d'onboarding sur un profil neuf, puis vérifier qu'un profil existant est migré avec `onboarding_completed=true` sans interruption.
 - Vérifier le test actif dans un champ utilisateur, l'exclusion du texte de test de l'historique et la restauration du presse-papiers précédent.
 - Si une session Xorg existe, vérifier la sauvegarde GDM, le réglage au prochain redémarrage, le refus de rollback après modification externe et `koplyx --restore-display-session`.
@@ -26,7 +26,7 @@ sha256sum -c SHA256SUMS
 
 ## Verification manuelle
 
-- Sous Wayland, tester d'abord `wtype`, `xdotool` avec une cible XWayland et `ydotool` lorsqu'ils sont disponibles. Si aucun outil direct ne fonctionne, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l'indicateur après le collage. Tester également le refus et la révocation de l'autorisation.
+- Sous Wayland, tester d'abord `wtype`, `xdotool` avec une cible XWayland et `ydotool` lorsque son helper est installé. Si aucun outil direct ne fonctionne, vérifier que l'assistant annonce puis affiche la demande « Bureau à distance », autoriser uniquement le clavier, revenir au champ cible et vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l'indicateur après le collage. Tester également le refus et la révocation de l'autorisation.
 - Sur un profil neuf, suivre l'assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l'assistant depuis Paramètres.
 - Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.

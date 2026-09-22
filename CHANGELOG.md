@@ -20,6 +20,8 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 - Le backend de collage est persistant (`auto`, `wtype`, `xwayland`, `xorg`, `ydotool`, `portal` ou `clipboard_only`) et le portail n'est jamais ouvert automatiquement depuis un clic non configuré.
 - Les profils existants sont migrés sans afficher l'assistant ; seuls les profils réellement neufs suivent le parcours de premier lancement.
 - L'assistant essaie désormais les méthodes l'une après l'autre avec des libellés compréhensibles ; les Paramètres n'exposent plus de sélecteur technique de backend.
+- Le mode presse-papiers restaure maintenant le contenu en première position et tente également Ctrl+V, même lorsque l'indicateur système n'est pas disponible.
+- L'assistant ne propose plus `ydotool` si le helper système du paquet n'est pas installé et explique explicitement l'ouverture de la demande « Bureau à distance » avant le test du portail.
 
 ### Corrigé
 

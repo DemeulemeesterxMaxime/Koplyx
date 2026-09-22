@@ -23,10 +23,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from cryptography.fernet import Fernet
 
+from koplyx import main as koplyx_main
 from koplyx.main import (
     Config,
     CryptoBox,
     HistoryStore,
+    KoplyxApplication,
     file_title_from_uris,
     paste_clipboard_now,
     paste_tool_candidates,
@@ -231,6 +233,43 @@ class HistoryStoreTests(unittest.TestCase):
             self.assertEqual(paste_tool_candidates("window", "wtype"), ["wtype"])
             self.assertEqual(paste_tool_candidates("window", "xwayland"), ["xdotool"])
             self.assertEqual(paste_tool_candidates("window", "clipboard_only"), [])
+
+    def test_onboarding_does_not_offer_ydotool_without_packaged_helper(self) -> None:
+        app = KoplyxApplication()
+        try:
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+                "koplyx.main.command_available", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
+            ), patch("koplyx.main.helper_path", return_value=None), patch(
+                "koplyx.main.xorg_sessions", return_value=[]
+            ):
+                self.assertEqual(app.onboarding_test_plan(), ["wtype", "xwayland", "portal"])
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
+
+    def test_clipboard_only_onboarding_still_attempts_ctrl_v(self) -> None:
+        app = KoplyxApplication()
+        try:
+            app.previous_window_id = "target"
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+                "koplyx.main.paste_tool_candidates", return_value=["wtype"]
+            ), patch("koplyx.main.paste_clipboard_now", return_value=True) as paste:
+                class FakePortal:
+                    ready = False
+
+                    def close(self):
+                        return None
+
+                app.portal_keyboard = FakePortal()
+                onboarding = type("Onboarding", (), {"test_result": lambda *_args: None})()
+                with patch.object(app, "remember_active_window"), patch.object(koplyx_main.GLib, "timeout_add", return_value=1), patch.object(
+                    koplyx_main.GLib, "idle_add", side_effect=lambda callback, *args: callback(*args) or 1
+                ):
+                    app.inject_onboarding_test(onboarding, "clipboard_only")
+                paste.assert_called_once_with("target", "auto")
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
 
 
 if __name__ == "__main__":
