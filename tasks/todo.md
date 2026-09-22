@@ -1,5 +1,17 @@
 # État des tâches
 
+## README orienté distribution et contributions
+
+- [x] Mettre les installations, releases et contributions au premier plan.
+- [x] Conserver les ressources open source et synchroniser la documentation HTML.
+- [x] Vérifier les liens locaux et préparer la mise à jour sur la PR existante.
+
+## Présentation README et assets visuels
+
+- [x] Ajouter les badges Snap Store HTML et Markdown dans le README.
+- [x] Générer et intégrer une bannière, des illustrations et une capture réelle de l'interface de présentation cohérentes avec Koplyx.
+- [x] Vérifier les chemins d'assets, le rendu Markdown et les contrôles du dépôt.
+
 ## Release corrective 0.4.5
 
 - [x] Mettre à jour la version centralisée, AppStream, Flatpak et le changelog pour le correctif de restauration au clic.

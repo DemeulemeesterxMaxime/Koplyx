@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import html
 import re
+import shutil
 from pathlib import Path
 
 
@@ -11,10 +12,22 @@ SOURCES = [
 ]
 LOGO_SOURCE = ROOT / "assets/icons/dev.limax.koplyx.svg"
 LOGO_TARGET = ROOT / "docs/html/assets/dev.limax.koplyx.svg"
+PRESENTATION_SOURCE = ROOT / "assets/presentation"
+PRESENTATION_TARGET = ROOT / "docs/html/assets/presentation"
 
 
 def inline(text: str) -> str:
     escaped = html.escape(text)
+    escaped = re.sub(
+        r"!\[([^\]]+)\]\(([^)]+)\)",
+        r'<img alt="\1" src="\2" />',
+        escaped,
+    )
+    escaped = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)",
+        r'<a href="\2">\1</a>',
+        escaped,
+    )
     return re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
 
 
@@ -51,6 +64,16 @@ def markdown_to_html(markdown: str) -> str:
 
         if not line.strip():
             close_lists()
+            continue
+
+        if line.lstrip().startswith("<"):
+            close_lists()
+            out.append(line)
+            continue
+
+        if line.startswith("> "):
+            close_lists()
+            out.append(f"<blockquote>{inline(line[2:])}</blockquote>")
             continue
 
         heading = re.match(r"^(#{1,6})\s+(.+)$", line)
@@ -145,6 +168,10 @@ def page(title: str, body: str) -> str:
     }}
     li {{ margin: 5px 0; }}
     p, li {{ color: var(--text); }}
+    img {{ max-width: 100%; height: auto; }}
+    table {{ width: 100%; border-collapse: collapse; }}
+    td {{ vertical-align: top; padding: 8px; }}
+    blockquote {{ border-left: 3px solid var(--accent); color: var(--muted); margin: 20px 0; padding: 4px 16px; }}
     header {{
       border-bottom: 1px solid var(--border);
       margin-bottom: 28px;
@@ -198,6 +225,12 @@ def main() -> int:
     LOGO_TARGET.parent.mkdir(parents=True, exist_ok=True)
     LOGO_TARGET.write_text(LOGO_SOURCE.read_text(encoding="utf-8"), encoding="utf-8")
     print(f"wrote {LOGO_TARGET.relative_to(ROOT)}")
+    if PRESENTATION_SOURCE.exists():
+        PRESENTATION_TARGET.mkdir(parents=True, exist_ok=True)
+        for source in PRESENTATION_SOURCE.glob("*.png"):
+            target = PRESENTATION_TARGET / source.name
+            shutil.copy2(source, target)
+            print(f"copied {target.relative_to(ROOT)}")
     for source, target, title in SOURCES:
         target.parent.mkdir(parents=True, exist_ok=True)
         body = markdown_to_html(source.read_text(encoding="utf-8"))
