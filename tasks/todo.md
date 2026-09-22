@@ -3,7 +3,7 @@
 ## Présentation README et assets visuels
 
 - [x] Ajouter les badges Snap Store HTML et Markdown dans le README.
-- [x] Générer et intégrer une bannière et des illustrations de présentation cohérentes avec Koplyx.
+- [x] Générer et intégrer une bannière, des illustrations et une capture réelle de l'interface de présentation cohérentes avec Koplyx.
 - [x] Vérifier les chemins d'assets, le rendu Markdown et les contrôles du dépôt.
 
 ## Release corrective 0.4.5

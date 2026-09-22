@@ -30,17 +30,19 @@ Koplyx est pensé pour les personnes qui copient souvent du contenu et veulent l
       Historique chiffré, clé locale et aucun compte cloud requis.
     </td>
     <td width="33%" align="center">
-      <img src="assets/presentation/koplyx-restore.png" alt="Illustration de la recherche et restauration d'une copie" width="100%" />
-      <br /><strong>Retrouver en un clic</strong><br />
-      Recherche instantanée, aperçus en mémoire et restauration rapide.
+      <img src="assets/presentation/koplyx-history.png" alt="Capture réelle de l'interface historique de Koplyx" width="100%" />
+      <br /><strong>Une interface concrète</strong><br />
+      Historique, recherche, textes épinglés et restauration dans la fenêtre principale.
     </td>
     <td width="33%" align="center">
-      <img src="assets/presentation/koplyx-tray.png" alt="Illustration du fonctionnement discret dans la barre système" width="100%" />
-      <br /><strong>Toujours disponible</strong><br />
-      Démarrage en arrière-plan, raccourci global et indicateur système.
+      <img src="assets/presentation/koplyx-restore.png" alt="Illustration de la recherche et restauration d'une copie" width="100%" />
+      <br /><strong>Retrouver en un clic</strong><br />
+      Aperçus en mémoire et restauration rapide depuis une carte de l'historique.
     </td>
   </tr>
 </table>
+
+Le menu de la barre système reste volontairement minimal : `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`. L'historique se consulte dans la fenêtre principale, accessible avec le raccourci global ou l'action `Afficher Koplyx`.
 
 ## Lancer en developpement
 
