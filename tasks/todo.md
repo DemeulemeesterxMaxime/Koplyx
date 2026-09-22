@@ -6,6 +6,12 @@
 - [x] Générer et intégrer une bannière, des illustrations et une capture réelle de l'interface de présentation cohérentes avec Koplyx.
 - [x] Vérifier les chemins d'assets, le rendu Markdown et les contrôles du dépôt.
 
+## Nettoyage avant la pull request de présentation
+
+- [x] Retirer le générateur HTML devenu inutile et ses appels.
+- [x] Nettoyer les consignes et modèles qui le référencent.
+- [x] Vérifier que les pages HTML statiques et les builds restent valides.
+
 ## Release corrective 0.4.5
 
 - [x] Mettre à jour la version centralisée, AppStream, Flatpak et le changelog pour le correctif de restauration au clic.
