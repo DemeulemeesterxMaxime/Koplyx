@@ -314,10 +314,7 @@ def paste_tool_name() -> str | None:
 
 
 def x11_active_window() -> str | None:
-    # xdotool peut piloter les fenêtres XWayland depuis une session Wayland.
-    # Ne pas filtrer sur XDG_SESSION_TYPE, sinon la fenêtre cible est perdue
-    # avant même que le collage direct puisse être tenté.
-    if not command_exists("xdotool"):
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11" or not command_exists("xdotool"):
         return None
     result = subprocess.run(["xdotool", "getactivewindow"], check=False, capture_output=True, text=True)
     if result.returncode != 0:
@@ -337,7 +334,11 @@ def x11_window_pid(window_id: str) -> int | None:
 
 
 def activate_x11_window(window_id: str | None) -> bool:
-    if not window_id or not command_exists("xdotool"):
+    if (
+        os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11"
+        or not window_id
+        or not command_exists("xdotool")
+    ):
         return False
     return (
         subprocess.run(

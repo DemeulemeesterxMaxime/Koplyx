@@ -134,17 +134,22 @@ class HistoryStoreTests(unittest.TestCase):
         self.assertEqual(len(migrated), 1)
         self.assertEqual(migrated[0].pinned, 1)
 
-    def test_xdotool_active_window_is_available_on_wayland_xwayland(self) -> None:
+    def test_xdotool_active_window_is_not_used_on_wayland(self) -> None:
         result = SimpleNamespace(returncode=0, stdout="123456\n")
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.subprocess.run", return_value=result) as run:
+            self.assertIsNone(x11_active_window())
+        run.assert_not_called()
+
+    def test_xdotool_active_window_is_available_on_x11(self) -> None:
+        result = SimpleNamespace(returncode=0, stdout="123456\n")
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "x11"}), patch(
+            "koplyx.main.command_exists", return_value=True
+        ), patch("koplyx.main.subprocess.run", return_value=result) as run:
             self.assertEqual(x11_active_window(), "123456")
         run.assert_called_once_with(
-            ["xdotool", "getactivewindow"],
-            check=False,
-            capture_output=True,
-            text=True,
+            ["xdotool", "getactivewindow"], check=False, capture_output=True, text=True
         )
 
     def test_invalid_payload_does_not_break_history_rendering(self) -> None:
