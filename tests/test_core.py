@@ -261,6 +261,20 @@ class HistoryStoreTests(unittest.TestCase):
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": "x11", "DISPLAY": ":0"}):
             self.assertTrue(running_x11())
 
+    def test_xwayland_launch_keeps_onboarding_pending(self) -> None:
+        app = KoplyxApplication()
+        try:
+            app.config.set("onboarding_completed", False)
+            with patch("koplyx.main.subprocess.Popen") as popen, patch.object(app, "quit") as quit_app:
+                app.launch_xwayland_backend()
+            environment = popen.call_args.kwargs["env"]
+            self.assertEqual(environment["GDK_BACKEND"], "x11")
+            self.assertEqual(environment["KOPLYX_XWAYLAND_TEST"], "1")
+            self.assertFalse(app.config.get("onboarding_completed"))
+            quit_app.assert_called_once()
+        finally:
+            app.store.conn.close()
+
     def test_clipboard_only_onboarding_still_attempts_ctrl_v(self) -> None:
         app = KoplyxApplication()
         try:
