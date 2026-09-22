@@ -151,11 +151,12 @@ sha256sum -c SHA256SUMS
 </p>
 <ul>
 <li>Recherchez parmi les textes, images et fichiers copiés.</li>
-<li>Épinglez les textes à conserver et restaurez une entrée d&#x27;un clic.</li>
+<li>Épinglez les textes, images et fichiers à conserver. Pour chaque épingle, choisissez son affichage en haut, en bas ou uniquement dans l&#x27;onglet <code>Épinglés</code>.</li>
+<li>Cliquez sur une ligne pour restaurer puis coller immédiatement l&#x27;élément dans la fenêtre précédente, sans créer une nouvelle entrée d&#x27;historique.</li>
 <li>Ouvrez la fenêtre avec <code>Ctrl+Alt+V</code>, configurable dans les paramètres et installé automatiquement sous GNOME.</li>
 <li>Le menu de la barre système propose <code>Afficher Koplyx</code>, <code>Paramètres</code> et <code>Quitter Koplyx</code>. L&#x27;historique se consulte dans la fenêtre principale.</li>
 </ul>
-<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. Le collage automatique utilise <code>xdotool</code> sous X11. Sous Wayland, les fonctionnalités du presse-papiers et les raccourcis dépendent du bureau. L&#x27;indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
+<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. Le collage direct utilise <code>xdotool</code> sous X11. Sous Wayland, les fonctionnalités du presse-papiers, l&#x27;activation de la fenêtre précédente et les raccourcis dépendent du bureau. L&#x27;indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
 <p>Les contenus sont chiffrés avant leur stockage local dans SQLite et les aperçus sont déchiffrés en mémoire. La clé utilise Secret Service/libsecret si disponible, avec un fichier local en solution de repli. Consultez la <a href="SECURITY.md">politique de sécurité</a> pour les précautions concernant les anciens historiques.</p>
 <h2>Contributions</h2>
 <p>Koplyx est un projet open source sous <a href="LICENSE">licence MIT</a>. Les contributions sont bienvenues : corrections de bugs, documentation, accessibilité, packaging et tests sur différentes distributions Linux.</p>

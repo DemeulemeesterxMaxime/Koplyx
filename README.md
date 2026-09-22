@@ -78,11 +78,12 @@ Le [workflow de release](.github/workflows/release.yml) vérifie les pull reques
 </p>
 
 - Recherchez parmi les textes, images et fichiers copiés.
-- Épinglez les textes à conserver et restaurez une entrée d'un clic.
+- Épinglez les textes, images et fichiers à conserver. Pour chaque épingle, choisissez son affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Cliquez sur une ligne pour restaurer puis coller immédiatement l'élément dans la fenêtre précédente, sans créer une nouvelle entrée d'historique.
 - Ouvrez la fenêtre avec `Ctrl+Alt+V`, configurable dans les paramètres et installé automatiquement sous GNOME.
 - Le menu de la barre système propose `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`. L'historique se consulte dans la fenêtre principale.
 
-Koplyx peut démarrer en arrière-plan à l'ouverture de session. Le collage automatique utilise `xdotool` sous X11. Sous Wayland, les fonctionnalités du presse-papiers et les raccourcis dépendent du bureau. L'indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.
+Koplyx peut démarrer en arrière-plan à l'ouverture de session. Le collage direct utilise `xdotool` sous X11. Sous Wayland, les fonctionnalités du presse-papiers, l'activation de la fenêtre précédente et les raccourcis dépendent du bureau. L'indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.
 
 Les contenus sont chiffrés avant leur stockage local dans SQLite et les aperçus sont déchiffrés en mémoire. La clé utilise Secret Service/libsecret si disponible, avec un fichier local en solution de repli. Consultez la [politique de sécurité](SECURITY.md) pour les précautions concernant les anciens historiques.
 

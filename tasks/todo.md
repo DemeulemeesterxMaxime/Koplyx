@@ -1,5 +1,12 @@
 # État des tâches
 
+## Épinglage, affichage et collage direct
+
+- [x] Ajouter les trois modes d'affichage persistants des éléments épinglés.
+- [x] Afficher tous les types dans l'onglet des éléments épinglés et tronquer les textes sur une ligne.
+- [x] Coller directement l'élément sélectionné dans la fenêtre précédente.
+- [x] Mettre à jour la documentation et les tests.
+
 ## README orienté distribution et contributions
 
 - [x] Mettre les installations, releases et contributions au premier plan.

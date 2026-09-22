@@ -119,12 +119,14 @@ sha256sum -c SHA256SUMS
 <ul>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
 <li>Copier/coller un texte et verifier son apparition dans l&#x27;historique avec un extrait lisible.</li>
+<li>Copier un texte long et verifier que sa carte reste sur une seule ligne avec une ellipse et une infobulle.</li>
 <li>Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.</li>
 <li>Copier une image et verifier l&#x27;apparition d&#x27;une vignette stable dans l&#x27;historique.</li>
 <li>Copier un fichier et verifier que son nom complet avec extension apparait dans l&#x27;historique.</li>
 <li>Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans <code>preview</code>.</li>
-<li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
-<li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
+<li>Cliquer une entree texte depuis un editeur actif et verifier le collage direct a l&#x27;emplacement du curseur sur X11, sans nouvelle entree dans l&#x27;historique.</li>
+<li>Epingler un texte, une image et un fichier, puis verifier leur presence dans l&#x27;onglet dedie.</li>
+<li>Depuis chaque epingle, tester <code>Afficher en haut</code>, <code>Afficher en bas</code> et <code>Afficher uniquement dans Epingles</code>.</li>
 <li>Ouvrir les parametres, tester l&#x27;autostart et l&#x27;installation du raccourci GNOME.</li>
 <li>Verifier <code>~/.config/autostart/koplyx.desktop</code> et la presence de <code>Exec=koplyx --hidden</code> ou d&#x27;un fallback Python local en mode source.</li>
 <li>Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l&#x27;indicateur est disponible.</li>

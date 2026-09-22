@@ -24,12 +24,14 @@ sha256sum -c SHA256SUMS
 
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
 - Copier/coller un texte et verifier son apparition dans l'historique avec un extrait lisible.
+- Copier un texte long et verifier que sa carte reste sur une seule ligne avec une ellipse et une infobulle.
 - Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.
 - Copier une image et verifier l'apparition d'une vignette stable dans l'historique.
 - Copier un fichier et verifier que son nom complet avec extension apparait dans l'historique.
 - Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans `preview`.
-- Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
-- Epingler un texte et verifier sa presence dans l'onglet dedie.
+- Cliquer une entree texte depuis un editeur actif et verifier le collage direct a l'emplacement du curseur sur X11, sans nouvelle entree dans l'historique.
+- Epingler un texte, une image et un fichier, puis verifier leur presence dans l'onglet dedie.
+- Depuis chaque epingle, tester `Afficher en haut`, `Afficher en bas` et `Afficher uniquement dans Epingles`.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
 - Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
 - Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l'indicateur est disponible.

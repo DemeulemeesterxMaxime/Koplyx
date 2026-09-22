@@ -2,6 +2,18 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [Unreleased]
+
+### Ajouté
+
+- Choix par élément épinglé entre un affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Onglet `Épinglés` étendu aux textes, images et fichiers.
+
+### Modifié
+
+- Les textes longs restent sur une seule ligne avec ellipse et infobulle.
+- Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
+
 ## [0.4.5] - 2026-09-21
 
 ### Corrigé

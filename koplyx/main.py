@@ -30,7 +30,8 @@ gi.require_version("GdkPixbuf", "2.0")
 gi.require_version("Gio", "2.0")
 gi.require_version("GLib", "2.0")
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk
+gi.require_version("Pango", "1.0")
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango
 
 from cryptography.fernet import Fernet
 
@@ -45,11 +46,13 @@ DEFAULT_CONFIG = {
     "shortcut": "<Ctrl><Alt>V",
     "capture_text": True,
     "capture_images": True,
-    "auto_paste": True,
     "show_tray": True,
     "start_hidden": True,
     "autostart_enabled": True,
 }
+
+PINNED_POSITIONS = {"top", "bottom", "pinned_only"}
+MAX_TOOLTIP_CHARS = 4000
 
 MODIFIER_KEYS = {
     Gdk.KEY_Shift_L,
@@ -236,6 +239,18 @@ def text_excerpt(data: bytes, limit: int = 180) -> str:
     return excerpt
 
 
+def text_content(data: bytes) -> str:
+    text = data.decode("utf-8", errors="replace").replace("\x00", "")
+    return " ".join(text.split()) or "Texte vide"
+
+
+def text_tooltip(data: bytes) -> str:
+    content = text_content(data)
+    if len(content) <= MAX_TOOLTIP_CHARS:
+        return content
+    return content[: MAX_TOOLTIP_CHARS - 1].rstrip() + "…"
+
+
 def uri_list_from_bytes(data: bytes) -> list[str]:
     text = data.decode("utf-8", errors="replace")
     uris = []
@@ -398,6 +413,7 @@ class Config:
                 pass
         for key, value in DEFAULT_CONFIG.items():
             self.data.setdefault(key, value)
+        self.data.pop("auto_paste", None)
         self.data["start_hidden"] = True
         if not global_shortcut_valid(str(self.data.get("shortcut", ""))):
             self.data["shortcut"] = DEFAULT_CONFIG["shortcut"]
@@ -467,6 +483,7 @@ class HistoryItem:
     preview: str
     created_at: int
     pinned: int
+    pinned_position: str
 
 
 @dataclass
@@ -480,6 +497,8 @@ class DisplayItem:
     search_text: str
     created_at: int
     pinned: int
+    pinned_position: str
+    title_tooltip: str | None = None
     image_data: bytes | None = None
 
 
@@ -502,9 +521,16 @@ class HistoryStore:
                 preview TEXT NOT NULL,
                 bytes_size INTEGER NOT NULL,
                 created_at INTEGER NOT NULL,
-                pinned INTEGER NOT NULL DEFAULT 0
+                pinned INTEGER NOT NULL DEFAULT 0,
+                pinned_position TEXT NOT NULL DEFAULT 'top'
             )
             """
+        )
+        columns = {row[1] for row in self.conn.execute("PRAGMA table_info(items)")}
+        if "pinned_position" not in columns:
+            self.conn.execute("ALTER TABLE items ADD COLUMN pinned_position TEXT NOT NULL DEFAULT 'top'")
+        self.conn.execute(
+            "UPDATE items SET pinned_position = 'top' WHERE pinned_position NOT IN ('top', 'bottom', 'pinned_only')"
         )
         self.conn.commit()
         harden_local_permissions()
@@ -534,40 +560,58 @@ class HistoryStore:
         self.prune()
         return inserted
 
-    def list(self, query: str = "", pinned_text_only: bool = False) -> list[HistoryItem]:
+    def list(self, query: str = "", pinned_only: bool = False) -> list[HistoryItem]:
         conditions = []
         params = []
         if query.strip():
             conditions.append("preview LIKE ?")
             params.append(f"%{query.strip()}%")
-        if pinned_text_only:
+        if pinned_only:
             conditions.append("pinned = 1")
-            conditions.append("kind = 'text'")
+        else:
+            conditions.append("(pinned = 0 OR pinned_position != 'pinned_only')")
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         rows = self.conn.execute(
             f"""
-            SELECT id, kind, mime, preview, created_at, pinned
+            SELECT id, kind, mime, preview, created_at, pinned, pinned_position
             FROM items
             {where}
-            ORDER BY pinned DESC, created_at DESC
+            ORDER BY
+                CASE
+                    WHEN pinned = 1 AND pinned_position = 'top' THEN 0
+                    WHEN pinned = 0 THEN 1
+                    WHEN pinned = 1 AND pinned_position = 'bottom' THEN 2
+                    ELSE 3
+                END,
+                created_at DESC
             LIMIT 300
             """,
             params,
         ).fetchall()
         return [HistoryItem(*row) for row in rows]
 
-    def recent(self, pinned_text_only: bool = False) -> list[HistoryItem]:
+    def recent(self, pinned_only: bool = False) -> list[HistoryItem]:
         conditions = []
-        if pinned_text_only:
+        if pinned_only:
             conditions.append("pinned = 1")
-            conditions.append("kind = 'text'")
+        else:
+            conditions.append("(pinned = 0 OR pinned_position != 'pinned_only')")
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        order_by = "created_at DESC" if pinned_only else """
+            CASE
+                WHEN pinned = 1 AND pinned_position = 'top' THEN 0
+                WHEN pinned = 0 THEN 1
+                WHEN pinned = 1 AND pinned_position = 'bottom' THEN 2
+                ELSE 3
+            END,
+            created_at DESC
+        """
         rows = self.conn.execute(
             f"""
-            SELECT id, kind, mime, preview, created_at, pinned
+            SELECT id, kind, mime, preview, created_at, pinned, pinned_position
             FROM items
             {where}
-            ORDER BY pinned DESC, created_at DESC
+            ORDER BY {order_by}
             LIMIT 300
             """
         ).fetchall()
@@ -593,9 +637,25 @@ class HistoryStore:
         harden_local_permissions()
 
     def toggle_pin(self, item_id: int) -> None:
+        row = self.conn.execute("SELECT pinned FROM items WHERE id = ?", (item_id,)).fetchone()
+        if not row:
+            return
+        if row[0]:
+            self.conn.execute("UPDATE items SET pinned = 0 WHERE id = ?", (item_id,))
+        else:
+            self.conn.execute(
+                "UPDATE items SET pinned = 1, pinned_position = 'top' WHERE id = ?",
+                (item_id,),
+            )
+        self.conn.commit()
+        harden_local_permissions()
+
+    def set_pinned_position(self, item_id: int, position: str) -> None:
+        if position not in PINNED_POSITIONS:
+            raise ValueError(f"Position d'épingle invalide: {position}")
         self.conn.execute(
-            "UPDATE items SET pinned = CASE pinned WHEN 1 THEN 0 ELSE 1 END WHERE id = ?",
-            (item_id,),
+            "UPDATE items SET pinned_position = ? WHERE id = ? AND pinned = 1",
+            (position, item_id),
         )
         self.conn.commit()
         harden_local_permissions()
@@ -770,8 +830,10 @@ class HistoryRow(Gtk.ListBoxRow):
         text_box.set_hexpand(True)
         title = Gtk.Label(label=item.title)
         title.set_xalign(0)
-        title.set_ellipsize(3)
-        title.set_lines(2)
+        title.set_hexpand(True)
+        title.set_ellipsize(Pango.EllipsizeMode.END)
+        title.set_lines(1)
+        title.set_tooltip_text(item.title_tooltip or item.title)
         title.add_css_class("history-title")
         meta = Gtk.Label(label=f"{item.detail} · {human_time(item.created_at)}" + (" · epingle" if item.pinned else ""))
         meta.set_xalign(0)
@@ -789,6 +851,14 @@ class HistoryRow(Gtk.ListBoxRow):
         if item.pinned:
             pin.add_css_class("is-pinned")
         pin.connect("clicked", self.on_pin)
+        if item.pinned:
+            position = Gtk.MenuButton(icon_name="view-more-symbolic")
+            position.set_tooltip_text("Choisir l'affichage dans l'historique")
+            position.add_css_class("icon-button")
+            position.set_popover(self.pinned_position_popover())
+            position.set_halign(Gtk.Align.CENTER)
+            position.set_valign(Gtk.Align.CENTER)
+            actions.append(position)
         paste = Gtk.Button(icon_name="edit-paste-symbolic")
         paste.set_tooltip_text("Restaurer dans le presse-papiers")
         paste.add_css_class("restore-button")
@@ -803,6 +873,33 @@ class HistoryRow(Gtk.ListBoxRow):
             button.set_valign(Gtk.Align.CENTER)
             actions.append(button)
         root.append(actions)
+
+    def pinned_position_popover(self) -> Gtk.Popover:
+        popover = Gtk.Popover()
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        content.set_margin_top(8)
+        content.set_margin_bottom(8)
+        content.set_margin_start(8)
+        content.set_margin_end(8)
+        labels = {
+            "top": "Afficher en haut",
+            "bottom": "Afficher en bas",
+            "pinned_only": "Afficher uniquement dans Épinglés",
+        }
+        for position, label in labels.items():
+            suffix = " (actuel)" if self.item.pinned_position == position else ""
+            button = Gtk.Button(label=label + suffix)
+            button.add_css_class("flat")
+            button.set_halign(Gtk.Align.FILL)
+            button.connect("clicked", self.on_pinned_position, position, popover)
+            content.append(button)
+        popover.set_child(content)
+        return popover
+
+    def on_pinned_position(self, _button, position: str, popover: Gtk.Popover) -> None:
+        self.app.store.set_pinned_position(self.item.id, position)
+        popover.popdown()
+        self.app.refresh()
 
     def preview_widget(self, item: DisplayItem) -> Gtk.Widget:
         if item.kind == "image" and item.image_data:
@@ -932,9 +1029,9 @@ class KoplyxWindow(Gtk.ApplicationWindow):
         self.history_tab.connect("clicked", lambda _b: self.set_active_view("history"))
         tabs.append(self.history_tab)
 
-        self.pinned_text_tab = Gtk.Button(label="Textes epingles")
-        self.pinned_text_tab.connect("clicked", lambda _b: self.set_active_view("pinned_text"))
-        tabs.append(self.pinned_text_tab)
+        self.pinned_tab = Gtk.Button(label="Épinglés")
+        self.pinned_tab.connect("clicked", lambda _b: self.set_active_view("pinned"))
+        tabs.append(self.pinned_tab)
         self.update_tabs()
 
         scroller = Gtk.ScrolledWindow()
@@ -989,18 +1086,18 @@ class KoplyxWindow(Gtk.ApplicationWindow):
 
     def set_active_view(self, view: str) -> None:
         self.active_view = view
-        if view == "pinned_text":
-            self.search.set_placeholder_text("Rechercher dans les textes epingles")
+        if view == "pinned":
+            self.search.set_placeholder_text("Rechercher dans les éléments épinglés")
         else:
             self.search.set_placeholder_text("Rechercher dans l'historique")
         self.update_tabs()
         self.app.refresh()
 
     def update_tabs(self) -> None:
-        for button in (self.history_tab, self.pinned_text_tab):
+        for button in (self.history_tab, self.pinned_tab):
             button.remove_css_class("tab-active")
-        if self.active_view == "pinned_text":
-            self.pinned_text_tab.add_css_class("tab-active")
+        if self.active_view == "pinned":
+            self.pinned_tab.add_css_class("tab-active")
         else:
             self.history_tab.add_css_class("tab-active")
 
@@ -1018,14 +1115,14 @@ class KoplyxWindow(Gtk.ApplicationWindow):
             empty.set_valign(Gtk.Align.CENTER)
             empty.set_vexpand(True)
             empty.add_css_class("empty-state")
-            icon = Gtk.Image.new_from_icon_name("view-pin-symbolic" if self.active_view == "pinned_text" else "edit-copy-symbolic")
+            icon = Gtk.Image.new_from_icon_name("view-pin-symbolic" if self.active_view == "pinned" else "edit-copy-symbolic")
             icon.set_pixel_size(34)
             icon.add_css_class("empty-icon")
             empty.append(icon)
-            title = Gtk.Label(label="Aucun texte epingle" if self.active_view == "pinned_text" else "Votre historique est pret")
+            title = Gtk.Label(label="Aucun élément épinglé" if self.active_view == "pinned" else "Votre historique est prêt")
             title.add_css_class("empty-title")
             empty.append(title)
-            detail = Gtk.Label(label="Epinglez les textes importants pour les garder a portee de main." if self.active_view == "pinned_text" else "Copiez du texte, une image ou un fichier pour le retrouver ici.")
+            detail = Gtk.Label(label="Épinglez les éléments importants pour les garder à portée de main." if self.active_view == "pinned" else "Copiez du texte, une image ou un fichier pour le retrouver ici.")
             detail.set_wrap(True)
             detail.set_justify(Gtk.Justification.CENTER)
             detail.set_max_width_chars(38)
@@ -1037,7 +1134,7 @@ class KoplyxWindow(Gtk.ApplicationWindow):
                 self.listbox.append(HistoryRow(self.app, item))
         count, total = self.app.store.stats()
         mb = total / 1024 / 1024
-        view_label = "textes epingles" if self.active_view == "pinned_text" else "historique"
+        view_label = "éléments épinglés" if self.active_view == "pinned" else "historique"
         message = self.app.status_message
         if message:
             self.status.set_text(message)
@@ -1139,7 +1236,6 @@ class SettingsWindow(Gtk.Window):
         self.capture_images = self.switch(content, "Capturer les images", "capture_images")
 
         self.section(content, "ARRIÈRE-PLAN")
-        self.auto_paste = self.switch(content, "Coller automatiquement après un clic", "auto_paste")
         self.show_tray = self.switch(content, "Afficher dans la barre système", "show_tray", self.on_tray_changed)
         self.autostart = self.switch(content, "Lancer Koplyx au démarrage", "autostart_enabled", self.on_autostart_changed)
 
@@ -1160,7 +1256,7 @@ class SettingsWindow(Gtk.Window):
         tools = paste_tool_name()
         paste_note = tools if tools else "non disponible, installer xdotool sur X11 ou wtype sur Wayland"
         note = Gtk.Label(
-            label=f"Outil de collage automatique : {paste_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
+            label=f"Outil de collage direct : {paste_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
         )
         note.set_wrap(True)
         note.set_xalign(0)
@@ -1846,9 +1942,9 @@ class KoplyxApplication(Gtk.Application):
         if not self.window:
             return []
         query = self.window.query().strip().lower()
-        pinned_text_only = self.window.active_view == "pinned_text"
+        pinned_only = self.window.active_view == "pinned"
         display_items = []
-        for item in self.store.recent(pinned_text_only=pinned_text_only):
+        for item in self.store.recent(pinned_only=pinned_only):
             display_item = self.display_item(item)
             if query and query not in display_item.search_text.lower():
                 continue
@@ -1868,13 +1964,26 @@ class KoplyxApplication(Gtk.Application):
                 item.preview,
                 item.created_at,
                 item.pinned,
+                item.pinned_position,
             )
         kind, mime, data = payload
         if kind == "text":
-            title = text_excerpt(data)
+            title = text_content(data)
             detail = private_preview(kind, mime, data)
             search_text = f"{title} {detail}"
-            return DisplayItem(item.id, kind, mime, item.preview, title, detail, search_text, item.created_at, item.pinned)
+            return DisplayItem(
+                item.id,
+                kind,
+                mime,
+                item.preview,
+                title,
+                detail,
+                search_text,
+                item.created_at,
+                item.pinned,
+                item.pinned_position,
+                title_tooltip=text_tooltip(data),
+            )
         if kind == "image":
             detail = private_preview(kind, mime, data)
             return DisplayItem(
@@ -1887,6 +1996,7 @@ class KoplyxApplication(Gtk.Application):
                 detail,
                 item.created_at,
                 item.pinned,
+                item.pinned_position,
                 image_data=data,
             )
         if kind in ("file", "files"):
@@ -1894,8 +2004,30 @@ class KoplyxApplication(Gtk.Application):
             title = file_title_from_uris(uris)
             detail = private_preview(kind, mime, data)
             search_text = " ".join([title, detail, *[uri_display_name(uri) for uri in uris]])
-            return DisplayItem(item.id, kind, mime, item.preview, title, detail, search_text, item.created_at, item.pinned)
-        return DisplayItem(item.id, kind, mime, item.preview, item.preview, kind.upper(), item.preview, item.created_at, item.pinned)
+            return DisplayItem(
+                item.id,
+                kind,
+                mime,
+                item.preview,
+                title,
+                detail,
+                search_text,
+                item.created_at,
+                item.pinned,
+                item.pinned_position,
+            )
+        return DisplayItem(
+            item.id,
+            kind,
+            mime,
+            item.preview,
+            item.preview,
+            kind.upper(),
+            item.preview,
+            item.created_at,
+            item.pinned,
+            item.pinned_position,
+        )
 
     def restore_item(self, item_id: int) -> None:
         payload = self.store.payload(item_id)
@@ -1909,12 +2041,15 @@ class KoplyxApplication(Gtk.Application):
             self.watcher.set_image_png(data)
         elif kind in ("file", "files"):
             restored = self.watcher.set_files(data)
-            self.set_status("Fichier restaure dans le presse-papiers." if restored else "Restauration fichier impossible.")
+            if not restored:
+                self.set_status("Restauration fichier impossible.")
         else:
             restored = False
-        self.sleep_to_tray()
-        if restored and self.config.get("auto_paste") and kind in ("text", "image"):
+        if restored:
+            self.sleep_to_tray()
             GLib.timeout_add(120, self.activate_then_paste)
+        else:
+            self.set_status("Restauration impossible.")
 
     def activate_then_paste(self) -> bool:
         if activate_x11_window(self.previous_window_id):

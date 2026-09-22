@@ -97,7 +97,7 @@ store = HistoryStore(crypto, config)
 store.add("text", "text/plain", b"koplyx smoke pinned", "koplyx smoke pinned")
 item = store.list("")[0]
 store.toggle_pin(item.id)
-pinned = store.list("", pinned_text_only=True)
+pinned = store.list("", pinned_only=True)
 assert len(pinned) == 1
 assert pinned[0].preview != "koplyx smoke pinned"
 assert store.payload(pinned[0].id)[2] == b"koplyx smoke pinned"
