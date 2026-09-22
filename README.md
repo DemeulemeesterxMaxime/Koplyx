@@ -78,7 +78,7 @@ Le [workflow de release](.github/workflows/release.yml) vérifie les pull reques
 </p>
 
 - Recherchez parmi les textes, images et fichiers copiés.
-- Épinglez les textes, images et fichiers à conserver. Pour chaque épingle, choisissez son affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Épinglez les textes, images et fichiers à conserver. Le filtre global choisit si les épingles apparaissent en haut, en bas ou uniquement dans l'onglet `Épinglés`.
 - Cliquez sur une ligne pour restaurer puis coller immédiatement l'élément dans la fenêtre précédente, sans créer une nouvelle entrée d'historique.
 - Ouvrez la fenêtre avec `Ctrl+Alt+V`, configurable dans les paramètres et installé automatiquement sous GNOME.
 - Le menu de la barre système propose `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`. L'historique se consulte dans la fenêtre principale.

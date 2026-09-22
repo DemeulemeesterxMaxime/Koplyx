@@ -4,7 +4,7 @@
 
 - Vérifier la nouvelle hiérarchie visuelle avec un historique texte, image et fichiers.
 - Épingler un texte, une image et un fichier, puis vérifier leur présence dans l'onglet `Épinglés`.
-- Depuis chaque élément épinglé, tester les trois choix `Afficher en haut`, `Afficher en bas` et `Afficher uniquement dans Épinglés`.
+- Utiliser le bouton de filtre global et tester les trois choix `Épingles en haut`, `Épingles en bas` et `Épingles uniquement dans Épinglés`.
 - Vérifier l'ordre des éléments en haut, normaux et en bas dans l'historique principal.
 - Copier un texte long, vérifier que sa carte reste sur une ligne avec ellipse et que l'infobulle donne le contenu normalisé.
 - Cliquer une seule fois sur une carte de l'historique et vérifier que le contenu est collé dans la fenêtre précédente, sans nouvelle entrée ni déplacement dans l'historique.

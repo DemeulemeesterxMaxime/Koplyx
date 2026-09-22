@@ -9,6 +9,8 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -20,7 +22,17 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from cryptography.fernet import Fernet
 
-from koplyx.main import Config, CryptoBox, HistoryStore, file_title_from_uris, private_preview, text_content, text_excerpt, text_tooltip
+from koplyx.main import (
+    Config,
+    CryptoBox,
+    HistoryStore,
+    file_title_from_uris,
+    private_preview,
+    text_content,
+    text_excerpt,
+    text_tooltip,
+    x11_active_window,
+)
 
 
 class HistoryStoreTests(unittest.TestCase):
@@ -58,24 +70,39 @@ class HistoryStoreTests(unittest.TestCase):
         self.assertEqual(len(pinned), 1)
         self.assertEqual(pinned[0].id, item.id)
 
-    def test_pinned_position_controls_history_order(self) -> None:
+    def test_global_pinned_filter_controls_history_order(self) -> None:
         self.store.add("text", "text/plain", b"normal", "aperçu")
         self.store.add("image", "image/png", b"image", "aperçu")
         self.store.add("file", "text/uri-list", b"file:///tmp/a.txt", "aperçu")
         items = {self.store.payload(item.id)[2]: item.id for item in self.store.list()}
+        self.store.conn.execute(
+            "UPDATE items SET created_at = CASE id WHEN ? THEN 10 WHEN ? THEN 20 WHEN ? THEN 30 END",
+            (items[b"normal"], items[b"image"], items[b"file:///tmp/a.txt"]),
+        )
+        self.store.conn.commit()
 
         self.store.toggle_pin(items[b"image"])
         self.store.toggle_pin(items[b"file:///tmp/a.txt"])
-        self.store.set_pinned_position(items[b"image"], "bottom")
-        self.store.set_pinned_position(items[b"file:///tmp/a.txt"], "pinned_only")
 
-        history = self.store.recent()
-        self.assertEqual([item.id for item in history], [items[b"normal"], items[b"image"]])
+        history = self.store.recent(pinned_history_position="top")
+        self.assertEqual(
+            [item.id for item in history],
+            [items[b"file:///tmp/a.txt"], items[b"image"], items[b"normal"]],
+        )
+        history = self.store.recent(pinned_history_position="bottom")
+        self.assertEqual(
+            [item.id for item in history],
+            [items[b"normal"], items[b"file:///tmp/a.txt"], items[b"image"]],
+        )
+        history = self.store.recent(pinned_history_position="pinned_only")
+        self.assertEqual([item.id for item in history], [items[b"normal"]])
         pinned = self.store.recent(pinned_only=True)
         self.assertEqual({item.id for item in pinned}, {items[b"image"], items[b"file:///tmp/a.txt"]})
-        self.assertEqual(next(item for item in pinned if item.id == items[b"file:///tmp/a.txt"]).pinned_position, "pinned_only")
+        self.config.set("pinned_history_position", "bottom")
+        reloaded = Config()
+        self.assertEqual(reloaded.get("pinned_history_position"), "bottom")
 
-    def test_existing_database_gets_default_pinned_position(self) -> None:
+    def test_existing_database_with_legacy_pin_column_remains_readable(self) -> None:
         self.store.conn.close()
         self.store.db_path.unlink()
         connection = sqlite3.connect(self.store.db_path)
@@ -105,7 +132,20 @@ class HistoryStoreTests(unittest.TestCase):
         self.store = HistoryStore(self.store.crypto, self.config)
         migrated = self.store.recent(pinned_only=True)
         self.assertEqual(len(migrated), 1)
-        self.assertEqual(migrated[0].pinned_position, "top")
+        self.assertEqual(migrated[0].pinned, 1)
+
+    def test_xdotool_active_window_is_available_on_wayland_xwayland(self) -> None:
+        result = SimpleNamespace(returncode=0, stdout="123456\n")
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+            "koplyx.main.command_exists", return_value=True
+        ), patch("koplyx.main.subprocess.run", return_value=result) as run:
+            self.assertEqual(x11_active_window(), "123456")
+        run.assert_called_once_with(
+            ["xdotool", "getactivewindow"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
 
     def test_invalid_payload_does_not_break_history_rendering(self) -> None:
         self.store.add("text", "text/plain", b"ancienne cle", "aperçu")

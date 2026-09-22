@@ -16,10 +16,10 @@ PY
 /usr/bin/python3 tests/test_control_socket.py
 /usr/bin/python3 tests/test_shortcut_installation.py
 
-if command -v xvfb-run >/dev/null 2>&1; then
-  xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py
+if command -v dbus-run-session >/dev/null 2>&1 && command -v xvfb-run >/dev/null 2>&1; then
+  dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py
 else
-  printf '%s\n' "history interaction skipped: xvfb-run missing"
+  printf '%s\n' "history interaction skipped: dbus-run-session or xvfb-run missing"
 fi
 
 if ! grep -q 'MENU_PATH = "/StatusNotifierItem/menu"' koplyx/main.py; then

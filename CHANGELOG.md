@@ -6,7 +6,7 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
 ### Ajouté
 
-- Choix par élément épinglé entre un affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Filtre global des éléments épinglés : affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
 - Onglet `Épinglés` étendu aux textes, images et fichiers.
 
 ### Modifié

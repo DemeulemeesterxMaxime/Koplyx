@@ -31,7 +31,7 @@ sha256sum -c SHA256SUMS
 - Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans `preview`.
 - Cliquer une entree texte depuis un editeur actif et verifier le collage direct a l'emplacement du curseur sur X11, sans nouvelle entree dans l'historique.
 - Epingler un texte, une image et un fichier, puis verifier leur presence dans l'onglet dedie.
-- Depuis chaque epingle, tester `Afficher en haut`, `Afficher en bas` et `Afficher uniquement dans Epingles`.
+- Utiliser le filtre global et tester `Épingles en haut`, `Épingles en bas` et `Épingles uniquement dans Épinglés`.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
 - Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
 - Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l'indicateur est disponible.

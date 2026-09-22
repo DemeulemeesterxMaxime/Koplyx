@@ -52,7 +52,7 @@ Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-gdkpixbuf-2.0, python3-cryp
 Recommends: gnome-shell-extension-appindicator
 Description: Local encrypted clipboard history for Linux
  Koplyx stores text and image clipboard history locally with encryption,
- search, per-item pin visibility, direct restore and paste, and system tray support.
+ search, global pin visibility filter, direct restore and paste, and system tray support.
 EOF
 
 cat > "$DEB_ROOT/DEBIAN/postinst" <<'EOF'

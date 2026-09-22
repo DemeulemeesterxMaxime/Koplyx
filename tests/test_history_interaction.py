@@ -39,9 +39,14 @@ def main() -> int:
     return 0
 
 
-def test_pinned_menu_and_single_line_title() -> None:
+def test_global_pinned_filter_and_single_line_title() -> None:
     app = new_test_app()
     try:
+        app.ensure_window()
+        assert app.window is not None
+        assert type(app.window.pinned_filter).__name__ == "MenuButton"
+        assert app.window.pinned_filter.get_label() == "Épingles en haut"
+        assert app.window.pinned_filter.get_popover() is not None
         app.store.add("text", "text/plain", b"un texte suffisamment long pour etre tronque visuellement", "aperçu")
         item = app.store.list()[0]
         app.store.toggle_pin(item.id)
@@ -50,7 +55,7 @@ def test_pinned_menu_and_single_line_title() -> None:
         assert root is not None
         actions = root.get_last_child()
         assert actions is not None
-        assert any(type(child).__name__ == "MenuButton" for child in iter_children(actions))
+        assert not any(type(child).__name__ == "MenuButton" for child in iter_children(actions))
         title = root.get_first_child().get_next_sibling().get_first_child()
         assert title.get_lines() == 1
         assert title.get_ellipsize().value_nick == "end"
@@ -88,7 +93,7 @@ def test_restore_pastes_to_previous_window_without_new_history_item() -> None:
         assert len(callbacks) == 1
 
         with patch.object(koplyx_main.GLib, "timeout_add", side_effect=lambda _delay, callback: callbacks.append(callback) or 1), patch.object(
-            koplyx_main, "activate_x11_window", return_value=True
+            koplyx_main, "activate_x11_window", return_value=False
         ), patch.object(koplyx_main, "paste_clipboard_now", return_value=True):
             callbacks.pop(0)()
             assert len(callbacks) == 1
@@ -113,6 +118,6 @@ def new_test_app() -> KoplyxApplication:
 
 if __name__ == "__main__":
     result = main()
-    test_pinned_menu_and_single_line_title()
+    test_global_pinned_filter_and_single_line_title()
     test_restore_pastes_to_previous_window_without_new_history_item()
     raise SystemExit(result)
