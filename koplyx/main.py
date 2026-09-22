@@ -1735,7 +1735,10 @@ class OnboardingWindow(Gtk.Window):
         self.body = Gtk.Label()
         self.body.set_xalign(0)
         self.body.set_wrap(True)
-        self.body.set_selectable(True)
+        # Le texte explicatif n'est pas un champ éditable : le rendre
+        # sélectionnable déclenche le surlignage orange du thème Ubuntu au
+        # premier affichage de la fenêtre.
+        self.body.set_selectable(False)
         self.body.add_css_class("settings-note")
         root.append(self.body)
         self.status = Gtk.Label()
