@@ -98,131 +98,84 @@
       </div>
     </header>
     <h1>Koplyx</h1>
-<p>Koplyx est une micro-app Linux d&#x27;historique du presse-papiers. Elle surveille les copies texte et image, stocke l&#x27;historique localement avec chiffrement applicatif, puis permet de retrouver et restaurer une ancienne copie via une fenetre compacte.</p>
+<p>Un historique du presse-papiers pour Linux, local et chiffré. Retrouvez vos textes, images et fichiers copiés, recherchez une entrée et restaurez-la depuis une fenêtre compacte.</p>
+<p><a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest">Télécharger</a> · <a href="CHANGELOG.md">Notes de version</a> · <a href="CONTRIBUTING.md">Contribuer</a> · <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/issues">Signaler un bug</a></p>
 <p align="center">
   <a href="https://snapcraft.io/koplyx">
     <img alt="Disponible sur le Snap Store" src="https://snapcraft.io/koplyx/badge.svg" />
   </a>
 </p>
-<p align="center">
-  <img src="assets/presentation/koplyx-banner.png" alt="Illustration de Koplyx, historique du presse-papiers local et chiffre" width="100%" />
-</p>
-<blockquote>Koplyx garde vos copies à portée de main, sans synchronisation cloud : recherchez, épinglez et restaurez vos textes, images et fichiers depuis une interface Linux compacte.</blockquote>
-<p>Badge Snap Store en Markdown :</p>
-<p><a href="https://snapcraft.io/koplyx"><img alt="Disponible sur le Snap Store" src="https://snapcraft.io/koplyx/badge.svg" /></a></p>
-<h2>Présentation</h2>
-<p>Koplyx est pensé pour les personnes qui copient souvent du contenu et veulent le retrouver rapidement sans exposer leur historique à un service distant. Les données restent sur la machine, chiffrées localement, avec une recherche en mémoire quand la fenêtre est ouverte.</p>
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <img src="assets/presentation/koplyx-private.png" alt="Illustration du stockage local chiffré de Koplyx" width="100%" />
-      <br /><strong>Confidentialité locale</strong><br />
-<p>      Historique chiffré, clé locale et aucun compte cloud requis.</p>
-    </td>
-    <td width="33%" align="center">
-      <img src="assets/presentation/koplyx-history.png" alt="Capture réelle de l'interface historique de Koplyx" width="100%" />
-      <br /><strong>Une interface concrète</strong><br />
-<p>      Historique, recherche, textes épinglés et restauration dans la fenêtre principale.</p>
-    </td>
-    <td width="33%" align="center">
-      <img src="assets/presentation/koplyx-restore.png" alt="Illustration de la recherche et restauration d'une copie" width="100%" />
-      <br /><strong>Retrouver en un clic</strong><br />
-<p>      Aperçus en mémoire et restauration rapide depuis une carte de l&#x27;historique.</p>
-    </td>
-  </tr>
-</table>
-<p>Le menu de la barre système reste volontairement minimal : <code>Afficher Koplyx</code>, <code>Paramètres</code> et <code>Quitter Koplyx</code>. L&#x27;historique se consulte dans la fenêtre principale, accessible avec le raccourci global ou l&#x27;action <code>Afficher Koplyx</code>.</p>
-<h2>Lancer en developpement</h2>
+<h2>Distributions et installation</h2>
+<h3>Snap Store</h3>
+<p>Installez Koplyx depuis sa <a href="https://snapcraft.io/koplyx">page Snap Store</a> ou sur une distribution équipée de Snap :</p>
 <pre><code>
+sudo snap install koplyx
+</code></pre>
+<p>Pour demander une mise à jour du canal stable :</p>
+<pre><code>
+sudo snap refresh koplyx --channel=latest/stable
+</code></pre>
+<h3>Debian et Ubuntu (.deb)</h3>
+<p>Téléchargez <code>koplyx_&lt;version&gt;_all.deb</code> dans les <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest">GitHub Releases</a>. Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release <code>0.4.5</code> :</p>
+<pre><code>
+sudo apt install ./koplyx_0.4.5_all.deb
+</code></pre>
+<p>Pour mettre à jour, téléchargez et installez le paquet de la nouvelle release.</p>
+<h3>Depuis les sources</h3>
+<p>Sur Debian ou Ubuntu, installez les dépendances puis lancez le projet :</p>
+<pre><code>
+sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool
+git clone https://github.com/DemeulemeesterxMaxime/Koplyx.git
 cd Koplyx
 ./bin/koplyx
 </code></pre>
-<h2>Fonctionnalites v1</h2>
+<p>Vous pouvez aussi extraire l&#x27;archive source d&#x27;une release. Pour ajouter un lanceur à votre session, exécutez <code>./packaging/install-user.sh</code> depuis le dossier du projet. Le lanceur utilise ce dossier : conservez-le à son emplacement après l&#x27;installation.</p>
+<h3>Flatpak</h3>
+<p>Le dépôt fournit un <a href="packaging/flatpak/dev.limax.koplyx.yml">manifeste Flatpak</a> pour la construction locale et la préparation d&#x27;une soumission à Flathub. Les commandes et prérequis sont dans le <a href="docs/PUBLIC_RELEASE.md">guide de packaging et publication</a>.</p>
+<h2>Releases</h2>
+<p>Les <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases">GitHub Releases</a> regroupent les versions publiées et leurs fichiers :</p>
 <ul>
-<li>Historique texte, image et fichiers copies.</li>
-<li>Deduplication par hash.</li>
-<li>Apercus reels dans l&#x27;app apres dechiffrement en memoire : extrait texte, vignette image, nom de fichier.</li>
-<li>Recherche instantanee en memoire sur les apercus dechiffres.</li>
-<li>Onglet dedie aux textes epingles.</li>
-<li>Restauration dans le presse-papiers.</li>
-<li>Collage automatique apres clic via <code>xdotool</code> sur X11.</li>
-<li>Indicateur de barre systeme si le bureau expose AppIndicator/KStatusNotifierItem.</li>
-<li>Menu de barre systeme avec acces aux parametres et action quitter.</li>
-<li>Icone Koplyx dediee dans le lanceur et la barre systeme.</li>
-<li>Stockage SQLite local chiffre avec <code>cryptography.Fernet</code>.</li>
-<li>Cle de chiffrement stockee via Secret Service/libsecret quand disponible, avec fallback fichier local.</li>
-<li>Purge par nombre d&#x27;entrees, age et taille totale.</li>
-<li>Parametres integres.</li>
-<li>Dialogue de capture du raccourci clavier avec Entree pour demarrer/valider.</li>
-<li>Installation et synchronisation automatiques du raccourci GNOME.</li>
-<li>Demarrage automatique en arriere-plan par defaut.</li>
-<li>Fermeture de la fenetre en mise en veille, avec acces maintenu depuis la barre systeme.</li>
+<li><code>koplyx_&lt;version&gt;_all.deb</code> : paquet Debian et Ubuntu.</li>
+<li><code>koplyx-&lt;version&gt;-linux-source.tar.gz</code> : archive source.</li>
+<li><code>SHA256SUMS</code> : sommes de contrôle des deux artefacts.</li>
 </ul>
-<h2>Donnees locales</h2>
-<ul>
-<li>Configuration : <code>~/.config/koplyx/config.json</code></li>
-<li>Cle locale : Secret Service/libsecret si disponible, sinon <code>~/.config/koplyx/key.bin</code></li>
-<li>Base historique : <code>~/.local/share/koplyx/history.db</code></li>
-</ul>
-<p>Les contenus complets sont stockes dans <code>encrypted_blob</code>. Depuis <code>0.2.2</code>, les nouveaux apercus stockes dans SQLite ne reprennent plus le texte copie en clair et indiquent seulement le type, la taille ou la longueur. Depuis <code>0.2.4</code>, l&#x27;interface affiche des apercus reels en dechiffrant les entrees en memoire quand la fenetre est ouverte : extrait texte, vignette image et nom de fichier. Ces apercus visibles dans l&#x27;app ne sont pas reinjectes en clair dans SQLite. Les historiques crees avant <code>0.2.2</code> peuvent encore contenir d&#x27;anciens apercus en clair ; purger l&#x27;historique avant une publication stable si de vraies donnees ont ete utilisees pendant les tests.</p>
-<p>Les dossiers locaux <code>~/.config/koplyx</code> et <code>~/.local/share/koplyx</code> sont durcis en <code>0700</code>, et les fichiers config, cle et base en <code>0600</code> quand le systeme de fichiers le permet. La cle reste locale sur la machine et utilise Secret Service/libsecret quand le bureau le fournit.</p>
-<h2>Raccourci global</h2>
-<p>Le raccourci par defaut est <code>&lt;Ctrl&gt;&lt;Alt&gt;V</code>. Koplyx configure automatiquement le raccourci GNOME au démarrage et après chaque modification. Il lance l&#x27;instance déjà ouverte, ou Koplyx si elle n&#x27;est pas encore démarrée :</p>
+<p>Téléchargez les deux artefacts et <code>SHA256SUMS</code> dans le même dossier, puis vérifiez leur intégrité :</p>
 <pre><code>
-/snap/bin/koplyx --toggle
-</code></pre>
-<p>Sous Wayland, le support des raccourcis globaux depend du bureau. GNOME peut accepter ce raccourci via ses parametres, mais les comportements clipboard globaux restent plus restrictifs que sous X11.</p>
-<p>Pour modifier la combinaison dans Koplyx : ouvrir les paramètres, cliquer <code>Modifier</code>, cliquer <code>Démarrer</code> pour vider l&#x27;ancienne combinaison, choisir si besoin <code>Ctrl</code>, <code>Alt</code> ou <code>Super</code>, appuyer sur la touche principale, puis cliquer <code>Valider</code>. Le raccourci est alors appliqué immédiatement. Le bouton <code>Fn</code> est affiché comme aide, mais GNOME ne peut généralement pas enregistrer <code>Fn</code> comme modificateur.</p>
-<p>Si le raccourci ne repond pas, il peut deja etre reserve par l&#x27;OS. Ouvrir <code>Parametres &gt; Clavier &gt; Raccourcis clavier</code> pour changer ou liberer le raccourci systeme.</p>
-<h2>Fonctionnement en arriere-plan</h2>
-<p>Koplyx installe son autostart utilisateur par defaut et se lance avec <code>koplyx --hidden</code> au demarrage de session. Lorsque l&#x27;indicateur systeme est disponible, fermer la fenetre avec la croix masque Koplyx sans arreter la surveillance du presse-papiers. Pour quitter reellement le processus, utiliser <code>Quitter Koplyx</code> dans le menu de la barre systeme.</p>
-<p>Le mode cache utilise en priorite un hote <code>StatusNotifierItem</code> pour placer Koplyx dans la barre systeme. Si cet hote est temporairement indisponible, Koplyx reste accessible par son raccourci global : la croix le masque alors sans interrompre la surveillance du presse-papiers. L&#x27;indicateur propose les actions <code>Afficher Koplyx</code>, <code>Parametres</code> et <code>Quitter Koplyx</code>.</p>
-<p>L&#x27;autostart peut être activé ou désactivé directement avec <code>Lancer Koplyx au démarrage</code>. Dans certains environnements sandbox, l&#x27;écriture du fichier autostart utilisateur peut être refusée ; Koplyx reste utilisable et affiche un statut d&#x27;erreur.</p>
-<h2>Installation utilisateur</h2>
-<pre><code>
-cd Koplyx
-./packaging/install-user.sh
-</code></pre>
-<p>Cela installe un lanceur dans <code>~/.local/bin/koplyx</code> et une entree desktop dans <code>~/.local/share/applications/dev.limax.koplyx.desktop</code>.</p>
-<p>Sur X11, le script tente aussi d&#x27;installer <code>xdotool</code> via <code>apt</code> pour activer le collage automatique.</p>
-<h2>Validation locale</h2>
-<pre><code>
-cd Koplyx
-./scripts/smoke-test.sh
-./scripts/build-dist.sh
-cd dist
 sha256sum -c SHA256SUMS
 </code></pre>
-<p>La checklist de publication est dans <code>docs/PUBLIC_RELEASE.md</code>.</p>
-<p>Les versions HTML statiques de la documentation sont dans <code>docs/html/</code>.</p>
-<p>Les changements de version sont résumés dans <code>CHANGELOG.md</code>.</p>
-<h2>Contribuer</h2>
-<p>Les contributions sont bienvenues pour les corrections de bugs, la documentation, le packaging Linux et les ameliorations ciblees de l&#x27;experience utilisateur. Lire <code>CONTRIBUTING.md</code> avant d&#x27;ouvrir une issue ou une pull request.</p>
-<h2>Dependances optionnelles</h2>
+<p>Le projet suit Semantic Versioning (<code>MAJOR.MINOR.PATCH</code>), avec <a href="VERSION">VERSION</a> comme source de vérité. Le <a href="CHANGELOG.md">changelog</a> détaille les évolutions et correctifs.</p>
+<p>Le <a href=".github/workflows/release.yml">workflow de release</a> vérifie les pull requests vers <code>main</code> et construit les artefacts Linux et Snap. Les tags <code>v*</code> déclenchent la publication GitHub ; la publication Snap stable dépend des identifiants du Store configurés dans la CI. Attendez la réussite complète de la CI avant une fusion ou une publication. Consultez le <a href="docs/PUBLIC_RELEASE.md">guide de publication</a> pour la procédure complète.</p>
+<h2>Utiliser Koplyx</h2>
+<p align="center">
+  <img src="assets/presentation/koplyx-history.png" alt="Capture réelle de la fenêtre d'historique de Koplyx" width="400" />
+</p>
 <ul>
-<li><code>xdotool</code> sur X11 pour coller automatiquement dans le champ actif apres un clic.</li>
-<li><code>wtype</code> peut etre teste sur Wayland, mais il n&#x27;est pas une dependance du paquet <code>.deb</code>.</li>
-<li>Support AppIndicator/KStatusNotifierItem pour afficher Koplyx dans la zone systeme pres du Wi-Fi.</li>
-<li>La restauration de fichiers depend du support <code>text/uri-list</code>/<code>Gdk.FileList</code> de l&#x27;application cible.</li>
+<li>Recherchez parmi les textes, images et fichiers copiés.</li>
+<li>Épinglez les textes à conserver et restaurez une entrée d&#x27;un clic.</li>
+<li>Ouvrez la fenêtre avec <code>Ctrl+Alt+V</code>, configurable dans les paramètres et installé automatiquement sous GNOME.</li>
+<li>Le menu de la barre système propose <code>Afficher Koplyx</code>, <code>Paramètres</code> et <code>Quitter Koplyx</code>. L&#x27;historique se consulte dans la fenêtre principale.</li>
 </ul>
-<p>Le collage automatique envoie volontairement <code>Ctrl+V</code> a la fenetre active apres restauration. Cette fonction doit etre testee sur l&#x27;environnement cible avant publication stable.</p>
-<h2>Build release</h2>
+<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. Le collage automatique utilise <code>xdotool</code> sous X11. Sous Wayland, les fonctionnalités du presse-papiers et les raccourcis dépendent du bureau. L&#x27;indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
+<p>Les contenus sont chiffrés avant leur stockage local dans SQLite et les aperçus sont déchiffrés en mémoire. La clé utilise Secret Service/libsecret si disponible, avec un fichier local en solution de repli. Consultez la <a href="SECURITY.md">politique de sécurité</a> pour les précautions concernant les anciens historiques.</p>
+<h2>Contributions</h2>
+<p>Koplyx est un projet open source sous <a href="LICENSE">licence MIT</a>. Les contributions sont bienvenues : corrections de bugs, documentation, accessibilité, packaging et tests sur différentes distributions Linux.</p>
+<ol>
+<li>Consultez les <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/issues">issues</a> et ouvrez une discussion avant une modification importante.</li>
+<li>Lisez le <a href="CONTRIBUTING.md">guide de contribution</a> et le <a href="CODE_OF_CONDUCT.md">code de conduite</a>.</li>
+<li>Créez une branche dédiée et effectuez les vérifications locales.</li>
+<li>Ouvrez une pull request vers <code>main</code> avec une description du changement, les tests effectués et les limites connues sur X11, Wayland, Snap ou Flatpak.</li>
+</ol>
+<p>Pour un bug, indiquez la version, la distribution, le bureau, le type de session et la méthode d&#x27;installation, avec les étapes de reproduction. Pour une vulnérabilité, suivez la <a href="SECURITY.md">procédure de signalement privé</a>.</p>
+<h3>Vérifier et construire</h3>
+<p>Depuis la racine du dépôt, avec les dépendances de développement et de packaging installées :</p>
 <pre><code>
-cd Koplyx
+./scripts/smoke-test.sh
+/usr/bin/python3 -m py_compile scripts/build-html-docs.py koplyx/main.py koplyx/__init__.py
 ./scripts/build-dist.sh
+(cd dist &amp;&amp; sha256sum -c SHA256SUMS)
 </code></pre>
-<p>Le build produit <code>dist/koplyx-&lt;version&gt;-linux-source.tar.gz</code>, <code>dist/koplyx_&lt;version&gt;_all.deb</code> et <code>dist/SHA256SUMS</code>.</p>
-<p>La GitHub Action <code>.github/workflows/release.yml</code> genere les memes fichiers en artefacts telechargeables, et les publie dans une GitHub Release quand un tag <code>v*</code> est pousse.</p>
-<h2>Snapcraft et Flathub</h2>
-<ul>
-<li>Snapcraft: <code>snap/snapcraft.yaml</code></li>
-<li>Flathub/Flatpak: <code>packaging/flatpak/dev.limax.koplyx.yml</code></li>
-<li>AppStream: <code>packaging/metainfo/dev.limax.koplyx.metainfo.xml</code></li>
-<li>Outils packaging: <code>packaging/scripts/install-packaging-tools.sh</code></li>
-</ul>
-<p>Snapcraft et Flatpak Builder doivent etre installes localement pour construire ces paquets. Les commandes de publication sont documentees dans <code>docs/PUBLIC_RELEASE.md</code>.</p>
-<h2>Note juridique naming</h2>
-<p>Le nom Koplyx a ete choisi apres recherche preliminaire. Ce n&#x27;est pas une garantie juridique. Avant publication publique, verifier formellement WIPO, USPTO, EUIPO et INPI.</p>
+<p>Le build génère les paquets dans <code>dist/</code> et régénère les <a href="docs/html/index.html">pages HTML de documentation</a> avec <a href="scripts/build-html-docs.py">le script dédié</a>. Ne versionnez pas les paquets générés ni les données personnelles de l&#x27;application.</p>
+<p>Les ressources de packaging comprennent le <a href="snap/snapcraft.yaml">manifeste Snap</a>, le <a href="packaging/flatpak/dev.limax.koplyx.yml">manifeste Flatpak</a>, les <a href="packaging/metainfo/dev.limax.koplyx.metainfo.xml">métadonnées AppStream</a> et les <a href="packaging/scripts/install-packaging-tools.sh">outils de packaging</a>. La <a href="tasks/TESTS-MANUELS.md">checklist manuelle</a> complète les contrôles automatisés.</p>
   </main>
 </body>
 </html>

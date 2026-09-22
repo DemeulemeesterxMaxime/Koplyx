@@ -1,5 +1,11 @@
 # État des tâches
 
+## README orienté distribution et contributions
+
+- [x] Mettre les installations, releases et contributions au premier plan.
+- [x] Conserver les ressources open source et synchroniser la documentation HTML.
+- [x] Vérifier les liens locaux et préparer la mise à jour sur la PR existante.
+
 ## Présentation README et assets visuels
 
 - [x] Ajouter les badges Snap Store HTML et Markdown dans le README.
