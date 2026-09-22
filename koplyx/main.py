@@ -319,6 +319,17 @@ def xwayland_active_window() -> str | None:
     return window_id
 
 
+def ydotool_available() -> bool:
+    """Vérifie que le daemon ydotool expose réellement son socket utilisateur."""
+    if not command_exists("ydotool"):
+        return False
+    socket_path = os.environ.get("YDOTOOL_SOCKET")
+    if not socket_path:
+        runtime_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+        socket_path = str(Path(runtime_dir) / ".ydotool_socket")
+    return Path(socket_path).exists() and os.access(socket_path, os.W_OK)
+
+
 def paste_tool_candidates(window_id: str | None = None) -> list[str]:
     """Retourne les outils directs dans l'ordre de repli souhaité."""
     session = os.environ.get("XDG_SESSION_TYPE", "").lower()
@@ -330,12 +341,12 @@ def paste_tool_candidates(window_id: str | None = None) -> list[str]:
         # mémorisée. Sinon son code retour peut être positif sans rien coller.
         if window_id and command_exists("xdotool"):
             candidates.append("xdotool")
-        if command_exists("ydotool"):
+        if ydotool_available():
             candidates.append("ydotool")
         return candidates
     if command_exists("xdotool"):
         candidates.append("xdotool")
-    if command_exists("ydotool"):
+    if ydotool_available():
         candidates.append("ydotool")
     return candidates
 
@@ -346,7 +357,7 @@ def paste_tool_name(window_id: str | None = None) -> str | None:
         labels = list(candidates)
         if "xdotool" not in labels and command_exists("xdotool"):
             labels.append("xdotool (XWayland)")
-        if "ydotool" not in labels and command_exists("ydotool"):
+        if "ydotool" not in labels and ydotool_available():
             labels.append("ydotool")
         labels.append("portail du bureau")
         return " → ".join(labels)

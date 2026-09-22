@@ -41,7 +41,7 @@ Pour mettre à jour, téléchargez et installez le paquet de la nouvelle release
 Sur Debian ou Ubuntu, installez les dépendances puis lancez le projet :
 
 ```bash
-sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool wtype
+sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool wtype ydotool
 git clone https://github.com/DemeulemeesterxMaxime/Koplyx.git
 cd Koplyx
 ./bin/koplyx

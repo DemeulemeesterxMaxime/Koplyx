@@ -157,13 +157,13 @@ class HistoryStoreTests(unittest.TestCase):
     def test_wayland_paste_tool_order_prefers_wtype_xwayland_then_ydotool(self) -> None:
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
             "koplyx.main.command_exists", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
-        ):
+        ), patch("koplyx.main.ydotool_available", return_value=True):
             self.assertEqual(paste_tool_candidates("123"), ["wtype", "xdotool", "ydotool"])
 
     def test_wayland_skips_xdotool_without_xwayland_target(self) -> None:
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
             "koplyx.main.command_exists", side_effect=lambda command: command in {"xdotool", "ydotool"}
-        ):
+        ), patch("koplyx.main.ydotool_available", return_value=True):
             self.assertEqual(paste_tool_candidates(), ["ydotool"])
 
     def test_direct_paste_continues_after_a_tool_failure(self) -> None:
@@ -171,7 +171,9 @@ class HistoryStoreTests(unittest.TestCase):
         results = iter([SimpleNamespace(returncode=1), SimpleNamespace(returncode=1), SimpleNamespace(returncode=0)])
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
             "koplyx.main.command_exists", return_value=True
-        ), patch("koplyx.main.subprocess.run", side_effect=lambda command, **_kwargs: calls.append(command) or next(results)):
+        ), patch("koplyx.main.ydotool_available", return_value=True), patch(
+            "koplyx.main.subprocess.run", side_effect=lambda command, **_kwargs: calls.append(command) or next(results)
+        ):
             self.assertTrue(paste_clipboard_now("123"))
         self.assertEqual(calls[0][0], "wtype")
         self.assertEqual(calls[1][:4], ["xdotool", "key", "--window", "123"])
