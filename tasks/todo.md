@@ -1,5 +1,11 @@
 # État des tâches
 
+## Présentation README et assets visuels
+
+- [x] Ajouter les badges Snap Store HTML et Markdown dans le README.
+- [x] Générer et intégrer une bannière et des illustrations de présentation cohérentes avec Koplyx.
+- [x] Vérifier les chemins d'assets, le rendu Markdown et les contrôles du dépôt.
+
 ## Release corrective 0.4.5
 
 - [x] Mettre à jour la version centralisée, AppStream, Flatpak et le changelog pour le correctif de restauration au clic.

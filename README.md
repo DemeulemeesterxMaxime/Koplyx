@@ -2,6 +2,46 @@
 
 Koplyx est une micro-app Linux d'historique du presse-papiers. Elle surveille les copies texte et image, stocke l'historique localement avec chiffrement applicatif, puis permet de retrouver et restaurer une ancienne copie via une fenetre compacte.
 
+<p align="center">
+  <a href="https://snapcraft.io/koplyx">
+    <img alt="Disponible sur le Snap Store" src="https://snapcraft.io/koplyx/badge.svg" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="assets/presentation/koplyx-banner.png" alt="Illustration de Koplyx, historique du presse-papiers local et chiffre" width="100%" />
+</p>
+
+> Koplyx garde vos copies à portée de main, sans synchronisation cloud : recherchez, épinglez et restaurez vos textes, images et fichiers depuis une interface Linux compacte.
+
+Badge Snap Store en Markdown :
+
+[![Disponible sur le Snap Store](https://snapcraft.io/koplyx/badge.svg)](https://snapcraft.io/koplyx)
+
+## Présentation
+
+Koplyx est pensé pour les personnes qui copient souvent du contenu et veulent le retrouver rapidement sans exposer leur historique à un service distant. Les données restent sur la machine, chiffrées localement, avec une recherche en mémoire quand la fenêtre est ouverte.
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="assets/presentation/koplyx-private.png" alt="Illustration du stockage local chiffré de Koplyx" width="100%" />
+      <br /><strong>Confidentialité locale</strong><br />
+      Historique chiffré, clé locale et aucun compte cloud requis.
+    </td>
+    <td width="33%" align="center">
+      <img src="assets/presentation/koplyx-restore.png" alt="Illustration de la recherche et restauration d'une copie" width="100%" />
+      <br /><strong>Retrouver en un clic</strong><br />
+      Recherche instantanée, aperçus en mémoire et restauration rapide.
+    </td>
+    <td width="33%" align="center">
+      <img src="assets/presentation/koplyx-tray.png" alt="Illustration du fonctionnement discret dans la barre système" width="100%" />
+      <br /><strong>Toujours disponible</strong><br />
+      Démarrage en arrière-plan, raccourci global et indicateur système.
+    </td>
+  </tr>
+</table>
+
 ## Lancer en developpement
 
 ```bash
