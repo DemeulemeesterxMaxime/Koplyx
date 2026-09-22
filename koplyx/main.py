@@ -312,6 +312,13 @@ def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
 
 
+def running_x11() -> bool:
+    """Indique si le processus GTK dispose d'un affichage X11 utilisable."""
+    session = os.environ.get("XDG_SESSION_TYPE", "").lower()
+    backend = os.environ.get("GDK_BACKEND", "").lower()
+    return session == "x11" or (backend == "x11" and bool(os.environ.get("DISPLAY")))
+
+
 def xwayland_active_window() -> str | None:
     """Retourne la fenêtre XWayland active lorsqu'elle est identifiable."""
     if os.environ.get("XDG_SESSION_TYPE", "").lower() != "wayland" or not command_exists("xdotool"):
@@ -341,7 +348,7 @@ def ydotool_available() -> bool:
 
 def paste_tool_candidates(window_id: str | None = None, paste_backend: str | None = None) -> list[str]:
     """Retourne les outils directs dans l'ordre de repli souhaité."""
-    session = os.environ.get("XDG_SESSION_TYPE", "").lower()
+    session = "x11" if running_x11() else os.environ.get("XDG_SESSION_TYPE", "").lower()
     backend = paste_backend or "auto"
     if backend not in PASTE_BACKENDS:
         backend = "auto"
@@ -372,7 +379,7 @@ def paste_tool_name(window_id: str | None = None, paste_backend: str | None = No
         return "presse-papiers uniquement"
     if backend == "portal":
         return "portail du bureau"
-    if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+    if not running_x11():
         labels = list(candidates)
         if backend == "auto" and "xdotool" not in labels and command_exists("xdotool"):
             labels.append("xdotool (XWayland)")
@@ -387,7 +394,7 @@ def paste_tool_name(window_id: str | None = None, paste_backend: str | None = No
 
 
 def x11_active_window() -> str | None:
-    if os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11" or not command_exists("xdotool"):
+    if not running_x11() or not command_exists("xdotool"):
         return None
     result = subprocess.run(["xdotool", "getactivewindow"], check=False, capture_output=True, text=True)
     if result.returncode != 0:
@@ -408,7 +415,7 @@ def x11_window_pid(window_id: str) -> int | None:
 
 def activate_x11_window(window_id: str | None) -> bool:
     if (
-        os.environ.get("XDG_SESSION_TYPE", "").lower() != "x11"
+        not running_x11()
         or not window_id
         or not command_exists("xdotool")
     ):
@@ -1673,7 +1680,10 @@ class OnboardingWindow(Gtk.Window):
         self.primary.add_css_class("primary")
         self.primary.connect("clicked", self.on_primary)
         actions.append(self.primary)
-        self.show_page(0)
+        # Après la relance sous XWayland, revenir directement au diagnostic et
+        # au test évite de faire croire à l'utilisateur que la session entière
+        # a été redémarrée.
+        self.show_page(1 if app.xwayland_relaunch else 0)
         GLib.idle_add(self.focus_primary_once)
 
     def on_close_request(self, _window) -> bool:
@@ -1725,7 +1735,14 @@ class OnboardingWindow(Gtk.Window):
             )
             self.test_plan = self.app.onboarding_test_plan()
             self.test_index = -1
-            self.status.set_text(f"Koplyx va essayer jusqu'à {len(self.test_plan)} solutions, de la plus discrète à la plus assistée.")
+            self.status.set_text(
+                f"Koplyx va essayer jusqu'à {len(self.test_plan)} solutions, de la plus discrète à la plus assistée."
+            )
+            diagnostic = Gtk.Label(label=self.app.onboarding_display_summary())
+            diagnostic.set_xalign(0)
+            diagnostic.set_wrap(True)
+            diagnostic.add_css_class("settings-note")
+            self.content.append(diagnostic)
             self.secondary.set_label("Retour")
             self.primary.set_label("Tester")
         elif page == 2:
@@ -1749,7 +1766,7 @@ class OnboardingWindow(Gtk.Window):
         self.title_label.set_text(f"Essai {self.test_index + 1} sur {len(self.test_plan)}")
         descriptions = {
             "wtype": "une méthode silencieuse adaptée à votre bureau",
-            "xwayland": "la compatibilité avec les applications X",
+            "xwayland": "une relance locale de Koplyx sous XWayland",
             "xorg": "une session graphique classique au prochain redémarrage",
             "ydotool": "une méthode système dédiée au collage",
             "portal": "l'autorisation clavier d'Ubuntu",
@@ -1768,6 +1785,10 @@ class OnboardingWindow(Gtk.Window):
             self.status.set_text("Ubuntu affichera une autorisation « Bureau à distance ». Aucun écran ne sera partagé.")
         elif self.test_backend == "clipboard_only":
             self.status.set_text("Le texte sera remis en première position du presse-papiers, puis Koplyx tentera Ctrl+V.")
+        elif self.test_backend == "xwayland":
+            self.status.set_text(
+                "Koplyx va se relancer sous XWayland pour ce test. Votre session Ubuntu ne sera pas redémarrée."
+            )
         else:
             self.status.set_text("Aucun accès supplémentaire n'est demandé pour cet essai.")
         self.primary.set_label("Tester cette solution")
@@ -2131,6 +2152,10 @@ class KoplyxApplication(Gtk.Application):
         self.onboarding_test_marker = ""
         self.onboarding_test_digest = ""
         self.onboarding_previous_text: str | None = None
+        # Une relance XWayland est une étape explicite de l'assistant. Le
+        # drapeau est consommé au démarrage du processus enfant pour éviter
+        # de relancer encore Koplyx lorsque l'assistant est rouvert ensuite.
+        self.xwayland_relaunch = os.environ.pop("KOPLYX_XWAYLAND_TEST", "") == "1"
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
@@ -2234,6 +2259,10 @@ class KoplyxApplication(Gtk.Application):
         return descriptions.get(self.config.get("paste_backend"), descriptions["auto"])
 
     def onboarding_test_plan(self) -> list[str]:
+        if self.xwayland_relaunch:
+            # Le processus enfant est déjà sous GDK X11. Il teste cette
+            # configuration avant de proposer le portail comme repli.
+            return ["xwayland", "portal"]
         plan: list[str] = []
         if command_available("wtype"):
             plan.append("wtype")
@@ -2259,6 +2288,27 @@ class KoplyxApplication(Gtk.Application):
             plan.append("portal")
         return plan
 
+    def onboarding_display_summary(self) -> str:
+        session = os.environ.get("XDG_SESSION_TYPE", "").lower() or "inconnue"
+        if self.xwayland_relaunch:
+            return (
+                "Koplyx vient d'être relancé localement avec XWayland. "
+                "La session Ubuntu n'a pas été redémarrée."
+            )
+        if session == "wayland":
+            if os.environ.get("DISPLAY") and command_exists("xdotool"):
+                xwayland = "XWayland local détecté : une relance de Koplyx sera proposée pour le tester."
+            else:
+                xwayland = "XWayland local non détecté dans cette session."
+            if xorg_sessions():
+                xorg = "Une session Xorg est installée : elle demandera un redémarrage après sa configuration."
+            else:
+                xorg = "Aucune session Xorg n'est installée : l'option demandant un redémarrage reste indisponible."
+            return f"Session Wayland détectée. {xwayland} {xorg}"
+        if session == "x11":
+            return "Session X11 détectée. Le portail reste disponible en dernier recours."
+        return "Le type de session graphique n'a pas pu être identifié."
+
     def begin_onboarding_test(self, onboarding: OnboardingWindow, backend: str) -> None:
         if not self.watcher:
             onboarding.test_result(False, backend)
@@ -2275,6 +2325,12 @@ class KoplyxApplication(Gtk.Application):
             else:
                 onboarding.test_result(False, backend)
                 onboarding.status.set_text(message)
+            return
+        if backend == "xwayland" and not self.xwayland_relaunch:
+            onboarding.status.set_text(
+                "Koplyx va se relancer sous XWayland. Votre session Ubuntu ne sera pas redémarrée."
+            )
+            self.launch_xwayland_backend()
             return
         if backend == "ydotool":
             ok, message = run_privileged("ydotool-enable")
@@ -2354,7 +2410,7 @@ class KoplyxApplication(Gtk.Application):
             for candidate in candidates:
                 candidate_backend = {
                     "wtype": "wtype",
-                    "xdotool": "xwayland" if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" else "xorg",
+                    "xdotool": "xorg" if running_x11() else "xwayland",
                     "ydotool": "ydotool",
                 }.get(candidate, backend)
                 if paste_clipboard_now(self.previous_window_id, candidate_backend):
@@ -2377,7 +2433,7 @@ class KoplyxApplication(Gtk.Application):
     def launch_xwayland_backend(self) -> None:
         environment = os.environ.copy()
         environment["GDK_BACKEND"] = "x11"
-        self.config.set("onboarding_completed", True)
+        environment["KOPLYX_XWAYLAND_TEST"] = "1"
         self.control_server.close()
         try:
             subprocess.Popen([sys.executable, str(Path(__file__)), "--show"], env=environment)
@@ -2645,7 +2701,7 @@ class KoplyxApplication(Gtk.Application):
         self.portal_keyboard.prepare(update)
 
     def activate_then_paste(self) -> bool:
-        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "x11":
+        if running_x11():
             if not activate_x11_window(self.previous_window_id):
                 self.paste_failed("Fenêtre cible introuvable : presse-papiers restauré en première position, utilisez Ctrl+V.")
                 return GLib.SOURCE_REMOVE

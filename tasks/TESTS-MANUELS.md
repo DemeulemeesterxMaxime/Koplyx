@@ -16,6 +16,7 @@
 ## À valider sur Wayland
 
 - Sur un profil réellement neuf, vérifier que l'assistant s'ouvre au premier lancement, synchronise le raccourci GNOME et affiche le diagnostic de session.
+- Vérifier que l'étape XWayland explique la relance locale de Koplyx avec `GDK_BACKEND=x11`, sans redémarrer Ubuntu, puis que l'assistant reprend le test dans le nouveau processus. Si aucun fichier `/usr/share/xsessions/*.desktop` n'existe, vérifier que l'assistant explique pourquoi l'étape Xorg avec redémarrage est indisponible.
 - Dans l'assistant, préparer un champ texte cible, lancer le test actif et confirmer le texte identifiable. Vérifier qu'il n'est pas ajouté à l'historique et que l'ancien presse-papiers revient lorsque le bureau le permet.
 - Déclarer un échec, vérifier que l'assistant propose la solution suivante sans exposer de jargon, puis parcourir les méthodes jusqu'à la demande « Bureau à distance » et au mode presse-papiers. Le portail doit annoncer sa demande avant de l'afficher et ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
 - Relancer l'assistant depuis Paramètres et vérifier qu'aucun sélecteur de backend n'est présent : la méthode est mémorisée uniquement après « Oui, ça fonctionne ».

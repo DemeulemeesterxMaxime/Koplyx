@@ -33,6 +33,7 @@ from koplyx.main import (
     paste_clipboard_now,
     paste_tool_candidates,
     private_preview,
+    running_x11,
     text_content,
     text_excerpt,
     text_tooltip,
@@ -141,7 +142,7 @@ class HistoryStoreTests(unittest.TestCase):
 
     def test_xdotool_active_window_is_not_used_on_wayland(self) -> None:
         result = SimpleNamespace(returncode=0, stdout="123456\n")
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.subprocess.run", return_value=result) as run:
             self.assertIsNone(x11_active_window())
@@ -149,7 +150,7 @@ class HistoryStoreTests(unittest.TestCase):
 
     def test_xdotool_active_window_is_available_on_x11(self) -> None:
         result = SimpleNamespace(returncode=0, stdout="123456\n")
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "x11"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "x11", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.subprocess.run", return_value=result) as run:
             self.assertEqual(x11_active_window(), "123456")
@@ -158,13 +159,13 @@ class HistoryStoreTests(unittest.TestCase):
         )
 
     def test_wayland_paste_tool_order_prefers_wtype_xwayland_then_ydotool(self) -> None:
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
         ), patch("koplyx.main.ydotool_available", return_value=True):
             self.assertEqual(paste_tool_candidates("123"), ["wtype", "xdotool", "ydotool"])
 
     def test_wayland_skips_xdotool_without_xwayland_target(self) -> None:
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", side_effect=lambda command: command in {"xdotool", "ydotool"}
         ), patch("koplyx.main.ydotool_available", return_value=True):
             self.assertEqual(paste_tool_candidates(), ["ydotool"])
@@ -172,7 +173,7 @@ class HistoryStoreTests(unittest.TestCase):
     def test_direct_paste_continues_after_a_tool_failure(self) -> None:
         calls = []
         results = iter([SimpleNamespace(returncode=1), SimpleNamespace(returncode=1), SimpleNamespace(returncode=0)])
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.ydotool_available", return_value=True), patch(
             "koplyx.main.subprocess.run", side_effect=lambda command, **_kwargs: calls.append(command) or next(results)
@@ -227,7 +228,7 @@ class HistoryStoreTests(unittest.TestCase):
             shutil.rmtree(profile, ignore_errors=True)
 
     def test_paste_backend_can_limit_direct_candidates(self) -> None:
-        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.ydotool_available", return_value=True):
             self.assertEqual(paste_tool_candidates("window", "wtype"), ["wtype"])
@@ -237,7 +238,7 @@ class HistoryStoreTests(unittest.TestCase):
     def test_onboarding_does_not_offer_ydotool_without_packaged_helper(self) -> None:
         app = KoplyxApplication()
         try:
-            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
                 "koplyx.main.command_available", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
             ), patch("koplyx.main.helper_path", return_value=None), patch(
                 "koplyx.main.xorg_sessions", return_value=[]
@@ -247,11 +248,24 @@ class HistoryStoreTests(unittest.TestCase):
             app.store.conn.close()
             app.control_server.close()
 
+    def test_xwayland_relaunch_has_a_dedicated_follow_up_plan(self) -> None:
+        app = KoplyxApplication()
+        try:
+            app.xwayland_relaunch = True
+            self.assertEqual(app.onboarding_test_plan(), ["xwayland", "portal"])
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
+
+    def test_gdk_x11_is_treated_as_an_x11_runtime(self) -> None:
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": "x11", "DISPLAY": ":0"}):
+            self.assertTrue(running_x11())
+
     def test_clipboard_only_onboarding_still_attempts_ctrl_v(self) -> None:
         app = KoplyxApplication()
         try:
             app.previous_window_id = "target"
-            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
                 "koplyx.main.paste_tool_candidates", return_value=["wtype"]
             ), patch("koplyx.main.paste_clipboard_now", return_value=True) as paste:
                 class FakePortal:

@@ -18,6 +18,11 @@
 - [ ] Rendre la demande « Bureau à distance » visible et diagnosticable, sans session persistante ouverte après le test.
 - [ ] Rejouer les tests et relancer l'application pour validation manuelle avant tout push.
 
+## Parcours XWayland et Xorg dans l'assistant
+
+- [ ] Relier la relance `GDK_BACKEND=x11` à une étape réelle de l'assistant et reprendre le test au redémarrage de Koplyx.
+- [ ] Afficher le diagnostic XWayland/Xorg et expliquer lorsqu'aucune session Xorg ne peut demander un redémarrage.
+
 ## Repli de collage silencieux Wayland
 
 - [x] Détecter et essayer les outils dans l'ordre `wtype`, `xdotool` XWayland, `ydotool`, puis le portail.
