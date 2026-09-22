@@ -42,10 +42,11 @@ class FakeBus:
 class PortalTests(unittest.TestCase):
     def setUp(self):
         self.bus = FakeBus()
-        self.keyboard = PortalKeyboard()
         self.responses = []
+        self.tokens = []
         self.patch = patch("koplyx.portal_keyboard.Gio.bus_get_sync", return_value=self.bus)
         self.patch.start()
+        self.keyboard = PortalKeyboard(lambda: "ancien-token", self.tokens.append)
 
     def tearDown(self):
         self.keyboard.close()
@@ -56,6 +57,8 @@ class PortalTests(unittest.TestCase):
         self.bus.respond(self.keyboard, session_handle="/session/test")
         self.assertEqual(self.bus.calls[-1][1], "SelectDevices")
         self.assertEqual(self.bus.calls[-1][2][1]["types"], 1)
+        self.assertEqual(self.bus.calls[-1][2][1]["persist_mode"], 2)
+        self.assertEqual(self.bus.calls[-1][2][1]["restore_token"], "ancien-token")
         self.bus.respond(self.keyboard)
         self.assertEqual(self.bus.calls[-1][1], "Start")
 
@@ -63,10 +66,11 @@ class PortalTests(unittest.TestCase):
         self.prepare()
         self.assertFalse(self.keyboard.paste())
         self.assertEqual(self.bus.keys, [])
-        self.bus.respond(self.keyboard, devices=1)
+        self.bus.respond(self.keyboard, devices=1, restore_token="nouveau-token")
         # La réponse d'autorisation ne colle jamais dans sa propre boîte de dialogue.
         self.assertEqual(self.bus.keys, [])
         self.assertTrue(self.responses[0][0])
+        self.assertEqual(self.tokens, ["nouveau-token"])
         for _ in range(2):
             self.assertTrue(self.keyboard.paste())
         self.assertEqual(self.bus.keys, [(65507, 1), (118, 1), (118, 0), (65507, 0)] * 2)

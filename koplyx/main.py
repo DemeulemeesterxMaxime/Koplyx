@@ -51,6 +51,7 @@ DEFAULT_CONFIG = {
     "start_hidden": True,
     "autostart_enabled": True,
     "pinned_history_position": "top",
+    "wayland_restore_token": "",
 }
 
 PINNED_HISTORY_POSITIONS = {"top", "bottom", "pinned_only"}
@@ -1232,7 +1233,8 @@ class SettingsWindow(Gtk.Window):
             explanation = Gtk.Label(label=(
                 "GNOME peut nommer cette autorisation « Bureau à distance ». "
                 "Koplyx demande seulement le clavier pour Ctrl+V, sans partager l'écran. "
-                "L'autorisation reste active jusqu'à la fermeture de Koplyx."
+                "Koplyx demande une autorisation persistante et réutilise le jeton fourni par le bureau après un redémarrage. "
+                "Le bureau peut toutefois la révoquer dans ses paramètres de confidentialité."
             ))
             explanation.set_wrap(True)
             explanation.set_xalign(0)
@@ -1777,7 +1779,10 @@ class KoplyxApplication(Gtk.Application):
         self.watcher: ClipboardWatcher | None = None
         self.tray: TrayIndicator | None = None
         self.previous_window_id: str | None = None
-        self.portal_keyboard = PortalKeyboard()
+        self.portal_keyboard = PortalKeyboard(
+            get_restore_token=lambda: self.config.get("wayland_restore_token"),
+            save_restore_token=lambda token: self.config.set("wayland_restore_token", token),
+        )
         self.status_message = ""
         self.shortcut_sync_ok = False
 
@@ -2046,7 +2051,24 @@ class KoplyxApplication(Gtk.Application):
             restored = False
         if restored:
             if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and not self.portal_keyboard.ready:
-                self.authorize_paste()
+                if self.portal_keyboard.has_restore_token():
+                    self.set_status("Contenu restauré. Réactivation du collage direct…")
+
+                    def paste_after_restore(ok, message):
+                        if not ok:
+                            self.set_status(
+                                "Contenu restauré. Autorisez le collage direct dans Paramètres pour l'envoyer au curseur."
+                            )
+                            return
+                        self.set_status(message)
+                        if self.sleep_to_tray():
+                            GLib.timeout_add(120, self.activate_then_paste)
+
+                    # Avec un jeton persistant valide, le portail réactive la
+                    # session sans afficher de nouvelle demande au bureau.
+                    self.portal_keyboard.prepare(paste_after_restore)
+                else:
+                    self.set_status("Contenu restauré. Autorisez le collage direct dans Paramètres pour l'envoyer au curseur.")
                 return
             if self.sleep_to_tray():
                 GLib.timeout_add(120, self.activate_then_paste)

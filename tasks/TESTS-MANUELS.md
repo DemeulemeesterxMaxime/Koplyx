@@ -16,8 +16,9 @@
 ## À valider sur Wayland
 
 - Vérifier que le raccourci rouvre bien l'instance locale en cours de test, et non le Snap installé.
-- Au premier clic, autoriser le clavier dans la demande du bureau. Revenir au champ cible et sélectionner de nouveau une entrée : vérifier le texte effectivement inséré au curseur.
+- Depuis Paramètres, autoriser le clavier dans la demande du bureau, puis revenir au champ cible et sélectionner une entrée : vérifier le texte effectivement inséré au curseur.
 - Répéter avec deux entrées différentes : aucune nouvelle demande d'autorisation ne doit apparaître tant que Koplyx reste ouvert.
+- Fermer puis relancer Koplyx avec le même profil : sélectionner une entrée et vérifier que le jeton persistant réactive le collage sans nouvelle demande. Si le bureau a révoqué l'autorisation, le clic doit seulement restaurer le contenu et afficher un message invitant à retourner dans Paramètres.
 - Refuser une demande, puis réessayer dans les paramètres. Aucun collage ne doit partir dans la boîte d'autorisation.
 - Vérifier que les boutons réduire, agrandir et fermer ont leur apparence native dans l'historique et les paramètres.
 - Vérifier que Koplyx reste accessible lorsque la barre système ou le raccourci global ne sont pas exposés par le compositeur.

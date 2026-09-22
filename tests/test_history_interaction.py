@@ -111,9 +111,10 @@ def test_restore_pastes_to_previous_window_without_new_history_item() -> None:
         callbacks.clear()
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch.object(
             app.portal_keyboard, "prepare"
-        ) as prepare, patch.object(koplyx_main.GLib, "timeout_add") as schedule:
+        ) as prepare, patch.object(app, "set_status") as set_status, patch.object(koplyx_main.GLib, "timeout_add") as schedule:
             app.restore_item(item.id)
-            prepare.assert_called_once()
+            prepare.assert_not_called()
+            set_status.assert_called_once()
             schedule.assert_not_called()
         assert watcher.text == "coller ici"
         assert [(entry.id, entry.created_at) for entry in app.store.recent()] == before

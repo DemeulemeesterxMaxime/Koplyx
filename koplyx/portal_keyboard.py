@@ -13,7 +13,7 @@ SESSION = "org.freedesktop.portal.Session"
 
 
 class PortalKeyboard:
-    def __init__(self):
+    def __init__(self, get_restore_token=None, save_restore_token=None):
         self.bus = None
         self.session = None
         self.ready = False
@@ -23,12 +23,14 @@ class PortalKeyboard:
         self._closed_id = 0
         self._timeout_id = 0
         self._done = None
+        self._get_restore_token = get_restore_token or (lambda: "")
+        self._save_restore_token = save_restore_token or (lambda _token: None)
 
     def prepare(self, done):
         if self.pending:
             return
         if self.ready:
-            done(True, "Collage autorisé. Sélectionnez votre champ, puis rouvrez Koplyx.")
+            done(True, "Collage direct déjà autorisé. Sélectionnez votre champ, puis choisissez un élément.")
             return
         self.pending = True
         self._done = done
@@ -85,7 +87,14 @@ class PortalKeyboard:
             self._closed,
         )
         # Uniquement le clavier : aucun partage d'écran ni contrôle de la souris.
-        self._request("SelectDevices", (self.session,), {"types": GLib.Variant("u", 1)}, self._selected)
+        options = {
+            "types": GLib.Variant("u", 1),
+            "persist_mode": GLib.Variant("u", 2),
+        }
+        restore_token = self._get_restore_token()
+        if restore_token:
+            options["restore_token"] = GLib.Variant("s", restore_token)
+        self._request("SelectDevices", (self.session,), options, self._selected)
 
     def _selected(self, _results):
         self._request("Start", (self.session, ""), {}, self._started)
@@ -94,11 +103,20 @@ class PortalKeyboard:
         if not results.get("devices", 0) & 1:
             self._fail("Le bureau n'a pas autorisé le clavier pour le collage.")
             return
+        restore_token = results.get("restore_token")
+        if restore_token:
+            # Le portail renouvelle le jeton à chaque démarrage réussi. Le
+            # dernier jeton doit remplacer l'ancien pour le prochain lancement.
+            self._save_restore_token(restore_token)
         self.ready = True
         self.pending = False
         done, self._done = self._done, None
         if done:
-            done(True, "Collage autorisé. Sélectionnez votre champ, puis rouvrez Koplyx et choisissez un élément.")
+            if restore_token:
+                message = "Collage direct autorisé de façon persistante. Sélectionnez votre champ, puis choisissez un élément."
+            else:
+                message = "Collage direct autorisé pour cette session. Le bureau n'a pas fourni de jeton persistant."
+            done(True, message)
 
     def paste(self):
         if not self.ready:
@@ -116,6 +134,10 @@ class PortalKeyboard:
             # Fermer la session libère également les touches en cas d'échec partiel.
             self.close()
             return False
+
+    def has_restore_token(self):
+        """Indique si le portail peut tenter une reconnexion silencieuse."""
+        return bool(self._get_restore_token())
 
     def _clear_request(self):
         if self._response_id:
