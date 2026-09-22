@@ -4,7 +4,13 @@
 
 - [x] Mettre à jour la version centralisée, AppStream, Flatpak et le changelog pour le correctif de restauration au clic.
 - [x] Valider les tests, le build des artefacts et les métadonnées de packaging.
-- [ ] Créer la pull request, attendre la CI complète, merger vers `main` et vérifier l'état distant.
+- [x] Créer la pull request, attendre la CI complète, merger vers `main` et vérifier l'état distant.
+
+## Publication 0.4.5
+
+- [ ] Mettre à jour la procédure de publication avec la version courante.
+- [ ] Valider la CI de la documentation, merger vers `main`, créer le tag et vérifier la GitHub Release.
+- [ ] Construire, publier et vérifier le Snap dans le canal `latest/stable`.
 
 ## Correctif clic simple dans l'historique
 
