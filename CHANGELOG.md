@@ -19,6 +19,7 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 - La session du portail est fermée après l'autorisation ou le collage afin de ne pas laisser l'indicateur « Bureau à distance » affiché en permanence.
 - Le backend de collage est persistant (`auto`, `wtype`, `xwayland`, `xorg`, `ydotool`, `portal` ou `clipboard_only`) et le portail n'est jamais ouvert automatiquement depuis un clic non configuré.
 - Les profils existants sont migrés sans afficher l'assistant ; seuls les profils réellement neufs suivent le parcours de premier lancement.
+- L'assistant essaie désormais les méthodes l'une après l'autre avec des libellés compréhensibles ; les Paramètres n'exposent plus de sélecteur technique de backend.
 
 ### Corrigé
 

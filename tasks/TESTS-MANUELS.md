@@ -16,9 +16,9 @@
 ## À valider sur Wayland
 
 - Sur un profil réellement neuf, vérifier que l'assistant s'ouvre au premier lancement, synchronise le raccourci GNOME et affiche le diagnostic de session.
-- Dans l'assistant, cliquer dans un champ texte cible, lancer le test actif et confirmer le texte identifiable. Vérifier qu'il n'est pas ajouté à l'historique et que l'ancien presse-papiers revient lorsque le bureau le permet.
-- Tester un échec, puis les options `wtype`, XWayland local, Xorg, `ydotool`, portail et presse-papiers uniquement. Le portail ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
-- Relancer l'assistant depuis Paramètres et vérifier la persistance de `paste_backend` et `onboarding_completed`.
+- Dans l'assistant, préparer un champ texte cible, lancer le test actif et confirmer le texte identifiable. Vérifier qu'il n'est pas ajouté à l'historique et que l'ancien presse-papiers revient lorsque le bureau le permet.
+- Déclarer un échec, vérifier que l'assistant propose la solution suivante sans exposer de jargon, puis parcourir les méthodes jusqu'au portail et au mode presse-papiers uniquement. Le portail ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
+- Relancer l'assistant depuis Paramètres et vérifier qu'aucun sélecteur de backend n'est présent : la méthode est mémorisée uniquement après « Oui, ça fonctionne ».
 - Si une session Xorg est disponible, vérifier la sauvegarde GDM, le message de redémarrage, le bouton « Restaurer Wayland » et le refus de restauration après modification externe. Tester aussi `koplyx --restore-display-session`.
 - Si `ydotool` est disponible, vérifier que le bouton demande explicitement `pkexec`, crée uniquement le groupe `ydotool`, installe la règle `/dev/uinput`, n'utilise jamais le groupe `input`, puis demande une reconnexion. Sous Snap ou Flatpak, vérifier que le bouton est désactivé.
 

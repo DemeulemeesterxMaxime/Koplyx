@@ -7,6 +7,7 @@
 - [x] Ajouter la détection XWayland/Xorg et la commande de restauration de session GDM sans modifier automatiquement le système.
 - [x] Ajouter le helper `pkexec` dédié à `ydotool` et la règle udev restreinte à l'utilisateur courant.
 - [x] Intégrer la sélection du backend au collage runtime et fermer les sessions du portail après usage.
+- [x] Remplacer le sélecteur technique par un parcours guidé qui essaie les méthodes successivement et ne mémorise qu'une réussite confirmée.
 - [x] Mettre à jour le packaging, le README, le changelog et les tests manuels.
 - [ ] Exécuter les tests, les artefacts et le lancement manuel avant tout push.
 

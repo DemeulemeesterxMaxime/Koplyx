@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from koplyx import main as koplyx_main
-from koplyx.main import HistoryRow, KoplyxApplication
+from koplyx.main import HistoryRow, KoplyxApplication, OnboardingWindow, SettingsWindow
 
 
 def main() -> int:
@@ -127,10 +127,41 @@ def test_restore_pastes_to_previous_window_without_new_history_item() -> None:
         shutil.rmtree(TEST_HOME, ignore_errors=True)
 
 
+def test_settings_does_not_expose_backend_selector_and_onboarding_is_guided() -> None:
+    app = new_test_app()
+    try:
+        app.ensure_window()
+        assert app.window is not None
+        settings = SettingsWindow(app, app.window)
+        assert not any(type(widget).__name__ == "ComboBoxText" for widget in walk_widgets(settings))
+        onboarding = OnboardingWindow(app, app.window)
+        onboarding.show_page(1)
+        assert onboarding.primary.get_label() == "Tester"
+        assert "solutions" in onboarding.status.get_text()
+        onboarding.on_primary(None)
+        assert onboarding.page == 2
+        assert onboarding.primary.get_label() == "Tester cette solution"
+        onboarding.close()
+        settings.close()
+    finally:
+        app.quit()
+        app.store.conn.close()
+        app.control_server.close()
+        shutil.rmtree(TEST_HOME, ignore_errors=True)
+
+
 def iter_children(widget):
     child = widget.get_first_child()
     while child is not None:
         yield child
+        child = child.get_next_sibling()
+
+
+def walk_widgets(widget):
+    yield widget
+    child = widget.get_first_child()
+    while child is not None:
+        yield from walk_widgets(child)
         child = child.get_next_sibling()
 
 
@@ -147,4 +178,5 @@ if __name__ == "__main__":
     result = main()
     test_global_pinned_filter_and_single_line_title()
     test_restore_pastes_to_previous_window_without_new_history_item()
+    test_settings_does_not_expose_backend_selector_and_onboarding_is_guided()
     raise SystemExit(result)

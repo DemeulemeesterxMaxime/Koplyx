@@ -39,7 +39,6 @@ from koplyx import APP_ID, APP_NAME
 from koplyx.portal_keyboard import PortalKeyboard
 from koplyx.system_setup import (
     command_available,
-    display_diagnostic,
     run_privileged,
     xorg_sessions,
 )
@@ -1322,30 +1321,18 @@ class SettingsWindow(Gtk.Window):
         self.capture_images = self.switch(content, "Capturer les images", "capture_images")
 
         self.section(content, "COLLAGE DIRECT")
-        backend_row = self.row(content, "Backend de collage")
-        self.backend_combo = Gtk.ComboBoxText()
-        backends = [
-            ("auto", "Automatique (wtype → XWayland → ydotool)"),
-            ("wtype", "wtype"),
-            ("xwayland", "XWayland local"),
-            ("xorg", "Xorg / xdotool"),
-            ("ydotool", "ydotool"),
-            ("portal", "Portail Bureau à distance"),
-            ("clipboard_only", "Presse-papiers uniquement"),
-        ]
-        for key, label in backends:
-            self.backend_combo.append(key, label)
-        current_backend = app.config.get("paste_backend")
-        self.backend_combo.set_active_id(current_backend if current_backend in PASTE_BACKENDS else "auto")
-        self.backend_combo.connect("changed", self.on_backend_changed)
-        backend_row.append(self.backend_combo)
-        backend_note = Gtk.Label(
-            label="Aucun portail ni privilège n'est demandé automatiquement. Les options Xorg et ydotool s'activent uniquement depuis l'assistant."
-        )
+        backend_note = Gtk.Label(label=self.app.paste_backend_description())
         backend_note.set_xalign(0)
         backend_note.set_wrap(True)
         backend_note.add_css_class("settings-note")
         content.append(backend_note)
+        assistant_note = Gtk.Label(
+            label="Pour modifier cette configuration, relancez l'assistant. Koplyx essaiera les solutions une par une et ne mémorisera votre choix qu'après votre confirmation."
+        )
+        assistant_note.set_xalign(0)
+        assistant_note.set_wrap(True)
+        assistant_note.add_css_class("settings-note")
+        content.append(assistant_note)
 
         self.section(content, "ARRIÈRE-PLAN")
         self.show_tray = self.switch(content, "Afficher dans la barre système", "show_tray", self.on_tray_changed)
@@ -1357,20 +1344,6 @@ class SettingsWindow(Gtk.Window):
         self.feedback.add_css_class("settings-feedback")
         content.append(self.feedback)
 
-        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
-            authorize = Gtk.Button(label="Autoriser le collage dans les autres applications")
-            authorize.connect("clicked", lambda _b: app.authorize_paste(self.feedback.set_text))
-            content.append(authorize)
-            explanation = Gtk.Label(label=(
-                "GNOME peut nommer cette autorisation « Bureau à distance ». "
-                "Koplyx demande seulement le clavier pour Ctrl+V, sans partager l'écran. "
-                "Koplyx demande une autorisation persistante et réutilise le jeton fourni par le bureau après un redémarrage. "
-                "Le bureau peut toutefois la révoquer dans ses paramètres de confidentialité."
-            ))
-            explanation.set_wrap(True)
-            explanation.set_xalign(0)
-            content.append(explanation)
-
         shortcut_warning = Gtk.Label(
             label="Le raccourci est appliqué automatiquement à GNOME. En cas de conflit, modifiez-le dans Paramètres > Clavier > Raccourcis clavier."
         )
@@ -1379,36 +1352,11 @@ class SettingsWindow(Gtk.Window):
         shortcut_warning.add_css_class("settings-warning")
         content.append(shortcut_warning)
 
-        tools = paste_tool_name()
-        paste_note = tools if tools else "non disponible, installer xdotool sur X11 ou wtype sur Wayland"
-        note = Gtk.Label(
-            label=f"Outil de collage direct : {paste_note}. Wayland peut limiter les raccourcis globaux selon le bureau."
-        )
+        note = Gtk.Label(label="Le mode presse-papiers reste toujours disponible si votre bureau refuse le collage automatique.")
         note.set_wrap(True)
         note.set_xalign(0)
         note.add_css_class("settings-note")
         content.append(note)
-
-        if xorg_sessions():
-            xorg_button = Gtk.Button(label="Configurer Xorg au prochain redémarrage")
-            xorg_button.connect("clicked", lambda _b: self.configure_xorg())
-            content.append(xorg_button)
-        else:
-            xorg_info = Gtk.Label(label="Aucune session Xorg installée : l'option de bascule reste désactivée.")
-            xorg_info.set_xalign(0)
-            xorg_info.set_wrap(True)
-            xorg_info.add_css_class("settings-note")
-            content.append(xorg_info)
-        restore_gdm = Gtk.Button(label="Restaurer Wayland dans GDM")
-        restore_gdm.connect("clicked", lambda _b: self.restore_gdm())
-        content.append(restore_gdm)
-        if command_available("ydotool") and not os.environ.get("SNAP") and not os.environ.get("FLATPAK_ID"):
-            ydotool_button = Gtk.Button(label="Configurer l'accès ydotool")
-            ydotool_button.connect("clicked", lambda _b: self.configure_ydotool())
-            content.append(ydotool_button)
-            ydotool_remove = Gtk.Button(label="Retirer la configuration ydotool")
-            ydotool_remove.connect("clicked", lambda _b: self.remove_ydotool())
-            content.append(ydotool_remove)
 
     def section(self, root: Gtk.Box, label: str) -> None:
         title = Gtk.Label(label=label)
@@ -1461,43 +1409,6 @@ class SettingsWindow(Gtk.Window):
             self.shortcut_state.set_text("À configurer dans les réglages clavier de GNOME.")
             self.shortcut_state.remove_css_class("shortcut-state-ok")
             self.shortcut_state.add_css_class("shortcut-state-error")
-
-    def on_backend_changed(self, combo: Gtk.ComboBoxText) -> None:
-        backend = combo.get_active_id() or "auto"
-        self.app.config.set("paste_backend", backend)
-        self.feedback.set_text(f"Backend sélectionné : {backend}.")
-
-    def configure_xorg(self) -> None:
-        sessions = xorg_sessions()
-        if not sessions:
-            self.feedback.set_text("Aucune session Xorg installée.")
-            return
-        ok, message = run_privileged("gdm-xorg-enable", str(sessions[0]))
-        self.feedback.set_text(message)
-        if ok:
-            self.app.config.set("paste_backend", "xorg")
-            self.backend_combo.set_active_id("xorg")
-
-    def configure_ydotool(self) -> None:
-        ok, message = run_privileged("ydotool-enable")
-        self.feedback.set_text(message)
-        if ok:
-            self.app.config.set("paste_backend", "ydotool")
-            self.backend_combo.set_active_id("ydotool")
-
-    def restore_gdm(self) -> None:
-        ok, message = run_privileged("gdm-restore")
-        self.feedback.set_text(message)
-        if ok and self.app.config.get("paste_backend") == "xorg":
-            self.app.config.set("paste_backend", "auto")
-            self.backend_combo.set_active_id("auto")
-
-    def remove_ydotool(self) -> None:
-        ok, message = run_privileged("ydotool-disable")
-        self.feedback.set_text(message)
-        if ok and self.app.config.get("paste_backend") == "ydotool":
-            self.app.config.set("paste_backend", "auto")
-            self.backend_combo.set_active_id("auto")
 
     def spin(self, root, label: str, key: str, minimum: int, maximum: int) -> Gtk.SpinButton:
         row = self.row(root, label)
@@ -1708,13 +1619,16 @@ class ShortcutCaptureDialog(Gtk.Window):
 
 
 class OnboardingWindow(Gtk.Window):
-    """Assistant de premier lancement pour choisir et vérifier le collage."""
+    """Assistant guidé qui essaie les solutions dans un ordre compréhensible."""
 
     def __init__(self, app: "KoplyxApplication", parent: Gtk.Window | None = None) -> None:
         super().__init__(title="Configurer le collage direct - Koplyx", transient_for=parent or app.window, modal=True)
         self.app = app
         self.page = 0
         self.action_mode = "page"
+        self.test_plan: list[str] = []
+        self.test_index = -1
+        self.test_backend = ""
         self.set_default_size(560, 500)
         self.set_size_request(460, 420)
         self.add_css_class("settings-window")
@@ -1735,9 +1649,6 @@ class OnboardingWindow(Gtk.Window):
         self.body = Gtk.Label()
         self.body.set_xalign(0)
         self.body.set_wrap(True)
-        # Le texte explicatif n'est pas un champ éditable : le rendre
-        # sélectionnable déclenche le surlignage orange du thème Ubuntu au
-        # premier affichage de la fenêtre.
         self.body.set_selectable(False)
         self.body.add_css_class("settings-note")
         root.append(self.body)
@@ -1754,7 +1665,7 @@ class OnboardingWindow(Gtk.Window):
         actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         actions.set_halign(Gtk.Align.END)
         root.append(actions)
-        self.secondary = Gtk.Button(label="Passer")
+        self.secondary = Gtk.Button(label="Quitter")
         self.secondary.connect("clicked", self.on_secondary)
         actions.append(self.secondary)
         self.primary = Gtk.Button(label="Continuer")
@@ -1762,6 +1673,7 @@ class OnboardingWindow(Gtk.Window):
         self.primary.connect("clicked", self.on_primary)
         actions.append(self.primary)
         self.show_page(0)
+        GLib.idle_add(self.primary.grab_focus)
 
     def on_close_request(self, _window) -> bool:
         self.app.onboarding = None
@@ -1779,8 +1691,8 @@ class OnboardingWindow(Gtk.Window):
         if page == 0:
             self.title_label.set_text("Bienvenue dans Koplyx")
             self.body.set_text(
-                "Avant de rester en arrière-plan, Koplyx doit vérifier comment envoyer Ctrl+V à la fenêtre précédente. "
-                "Choisissez d'abord le raccourci qui ouvre l'historique."
+                "Koplyx va essayer automatiquement plusieurs façons de coller dans la fenêtre précédente. "
+                "Vous confirmerez simplement si le texte apparaît au bon endroit."
             )
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
             row.add_css_class("settings-row")
@@ -1792,66 +1704,62 @@ class OnboardingWindow(Gtk.Window):
             button.connect("clicked", lambda _b: self.open_shortcut(value))
             row.append(button)
             self.content.append(row)
-            state = "Raccourci synchronisé avec GNOME." if self.app.shortcut_sync_ok else "Raccourci enregistré, mais GNOME n'a pas confirmé la synchronisation."
+            state = "Raccourci prêt." if self.app.shortcut_sync_ok else "Raccourci enregistré, synchronisation à vérifier dans GNOME."
             self.status.set_text(state)
             self.secondary.set_label("Quitter")
-            self.primary.set_label("Diagnostiquer")
+            self.primary.set_label("Commencer les tests")
         elif page == 1:
-            diagnostic = display_diagnostic()
-            ydotool = diagnostic["ydotool"]
-            self.title_label.set_text("Diagnostic de votre session")
+            self.title_label.set_text("Préparons le test")
             self.body.set_text(
-                "Le clic sur un élément restaure le contenu, masque Koplyx, réactive la fenêtre cible et envoie Ctrl+V. "
-                "Le test suivant vérifie cette action dans un champ que vous choisissez."
+                "Ouvrez un champ texte dans une autre application. Ensuite, revenez ici et cliquez sur « Tester ». "
+                "Koplyx masquera sa fenêtre, collera un texte de test puis reviendra automatiquement."
             )
-            details = [
-                f"Session : {diagnostic['session']} · DISPLAY : {diagnostic['display'] or 'absent'}",
-                f"Wayland : {'oui' if diagnostic['wayland_display'] else 'non'} · XWayland détectable : {'oui' if diagnostic['xwayland_candidate'] else 'non'}",
-                f"wtype : {'installé' if diagnostic['wtype'] else 'absent'} · xdotool : {'installé' if diagnostic['xdotool'] else 'absent'}",
-                f"ydotool : {'installé' if ydotool['installed'] else 'absent'}, socket : {'accessible' if ydotool['writable'] else 'indisponible'}",
-                f"Sessions Xorg détectées : {len(diagnostic['xorg_sessions'])}",
-            ]
-            for line in details:
-                label = Gtk.Label(label=line)
-                label.set_xalign(0)
-                label.set_wrap(True)
-                self.content.append(label)
-            self.status.set_text(f"Backend actuel : {paste_tool_name(self.app.previous_window_id, self.app.config.get('paste_backend')) or 'presse-papiers uniquement'}")
-            self.secondary.set_label("Configurer plus tard")
-            self.primary.set_label("Préparer le test")
+            self.test_plan = self.app.onboarding_test_plan()
+            self.test_index = -1
+            self.status.set_text(f"Koplyx va essayer jusqu'à {len(self.test_plan)} solutions, de la plus discrète à la plus assistée.")
+            self.secondary.set_label("Retour")
+            self.primary.set_label("Tester")
         elif page == 2:
-            self.title_label.set_text("Test actif")
-            self.body.set_text(
-                "Préparez un champ texte dans une autre application (vous pouvez utiliser Alt+Tab), puis revenez ici et lancez le test. "
-                "Koplyx se masquera quelques secondes, restaurera un texte de test identifiable et enverra Ctrl+V. "
-                "Ce texte est exclu de l'historique."
-            )
-            self.status.set_text("Le test utilise le backend configuré et ne demande aucun privilège automatiquement.")
-            self.secondary.set_label("Choisir une autre option")
-            self.primary.set_label("Lancer le test")
-        elif page == 3:
-            self.title_label.set_text("Choisir une solution")
-            self.body.set_text(
-                "Aucun accès n'est demandé sans votre clic. wtype est essayé en premier. XWayland relance uniquement Koplyx avec GDK_BACKEND=x11, "
-                "sans convertir toute la session. Xorg nécessite un redémarrage. ydotool utilise un groupe dédié et ne lit pas les périphériques clavier."
-            )
-            self.add_backend_button("wtype", "Utiliser wtype", "wtype", bool(command_available("wtype")))
-            self.add_backend_button("xwayland", "Tester Koplyx sous XWayland local", "xwayland", bool(os.environ.get("DISPLAY")))
-            sessions = xorg_sessions()
-            self.add_backend_button("xorg", "Configurer une session Xorg au prochain redémarrage", "xorg", bool(sessions), sessions[0].name if sessions else "")
-            self.add_backend_button("ydotool", "Configurer ydotool avec une autorisation", "ydotool", bool(command_available("ydotool")) and not os.environ.get("SNAP") and not os.environ.get("FLATPAK_ID"))
-            self.add_backend_button("portal", "Utiliser le portail Bureau à distance", "portal", True)
-            self.add_backend_button("clipboard_only", "Presse-papiers uniquement", "clipboard_only", True)
-            self.secondary.set_label("Retour au test")
-            self.primary.set_label("Terminer")
+            self.show_test_step()
 
-    def add_backend_button(self, _key: str, label: str, backend: str, enabled: bool, session: str = "") -> None:
-        button = Gtk.Button(label=label)
-        button.set_sensitive(enabled)
-        if not enabled:
-            button.set_tooltip_text("Option indisponible dans cette session ou cette installation.")
-        button.connect("clicked", lambda _b: self.choose_backend(backend, session))
-        self.content.append(button)
+    def show_test_step(self, message: str = "") -> None:
+        self.page = 2
+        self.action_mode = "page"
+        self.clear_content()
+        if self.test_index < 0:
+            self.test_index = 0
+        if self.test_index >= len(self.test_plan):
+            self.test_backend = "clipboard_only"
+            self.title_label.set_text("Dernière solution")
+            self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx peut tout de même restaurer chaque élément dans le presse-papiers pour que vous utilisiez Ctrl+V.")
+            self.status.set_text("Ce choix n'active aucun accès système.")
+            self.primary.set_label("Utiliser le presse-papiers")
+            self.secondary.set_label("Retour")
+            return
+        self.test_backend = self.test_plan[self.test_index]
+        self.title_label.set_text(f"Essai {self.test_index + 1} sur {len(self.test_plan)}")
+        descriptions = {
+            "wtype": "une méthode silencieuse adaptée à votre bureau",
+            "xwayland": "la compatibilité avec les applications X",
+            "xorg": "une session graphique classique au prochain redémarrage",
+            "ydotool": "une méthode système dédiée au collage",
+            "portal": "l'autorisation clavier d'Ubuntu",
+        }
+        description = descriptions.get(self.test_backend, "une autre méthode de collage")
+        self.body.set_text(
+            f"Nous allons essayer {description}. Placez le curseur dans votre champ texte, puis cliquez sur « Tester cette solution ». "
+            "Si le texte n'apparaît pas, Koplyx passera à la suivante."
+        )
+        if message:
+            self.status.set_text(message)
+        elif self.test_backend == "ydotool":
+            self.status.set_text("Ubuntu peut demander votre mot de passe. Koplyx envoie uniquement Ctrl+V et ne lit pas le clavier.")
+        elif self.test_backend == "portal":
+            self.status.set_text("Ubuntu affichera une autorisation « Bureau à distance ». Aucun écran ne sera partagé.")
+        else:
+            self.status.set_text("Aucun accès supplémentaire n'est demandé pour cet essai.")
+        self.primary.set_label("Tester cette solution")
+        self.secondary.set_label("Passer à la suivante")
 
     def open_shortcut(self, value: Gtk.Label) -> None:
         dialog = ShortcutCaptureDialog(self, self.app.config.get("shortcut"))
@@ -1862,78 +1770,65 @@ class OnboardingWindow(Gtk.Window):
         self.app.config.set("shortcut", shortcut)
         value.set_text(accelerator_label(shortcut))
         self.app.sync_global_shortcut()
-        self.status.set_text(
-            "Raccourci synchronisé avec GNOME." if self.app.shortcut_sync_ok else "Raccourci enregistré, synchronisation GNOME à vérifier."
-        )
+        self.status.set_text("Raccourci synchronisé." if self.app.shortcut_sync_ok else "Raccourci enregistré, synchronisation à vérifier.")
 
     def on_primary(self, _button) -> None:
         if self.action_mode == "success":
-            self.finish()
+            self.finish_success(self.test_backend)
             return
         if self.action_mode == "failure":
-            self.show_page(3)
+            self.next_test()
             return
         if self.page == 0:
             self.show_page(1)
         elif self.page == 1:
-            self.show_page(2)
+            self.test_index = 0
+            self.show_test_step()
         elif self.page == 2:
-            self.app.begin_onboarding_test(self)
-        else:
-            self.finish()
+            if self.test_backend == "clipboard_only":
+                self.finish_success("clipboard_only")
+            else:
+                self.app.begin_onboarding_test(self, self.test_backend)
 
     def on_secondary(self, _button) -> None:
-        if self.action_mode in {"success", "failure"}:
-            self.show_page(2)
+        if self.action_mode == "success":
+            self.next_test()
+            return
+        if self.action_mode == "failure":
+            self.next_test()
             return
         if self.page == 0:
             self.close()
         elif self.page == 1:
-            self.show_page(3)
+            self.show_page(0)
         elif self.page == 2:
-            self.show_page(3)
-        else:
-            self.show_page(2)
+            self.next_test()
+
+    def next_test(self) -> None:
+        self.test_index += 1
+        self.show_test_step("Cette solution n'a pas été confirmée. Essayons la suivante.")
 
     def test_result(self, success: bool, backend: str) -> None:
         self.present()
         if success:
-            self.status.set_text(f"Le backend {backend} a envoyé le test. Confirmez qu'il apparaît dans le champ cible.")
-            self.primary.set_label("Ça a fonctionné")
-            self.secondary.set_label("Réessayer")
+            self.test_backend = backend
+            self.status.set_text("Le collage a été envoyé. Est-ce que le texte est apparu dans le champ cible ?")
+            self.body.set_text("Répondez simplement oui ou non. La méthode ne sera mémorisée qu'après votre confirmation.")
+            self.primary.set_label("Oui, ça fonctionne")
+            self.secondary.set_label("Non, essayer la suivante")
             self.action_mode = "success"
         else:
-            self.status.set_text("Le test n'a pas été confirmé ou le backend est indisponible. Choisissez une autre option.")
-            self.primary.set_label("Voir les options")
-            self.secondary.set_label("Réessayer")
+            self.status.set_text("Cette solution n'a pas fonctionné dans votre session.")
+            self.primary.set_label("Essayer la suivante")
+            self.secondary.set_label("Essayer la suivante")
             self.action_mode = "failure"
 
-    def choose_backend(self, backend: str, session: str = "") -> None:
-        if backend == "xwayland":
-            self.app.config.set("paste_backend", "xwayland")
-            self.status.set_text("Koplyx sera relancé avec GDK_BACKEND=x11 pour tester XWayland local.")
-            self.app.launch_xwayland_backend()
-            return
-        if backend == "xorg":
-            ok, message = run_privileged("gdm-xorg-enable", str(Path("/usr/share/xsessions") / session))
-            self.status.set_text(message)
-            if ok:
-                self.app.config.set("paste_backend", "xorg")
-            return
-        if backend == "ydotool":
-            ok, message = run_privileged("ydotool-enable")
-            self.status.set_text(message)
-            if ok:
-                self.app.config.set("paste_backend", "ydotool")
-            return
+    def finish_success(self, backend: str) -> None:
         self.app.config.set("paste_backend", backend)
-        self.status.set_text(f"Backend sélectionné : {backend}.")
-
-    def finish(self) -> None:
         self.app.config.set("onboarding_completed", True)
         self.app.onboarding = None
         self.close()
-        self.app.set_status("Configuration du collage terminée.")
+        self.app.set_status("Collage direct configuré.")
 
 
 class TrayIndicator:
@@ -2297,10 +2192,70 @@ class KoplyxApplication(Gtk.Application):
         self.onboarding = OnboardingWindow(self, parent)
         self.onboarding.present()
 
-    def begin_onboarding_test(self, onboarding: OnboardingWindow) -> None:
+    def paste_backend_description(self) -> str:
+        descriptions = {
+            "auto": "Le collage direct est en cours de configuration par l'assistant.",
+            "wtype": "Le collage direct fonctionne avec la méthode validée par l'assistant.",
+            "xwayland": "Le collage direct fonctionne avec la méthode validée par l'assistant.",
+            "xorg": "Le collage direct est préparé pour la session graphique validée par l'assistant.",
+            "ydotool": "Le collage direct fonctionne avec la méthode système validée par l'assistant.",
+            "portal": "Le collage direct utilise l'autorisation Ubuntu validée par l'assistant.",
+            "clipboard_only": "Koplyx restaure les éléments dans le presse-papiers. Utilisez Ctrl+V pour les insérer.",
+        }
+        return descriptions.get(self.config.get("paste_backend"), descriptions["auto"])
+
+    def onboarding_test_plan(self) -> list[str]:
+        plan: list[str] = []
+        if command_available("wtype"):
+            plan.append("wtype")
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and os.environ.get("DISPLAY") and command_exists("xdotool"):
+            plan.append("xwayland")
+        if xorg_sessions():
+            plan.append("xorg")
+        if command_available("ydotool") and not os.environ.get("SNAP") and not os.environ.get("FLATPAK_ID"):
+            plan.append("ydotool")
+        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+            plan.append("portal")
+        return plan
+
+    def begin_onboarding_test(self, onboarding: OnboardingWindow, backend: str) -> None:
         if not self.watcher:
-            onboarding.test_result(False, "aucun")
+            onboarding.test_result(False, backend)
             return
+        if backend == "xorg":
+            sessions = xorg_sessions()
+            if not sessions:
+                onboarding.test_result(False, backend)
+                return
+            ok, message = run_privileged("gdm-xorg-enable", str(sessions[0]))
+            if ok:
+                onboarding.test_result(True, backend)
+                onboarding.status.set_text(message + " Après le redémarrage, confirmez que le collage fonctionne.")
+            else:
+                onboarding.test_result(False, backend)
+                onboarding.status.set_text(message)
+            return
+        if backend == "ydotool":
+            ok, message = run_privileged("ydotool-enable")
+            if not ok:
+                onboarding.test_result(False, backend)
+                onboarding.status.set_text(message)
+                return
+        if backend == "portal":
+            onboarding.status.set_text("Ubuntu va demander l'autorisation clavier. Acceptez-la pour continuer le test.")
+
+            def portal_ready(ok, message):
+                if not ok:
+                    onboarding.test_result(False, backend)
+                    onboarding.status.set_text(message)
+                    return
+                self.prepare_onboarding_injection(onboarding, backend)
+
+            self.portal_keyboard.prepare(portal_ready)
+            return
+        self.prepare_onboarding_injection(onboarding, backend)
+
+    def prepare_onboarding_injection(self, onboarding: OnboardingWindow, backend: str) -> None:
         self.onboarding_test_marker = "KOPLYX-TEST-COLLAGE-7F3A"
         self.onboarding_test_digest = sha256("text", self.onboarding_test_marker.encode("utf-8"))
         self.onboarding_previous_text = None
@@ -2315,7 +2270,7 @@ class KoplyxApplication(Gtk.Application):
             onboarding.hide()
             if self.window:
                 self.window.hide()
-            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding)
+            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding, backend)
 
         try:
             self.watcher.clipboard.read_text_async(None, save_previous)
@@ -2324,25 +2279,31 @@ class KoplyxApplication(Gtk.Application):
             onboarding.hide()
             if self.window:
                 self.window.hide()
-            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding)
+            GLib.timeout_add(1800, self.inject_onboarding_test, onboarding, backend)
 
-    def inject_onboarding_test(self, onboarding: OnboardingWindow) -> bool:
+    def inject_onboarding_test(self, onboarding: OnboardingWindow, backend: str) -> bool:
         self.remember_active_window()
-        backend = self.config.get("paste_backend") or "auto"
-        candidates = paste_tool_candidates(self.previous_window_id, backend)
+        if backend == "portal":
+            sent = bool(self.portal_keyboard.ready and self.portal_keyboard.paste())
+            candidates = ["portal"]
+        else:
+            candidates = paste_tool_candidates(self.previous_window_id, backend)
+            sent = False
         selected = candidates[0] if candidates else backend
-        sent = False
         used = selected
-        for candidate in candidates:
-            candidate_backend = {
-                "wtype": "wtype",
-                "xdotool": "xwayland" if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" else "xorg",
-                "ydotool": "ydotool",
-            }.get(candidate, backend)
-            if paste_clipboard_now(self.previous_window_id, candidate_backend):
-                sent = True
-                used = candidate
-                break
+        if backend != "portal":
+            for candidate in candidates:
+                candidate_backend = {
+                    "wtype": "wtype",
+                    "xdotool": "xwayland" if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" else "xorg",
+                    "ydotool": "ydotool",
+                }.get(candidate, backend)
+                if paste_clipboard_now(self.previous_window_id, candidate_backend):
+                    sent = True
+                    used = candidate
+                    break
+        if backend == "portal":
+            self.portal_keyboard.close()
         GLib.timeout_add(700, self.restore_onboarding_clipboard)
         GLib.idle_add(onboarding.test_result, sent, used)
         return GLib.SOURCE_REMOVE
