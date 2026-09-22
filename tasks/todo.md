@@ -1,5 +1,12 @@
 # État des tâches
 
+## Repli de collage silencieux Wayland
+
+- [x] Détecter et essayer les outils dans l'ordre `wtype`, `xdotool` XWayland, `ydotool`, puis le portail.
+- [x] Ajouter les tests de sélection, d'échec et de repli entre les outils.
+- [x] Mettre à jour les dépendances et la documentation sans rendre `ydotool` obligatoire.
+- [x] Rejouer les tests, le smoke test et le build, puis relancer l'instance locale pour validation manuelle.
+
 ## Épinglage, affichage et collage direct
 
 - [x] Remplacer le collage XTEST sous Wayland par une session clavier du portail, avec autorisation explicite et réutilisable.

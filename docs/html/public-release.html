@@ -104,7 +104,7 @@
 <li>Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.</li>
 <li>Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.</li>
 <li>Publier les checksums <code>SHA256SUMS</code> avec la release.</li>
-<li>Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.</li>
+<li>Documenter explicitement les limites Wayland : Koplyx essaie <code>wtype</code>, <code>xdotool</code> pour XWayland et <code>ydotool</code> avant le portail, mais le collage automatique dépend du bureau.</li>
 <li>Purger l&#x27;historique local si des donnees reelles ont ete copiees avec une version anterieure a <code>0.2.2</code>, car les anciens apercus pouvaient contenir du texte en clair.</li>
 <li>Tester une installation propre depuis le <code>.deb</code>, puis suppression et reinstall.</li>
 </ul>
@@ -117,7 +117,7 @@ sha256sum -c SHA256SUMS
 </code></pre>
 <h2>Verification manuelle</h2>
 <ul>
-<li>Sous Wayland, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande pendant la même exécution. Tester également le refus et la révocation de l&#x27;autorisation.</li>
+<li>Sous Wayland, tester d&#x27;abord <code>wtype</code>, <code>xdotool</code> avec une cible XWayland et <code>ydotool</code> lorsqu&#x27;ils sont disponibles. Si aucun outil direct ne fonctionne, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l&#x27;indicateur après le collage. Tester également le refus et la révocation de l&#x27;autorisation.</li>
 <li>Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.</li>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
 <li>Copier/coller un texte et verifier son apparition dans l&#x27;historique avec un extrait lisible.</li>

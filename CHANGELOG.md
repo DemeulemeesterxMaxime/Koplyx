@@ -13,6 +13,8 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
 - Les textes longs restent sur une seule ligne avec ellipse et infobulle.
 - Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
+- Le collage direct essaie `wtype`, `xdotool` pour XWayland, puis `ydotool` avant de recourir au portail Wayland.
+- La session du portail est fermée après l'autorisation ou le collage afin de ne pas laisser l'indicateur « Bureau à distance » affiché en permanence.
 
 ### Corrigé
 

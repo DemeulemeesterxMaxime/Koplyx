@@ -7,7 +7,7 @@ Koplyx est pret pour une release publique stable lorsque la validation locale pa
 - Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.
 - Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.
 - Publier les checksums `SHA256SUMS` avec la release.
-- Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.
+- Documenter explicitement les limites Wayland : Koplyx essaie `wtype`, `xdotool` pour XWayland et `ydotool` avant le portail, mais le collage automatique dépend du bureau.
 - Purger l'historique local si des donnees reelles ont ete copiees avec une version anterieure a `0.2.2`, car les anciens apercus pouvaient contenir du texte en clair.
 - Tester une installation propre depuis le `.deb`, puis suppression et reinstall.
 
@@ -22,7 +22,7 @@ sha256sum -c SHA256SUMS
 
 ## Verification manuelle
 
-- Sous Wayland, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande pendant la même exécution. Tester également le refus et la révocation de l'autorisation.
+- Sous Wayland, tester d'abord `wtype`, `xdotool` avec une cible XWayland et `ydotool` lorsqu'ils sont disponibles. Si aucun outil direct ne fonctionne, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l'indicateur après le collage. Tester également le refus et la révocation de l'autorisation.
 - Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
 - Copier/coller un texte et verifier son apparition dans l'historique avec un extrait lisible.

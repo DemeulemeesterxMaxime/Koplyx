@@ -81,4 +81,5 @@ parts:
       - python3-gi
       - python3-pil
       - python3-secretstorage
+      - wtype
       - xdotool

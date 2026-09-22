@@ -303,12 +303,55 @@ def command_exists(command: str) -> bool:
     return shutil.which(command) is not None
 
 
-def paste_tool_name() -> str | None:
+def xwayland_active_window() -> str | None:
+    """Retourne la fenêtre XWayland active lorsqu'elle est identifiable."""
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() != "wayland" or not command_exists("xdotool"):
+        return None
+    result = subprocess.run(["xdotool", "getactivewindow"], check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    window_id = result.stdout.strip()
+    if not window_id:
+        return None
+    pid = x11_window_pid(window_id)
+    if not pid or pid == os.getpid():
+        return None
+    return window_id
+
+
+def paste_tool_candidates(window_id: str | None = None) -> list[str]:
+    """Retourne les outils directs dans l'ordre de repli souhaité."""
     session = os.environ.get("XDG_SESSION_TYPE", "").lower()
+    candidates = []
     if session == "wayland":
-        return "Portail du bureau (autorisation clavier)"
+        if command_exists("wtype"):
+            candidates.append("wtype")
+        # xdotool ne doit être proposé que si une vraie cible XWayland a été
+        # mémorisée. Sinon son code retour peut être positif sans rien coller.
+        if window_id and command_exists("xdotool"):
+            candidates.append("xdotool")
+        if command_exists("ydotool"):
+            candidates.append("ydotool")
+        return candidates
     if command_exists("xdotool"):
-        return "xdotool"
+        candidates.append("xdotool")
+    if command_exists("ydotool"):
+        candidates.append("ydotool")
+    return candidates
+
+
+def paste_tool_name(window_id: str | None = None) -> str | None:
+    candidates = paste_tool_candidates(window_id)
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+        labels = list(candidates)
+        if "xdotool" not in labels and command_exists("xdotool"):
+            labels.append("xdotool (XWayland)")
+        if "ydotool" not in labels and command_exists("ydotool"):
+            labels.append("ydotool")
+        labels.append("portail du bureau")
+        return " → ".join(labels)
+    if candidates:
+        return " → ".join(candidates)
     return None
 
 
@@ -350,10 +393,22 @@ def activate_x11_window(window_id: str | None) -> bool:
     )
 
 
-def paste_clipboard_now() -> bool:
-    tool = paste_tool_name()
-    if tool == "xdotool":
-        return subprocess.run(["xdotool", "key", "--clearmodifiers", "ctrl+v"], check=False).returncode == 0
+def paste_clipboard_now(window_id: str | None = None) -> bool:
+    for tool in paste_tool_candidates(window_id):
+        if tool == "xdotool":
+            command = ["xdotool", "key"]
+            if window_id:
+                command.extend(["--window", window_id])
+            command.extend(["--clearmodifiers", "ctrl+v"])
+        elif tool == "wtype":
+            command = ["wtype", "-M", "ctrl", "v", "-m", "ctrl"]
+        else:
+            command = ["ydotool", "key", "29:1", "47:1", "47:0", "29:0"]
+        try:
+            if subprocess.run(command, check=False).returncode == 0:
+                return True
+        except OSError:
+            continue
     return False
 
 
@@ -1928,6 +1983,8 @@ class KoplyxApplication(Gtk.Application):
     def remember_active_window(self) -> None:
         window_id = x11_active_window()
         if not window_id:
+            window_id = xwayland_active_window()
+        if not window_id:
             self.previous_window_id = None
             return
         if x11_window_pid(window_id) == os.getpid():
@@ -2051,6 +2108,12 @@ class KoplyxApplication(Gtk.Application):
             restored = False
         if restored:
             if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and not self.portal_keyboard.ready:
+                # Les outils directs restent prioritaires et n'affichent
+                # aucun indicateur de session distante.
+                if paste_tool_candidates(self.previous_window_id):
+                    if self.sleep_to_tray():
+                        GLib.timeout_add(120, self.activate_then_paste)
+                    return
                 if self.portal_keyboard.has_restore_token():
                     self.set_status("Contenu restauré. Réactivation du collage direct…")
 
@@ -2076,10 +2139,15 @@ class KoplyxApplication(Gtk.Application):
             self.set_status("Restauration impossible.")
 
     def authorize_paste(self, feedback=None) -> None:
-        def update(_ok, message):
+        def update(ok, message):
             self.set_status(message)
             if feedback:
                 feedback(message)
+            # L'autorisation est conservée par le jeton, pas par une session
+            # RemoteDesktop maintenue ouverte en permanence. L'icône GNOME
+            # disparaît ainsi dès que la demande est terminée.
+            if ok:
+                self.portal_keyboard.close()
         update(False, "Autorisez le clavier dans la demande du bureau pour activer le collage direct.")
         self.portal_keyboard.prepare(update)
 
@@ -2096,11 +2164,32 @@ class KoplyxApplication(Gtk.Application):
             self.paste_failed("Koplyx a encore le focus. Sélectionnez le champ cible puis réessayez.")
             return GLib.SOURCE_REMOVE
         if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
-            sent = self.portal_keyboard.paste()
+            sent = paste_clipboard_now(self.previous_window_id)
+            if not sent:
+                if self.portal_keyboard.ready:
+                    sent = self.portal_keyboard.paste()
+                elif self.portal_keyboard.has_restore_token():
+                    self.set_status("Outil de collage direct indisponible. Réactivation du portail…")
+
+                    def paste_with_portal(ok, message):
+                        if not ok:
+                            self.paste_failed(message)
+                            return
+                        portal_sent = self.portal_keyboard.paste()
+                        if portal_sent:
+                            self.set_status("Commande de collage envoyée à la fenêtre active.")
+                            self.portal_keyboard.close()
+                        else:
+                            self.paste_failed("Collage non autorisé ou indisponible. Contenu restauré : utilisez Ctrl+V.")
+
+                    self.portal_keyboard.prepare(paste_with_portal)
+                    return GLib.SOURCE_REMOVE
         else:
-            sent = paste_clipboard_now()
+            sent = paste_clipboard_now(self.previous_window_id)
         if sent:
             self.set_status("Commande de collage envoyée à la fenêtre active.")
+            if self.portal_keyboard.ready:
+                self.portal_keyboard.close()
         else:
             self.paste_failed("Collage non autorisé ou indisponible. Contenu restauré : utilisez Ctrl+V.")
         return GLib.SOURCE_REMOVE

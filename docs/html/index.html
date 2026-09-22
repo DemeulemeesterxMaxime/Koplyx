@@ -124,7 +124,7 @@ sudo apt install ./koplyx_0.4.5_all.deb
 <h3>Depuis les sources</h3>
 <p>Sur Debian ou Ubuntu, installez les dépendances puis lancez le projet :</p>
 <pre><code>
-sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool
+sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool wtype
 git clone https://github.com/DemeulemeesterxMaxime/Koplyx.git
 cd Koplyx
 ./bin/koplyx
@@ -156,7 +156,7 @@ sha256sum -c SHA256SUMS
 <li>Ouvrez la fenêtre avec <code>Ctrl+Alt+V</code>, configurable dans les paramètres et installé automatiquement sous GNOME.</li>
 <li>Le menu de la barre système propose <code>Afficher Koplyx</code>, <code>Paramètres</code> et <code>Quitter Koplyx</code>. L&#x27;historique se consulte dans la fenêtre principale.</li>
 </ul>
-<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. Le collage direct utilise <code>xdotool</code> sous X11 et le portail du bureau sous Wayland. Sur Wayland, ouvrez Paramètres et autorisez le clavier dans la demande GNOME, parfois intitulée « Bureau à distance ». Koplyx ne demande ni partage d&#x27;écran ni contrôle de souris. Le portail reçoit une demande persistante et Koplyx réutilise le jeton fourni après un redémarrage, sans nouvelle fenêtre lorsque le bureau l&#x27;accepte. Le bureau peut révoquer cette autorisation dans ses paramètres de confidentialité. Sans autorisation, un clic restaure tout de même le contenu dans le presse-papiers et vous pouvez utiliser Ctrl+V. Le bureau doit fournir le portail RemoteDesktop ; l&#x27;indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
+<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. Le collage direct essaie <code>wtype</code>, puis <code>xdotool</code> pour une fenêtre XWayland, puis <code>ydotool</code>. Le portail du bureau Wayland n&#x27;est utilisé qu&#x27;en dernier recours. <code>wtype</code> dépend du support du protocole clavier virtuel par le compositeur ; <code>ydotool</code> nécessite son daemon et l&#x27;accès à <code>uinput</code>. Sur X11, <code>xdotool</code> reste prioritaire. Si aucun outil direct ne fonctionne, ouvrez Paramètres et autorisez le clavier dans la demande GNOME, parfois intitulée « Bureau à distance ». Koplyx ne demande ni partage d&#x27;écran ni contrôle de souris. Le portail reçoit une demande persistante et Koplyx réutilise le jeton fourni après un redémarrage, sans maintenir sa session ouverte en permanence. Le bureau peut révoquer cette autorisation dans ses paramètres de confidentialité. Sans autorisation, un clic restaure tout de même le contenu dans le presse-papiers et vous pouvez utiliser Ctrl+V. L&#x27;indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
 <p>Les contenus sont chiffrés avant leur stockage local dans SQLite et les aperçus sont déchiffrés en mémoire. La clé utilise Secret Service/libsecret si disponible, avec un fichier local en solution de repli. Consultez la <a href="SECURITY.md">politique de sécurité</a> pour les précautions concernant les anciens historiques.</p>
 <h2>Contributions</h2>
 <p>Koplyx est un projet open source sous <a href="LICENSE">licence MIT</a>. Les contributions sont bienvenues : corrections de bugs, documentation, accessibilité, packaging et tests sur différentes distributions Linux.</p>
