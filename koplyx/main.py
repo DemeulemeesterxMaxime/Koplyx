@@ -1673,11 +1673,15 @@ class OnboardingWindow(Gtk.Window):
         self.primary.connect("clicked", self.on_primary)
         actions.append(self.primary)
         self.show_page(0)
-        GLib.idle_add(self.primary.grab_focus)
+        GLib.idle_add(self.focus_primary_once)
 
     def on_close_request(self, _window) -> bool:
         self.app.onboarding = None
         return False
+
+    def focus_primary_once(self) -> bool:
+        self.primary.grab_focus()
+        return GLib.SOURCE_REMOVE
 
     def clear_content(self) -> None:
         while child := self.content.get_first_child():
