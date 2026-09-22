@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import json
 import shutil
 import sqlite3
 import sys
@@ -206,6 +207,30 @@ class HistoryStoreTests(unittest.TestCase):
     def test_file_title_is_human_readable(self) -> None:
         self.assertEqual(file_title_from_uris(["file:///tmp/rapport final.pdf"]), "rapport final.pdf")
         self.assertEqual(file_title_from_uris(["file:///tmp/a.txt", "file:///tmp/b.txt"]), "2 fichiers")
+
+    def test_new_profile_requires_onboarding_and_legacy_profile_is_migrated(self) -> None:
+        profile = Path(tempfile.mkdtemp(prefix="koplyx-config-migration-"))
+        try:
+            with patch("koplyx.main.CONFIG_DIR", profile):
+                fresh = Config()
+                self.assertFalse(fresh.get("onboarding_completed"))
+                self.assertEqual(fresh.get("paste_backend"), "auto")
+
+                legacy = {"shortcut": "<Ctrl><Alt>V", "max_items": 42}
+                (profile / "config.json").write_text(json.dumps(legacy), encoding="utf-8")
+                migrated = Config()
+                self.assertTrue(migrated.get("onboarding_completed"))
+                self.assertEqual(migrated.get("paste_backend"), "auto")
+        finally:
+            shutil.rmtree(profile, ignore_errors=True)
+
+    def test_paste_backend_can_limit_direct_candidates(self) -> None:
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland"}), patch(
+            "koplyx.main.command_exists", return_value=True
+        ), patch("koplyx.main.ydotool_available", return_value=True):
+            self.assertEqual(paste_tool_candidates("window", "wtype"), ["wtype"])
+            self.assertEqual(paste_tool_candidates("window", "xwayland"), ["xdotool"])
+            self.assertEqual(paste_tool_candidates("window", "clipboard_only"), [])
 
 
 if __name__ == "__main__":

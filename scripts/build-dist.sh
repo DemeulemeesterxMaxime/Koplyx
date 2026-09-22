@@ -24,6 +24,8 @@ mkdir -p \
   "$DEB_ROOT/DEBIAN" \
   "$DEB_ROOT/opt/koplyx" \
   "$DEB_ROOT/usr/bin" \
+  "$DEB_ROOT/usr/lib/koplyx" \
+  "$DEB_ROOT/usr/share/polkit-1/actions" \
   "$DEB_ROOT/usr/share/applications" \
   "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" \
   "$DEB_ROOT/usr/share/metainfo"
@@ -38,6 +40,8 @@ EOF
 chmod 0755 "$DEB_ROOT/usr/bin/koplyx"
 
 cp packaging/dev.limax.koplyx.desktop "$DEB_ROOT/usr/share/applications/dev.limax.koplyx.desktop"
+install -Dm755 packaging/scripts/koplyx-system-setup "$DEB_ROOT/usr/lib/koplyx/koplyx-system-setup"
+install -Dm644 packaging/polkit/org.limax.koplyx.system-setup.policy "$DEB_ROOT/usr/share/polkit-1/actions/org.limax.koplyx.system-setup.policy"
 cp assets/icons/dev.limax.koplyx.svg "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg"
 cp packaging/metainfo/dev.limax.koplyx.metainfo.xml "$DEB_ROOT/usr/share/metainfo/dev.limax.koplyx.metainfo.xml"
 

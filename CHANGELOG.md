@@ -8,6 +8,8 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
 - Filtre global des éléments épinglés : affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
 - Onglet `Épinglés` étendu aux textes, images et fichiers.
+- Assistant de premier lancement pour le raccourci, le diagnostic de session et le test actif du collage direct.
+- Helper privilégié limité à `ydotool` et à la sauvegarde/restauration GDM, avec règle udev dédiée à `/dev/uinput`.
 
 ### Modifié
 
@@ -15,6 +17,8 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 - Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
 - Le collage direct essaie `wtype`, `xdotool` pour XWayland, puis `ydotool` avant de recourir au portail Wayland.
 - La session du portail est fermée après l'autorisation ou le collage afin de ne pas laisser l'indicateur « Bureau à distance » affiché en permanence.
+- Le backend de collage est persistant (`auto`, `wtype`, `xwayland`, `xorg`, `ydotool`, `portal` ou `clipboard_only`) et le portail n'est jamais ouvert automatiquement depuis un clic non configuré.
+- Les profils existants sont migrés sans afficher l'assistant ; seuls les profils réellement neufs suivent le parcours de premier lancement.
 
 ### Corrigé
 

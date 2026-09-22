@@ -1,5 +1,15 @@
 # État des tâches
 
+## Onboarding de configuration du collage direct
+
+- [x] Migrer la configuration avec `onboarding_completed` et `paste_backend` sans interrompre les profils existants.
+- [x] Ajouter l'assistant GTK relançable depuis Paramètres : raccourci, diagnostic, test actif et replis explicites.
+- [x] Ajouter la détection XWayland/Xorg et la commande de restauration de session GDM sans modifier automatiquement le système.
+- [x] Ajouter le helper `pkexec` dédié à `ydotool` et la règle udev restreinte à l'utilisateur courant.
+- [x] Intégrer la sélection du backend au collage runtime et fermer les sessions du portail après usage.
+- [x] Mettre à jour le packaging, le README, le changelog et les tests manuels.
+- [ ] Exécuter les tests, les artefacts et le lancement manuel avant tout push.
+
 ## Repli de collage silencieux Wayland
 
 - [x] Détecter et essayer les outils dans l'ordre `wtype`, `xdotool` XWayland, `ydotool`, puis le portail.

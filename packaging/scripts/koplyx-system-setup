@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Helper privilégié Koplyx, limité aux actions de configuration documentées."""
+
+from __future__ import annotations
+
+import hashlib
+import os
+import pwd
+import grp
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+RULE_PATH = Path("/etc/udev/rules.d/90-koplyx-uinput.rules")
+RULE_CONTENT = 'KERNEL=="uinput", GROUP="ydotool", MODE="0660"\n'
+GDM_PATH = Path("/etc/gdm3/custom.conf")
+GDM_DIR = Path("/var/lib/koplyx/gdm")
+GDM_BACKUP = GDM_DIR / "custom.conf.orig"
+GDM_STATE = GDM_DIR / "custom.conf.sha256"
+
+
+def fail(message: str) -> int:
+    print(message, file=sys.stderr)
+    return 1
+
+
+def valid_user(name: str) -> bool:
+    return bool(name) and "/" not in name and name.replace("_", "").replace("-", "").isalnum()
+
+
+def require_pkexec_user() -> str | None:
+    raw_uid = os.environ.get("PKEXEC_UID", "")
+    try:
+        uid = int(raw_uid)
+        user = pwd.getpwuid(uid).pw_name
+    except (ValueError, KeyError):
+        return None
+    return user if valid_user(user) else None
+
+
+def run(command: list[str]) -> bool:
+    try:
+        return subprocess.run(command, check=False).returncode == 0
+    except OSError:
+        return False
+
+
+def ensure_group() -> bool:
+    try:
+        grp.getgrnam("ydotool")
+        return True
+    except KeyError:
+        return run(["groupadd", "--system", "ydotool"])
+
+
+def enable_ydotool() -> int:
+    user = require_pkexec_user()
+    if user is None:
+        return fail("Utilisateur appelant invalide.")
+    if not ensure_group():
+        return fail("Impossible de créer le groupe système ydotool.")
+    if not run(["usermod", "--append", "--groups", "ydotool", user]):
+        return fail("Impossible d'ajouter l'utilisateur au groupe dédié.")
+    try:
+        RULE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        RULE_PATH.write_text(RULE_CONTENT, encoding="utf-8")
+        RULE_PATH.chmod(0o644)
+    except OSError as exc:
+        return fail(f"Impossible d'écrire la règle udev : {exc}")
+    if not run(["udevadm", "control", "--reload-rules"]):
+        return fail("Impossible de recharger les règles udev.")
+    run(["udevadm", "trigger", "--subsystem-match=misc", "--attr-match=name=uinput"])
+    print("ydotool configuré. Une reconnexion ou un redémarrage est nécessaire.")
+    print("Koplyx envoie uniquement Ctrl+V comme événement virtuel et ne lit pas les périphériques clavier.")
+    return 0
+
+
+def disable_ydotool() -> int:
+    user = require_pkexec_user()
+    if user is None:
+        return fail("Utilisateur appelant invalide.")
+    if RULE_PATH.exists():
+        try:
+            if RULE_PATH.read_text(encoding="utf-8") == RULE_CONTENT:
+                RULE_PATH.unlink()
+        except OSError as exc:
+            return fail(f"Impossible de retirer la règle udev : {exc}")
+    try:
+        group = grp.getgrnam("ydotool")
+    except KeyError:
+        group = None
+    if group and user in group.gr_mem and not run(["gpasswd", "--delete", user, "ydotool"]):
+        return fail("Impossible de retirer l'utilisateur du groupe dédié.")
+    run(["udevadm", "control", "--reload-rules"])
+    run(["udevadm", "trigger", "--subsystem-match=misc", "--attr-match=name=uinput"])
+    print("Configuration ydotool retirée. Une reconnexion peut être nécessaire.")
+    return 0
+
+
+def gdm_session_valid(session: str) -> bool:
+    path = Path("/usr/share/xsessions") / session
+    return path.name == session and path.suffix == ".desktop" and path.is_file()
+
+
+def gdm_set_default(session: str) -> int:
+    if not gdm_session_valid(session):
+        return fail("Session Xorg inexistante.")
+    if not GDM_PATH.exists():
+        return fail("/etc/gdm3/custom.conf est introuvable.")
+    try:
+        GDM_DIR.mkdir(parents=True, exist_ok=True)
+        if not GDM_BACKUP.exists():
+            shutil.copy2(GDM_PATH, GDM_BACKUP)
+        lines = GDM_PATH.read_text(encoding="utf-8").splitlines()
+        out: list[str] = []
+        in_daemon = False
+        found = False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("[") and stripped.endswith("]"):
+                if in_daemon and not found:
+                    out.append("DefaultSession=" + session.removesuffix(".desktop"))
+                    found = True
+                in_daemon = stripped.lower() == "[daemon]"
+            if in_daemon and stripped.lower().startswith("defaultsession="):
+                if not found:
+                    out.append("DefaultSession=" + session.removesuffix(".desktop"))
+                    found = True
+                continue
+            out.append(line)
+        if in_daemon and not found:
+            out.append("DefaultSession=" + session.removesuffix(".desktop"))
+        if not any(line.strip().lower() == "[daemon]" for line in out):
+            out.extend(["", "[daemon]", "DefaultSession=" + session.removesuffix(".desktop")])
+        GDM_PATH.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
+        GDM_STATE.write_text(hashlib.sha256(GDM_PATH.read_bytes()).hexdigest(), encoding="ascii")
+    except OSError as exc:
+        return fail(f"Impossible de configurer GDM : {exc}")
+    print("Session Xorg configurée pour le prochain redémarrage.")
+    return 0
+
+
+def gdm_restore() -> int:
+    if not GDM_BACKUP.exists() or not GDM_PATH.exists() or not GDM_STATE.exists():
+        return fail("Aucune sauvegarde GDM Koplyx disponible.")
+    try:
+        expected = GDM_STATE.read_text(encoding="ascii").strip()
+        current = hashlib.sha256(GDM_PATH.read_bytes()).hexdigest()
+        if current != expected:
+            return fail("Refus de restaurer : custom.conf a été modifié depuis la configuration Koplyx.")
+        shutil.copy2(GDM_BACKUP, GDM_PATH)
+        GDM_STATE.unlink(missing_ok=True)
+    except OSError as exc:
+        return fail(f"Impossible de restaurer GDM : {exc}")
+    print("Configuration GDM restaurée. Le changement prendra effet au prochain redémarrage.")
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    if os.geteuid() != 0:
+        return fail("Ce helper doit être lancé via pkexec.")
+    if len(argv) < 2:
+        return fail("Action manquante.")
+    action = argv[1]
+    if action == "ydotool-enable" and len(argv) == 2:
+        return enable_ydotool()
+    if action == "ydotool-disable" and len(argv) == 2:
+        return disable_ydotool()
+    if action == "gdm-xorg-enable" and len(argv) == 3:
+        return gdm_set_default(argv[2])
+    if action == "gdm-restore" and len(argv) == 2:
+        return gdm_restore()
+    return fail("Arguments invalides.")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

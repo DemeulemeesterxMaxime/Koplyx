@@ -105,6 +105,10 @@
 <li>Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.</li>
 <li>Publier les checksums <code>SHA256SUMS</code> avec la release.</li>
 <li>Documenter explicitement les limites Wayland : Koplyx essaie <code>wtype</code>, <code>xdotool</code> pour XWayland et <code>ydotool</code> avant le portail, mais le collage automatique dépend du bureau.</li>
+<li>Valider le parcours d&#x27;onboarding sur un profil neuf, puis vérifier qu&#x27;un profil existant est migré avec <code>onboarding_completed=true</code> sans interruption.</li>
+<li>Vérifier le test actif dans un champ utilisateur, l&#x27;exclusion du texte de test de l&#x27;historique et la restauration du presse-papiers précédent.</li>
+<li>Si une session Xorg existe, vérifier la sauvegarde GDM, le réglage au prochain redémarrage, le refus de rollback après modification externe et <code>koplyx --restore-display-session</code>.</li>
+<li>Vérifier que la configuration <code>ydotool</code> utilise uniquement le groupe dédié et n&#x27;ajoute jamais l&#x27;utilisateur au groupe global <code>input</code>. Les boutons doivent être désactivés sous Snap et Flatpak.</li>
 <li>Purger l&#x27;historique local si des donnees reelles ont ete copiees avec une version anterieure a <code>0.2.2</code>, car les anciens apercus pouvaient contenir du texte en clair.</li>
 <li>Tester une installation propre depuis le <code>.deb</code>, puis suppression et reinstall.</li>
 </ul>
@@ -118,6 +122,7 @@ sha256sum -c SHA256SUMS
 <h2>Verification manuelle</h2>
 <ul>
 <li>Sous Wayland, tester d&#x27;abord <code>wtype</code>, <code>xdotool</code> avec une cible XWayland et <code>ydotool</code> lorsqu&#x27;ils sont disponibles. Si aucun outil direct ne fonctionne, autoriser le clavier via le portail du bureau puis revenir au champ cible. Vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l&#x27;indicateur après le collage. Tester également le refus et la révocation de l&#x27;autorisation.</li>
+<li>Sur un profil neuf, suivre l&#x27;assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l&#x27;assistant depuis Paramètres.</li>
 <li>Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.</li>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
 <li>Copier/coller un texte et verifier son apparition dans l&#x27;historique avec un extrait lisible.</li>
