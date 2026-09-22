@@ -1720,7 +1720,8 @@ class OnboardingWindow(Gtk.Window):
             self.title_label.set_text("Préparons le test")
             self.body.set_text(
                 "Ouvrez un champ texte dans une autre application. Ensuite, revenez ici et cliquez sur « Tester ». "
-                "Koplyx masquera sa fenêtre, collera un texte de test puis reviendra automatiquement."
+                "Koplyx masquera sa fenêtre, collera un texte de test puis reviendra automatiquement. "
+                "Ce texte de test est volontairement exclu de l'historique : copiez ensuite un texte réel pour vérifier la liste."
             )
             self.test_plan = self.app.onboarding_test_plan()
             self.test_index = -1
@@ -1739,7 +1740,7 @@ class OnboardingWindow(Gtk.Window):
         if self.test_index >= len(self.test_plan):
             self.test_backend = "clipboard_only"
             self.title_label.set_text("Dernière solution")
-            self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx restaurera chaque élément dans le presse-papiers, puis tentera encore Ctrl+V.")
+            self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx restaurera chaque élément dans le presse-papiers, puis tentera encore Ctrl+V. Le texte de test ne sera pas ajouté à l'historique.")
             self.status.set_text("Ce choix n'active aucun accès système.")
             self.primary.set_label("Tester le presse-papiers")
             self.secondary.set_label("Retour")
