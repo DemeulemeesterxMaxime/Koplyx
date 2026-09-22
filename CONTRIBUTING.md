@@ -20,7 +20,7 @@ Validation minimale avant pull request :
 
 ```bash
 ./scripts/smoke-test.sh
-/usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
+/usr/bin/python3 -m py_compile scripts/build-html-docs.py koplyx/main.py koplyx/__init__.py
 ./scripts/build-dist.sh
 cd dist
 sha256sum -c SHA256SUMS
