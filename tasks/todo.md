@@ -12,8 +12,10 @@
 - [x] Conserver ydotool dans les étapes de l'assistant après la relance XWayland, avant le portail et le repli presse-papiers.
 - [x] Ajouter une régression couvrant le plan du processus relancé et vérifier les tests ciblés.
 - [x] Construire et contrôler le `.deb` beta.4, sa version Debian, son helper embarqué et son SHA-256.
-- [ ] Publier une nouvelle préversion beta.4 avec le `.deb`, puis l'installer et confirmer le collage réel dans un champ Wayland.
+- [x] Publier la préversion GitHub beta.4 avec le `.deb`, publier le Snap sur `latest/beta` et installer le `.deb` sur la session Wayland.
+- [ ] Confirmer l'insertion réelle du marqueur par ydotool depuis l'assistant beta.4 dans un champ cible.
 - Empreinte construite : `0f8916423995be5ffeb213c08b42fe9376e0a79379ad0adabe0c10086a83d5b3`.
+- Note : GitHub Release `v0.4.6-beta.4` créée. Le job Snap CI est refusé car son jeton limite les canaux à `edge,stable`; le Snap construit par CI a ensuite été publié avec la session locale en révision 18 de `latest/beta`.
 
 ## Correctif final du test presse-papiers beta.3
 
