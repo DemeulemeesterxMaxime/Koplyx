@@ -5,7 +5,8 @@
 - [x] Vérifier et corriger les parcours de restauration presse-papiers et de test ydotool.
 - [x] Ajouter une publication de tag beta vers le canal `latest/beta` sans toucher à `stable`.
 - [x] Construire et valider le `.deb`, les tests et les métadonnées, puis confirmer les limites réelles de Snap pour ydotool.
-- [ ] Publier la version beta et vérifier le canal ainsi que les instructions d'installation.
+- [x] Publier la version beta et vérifier le canal ainsi que les instructions d'installation.
+- Note : Snap Store `latest/beta` vérifié sur la révision 16 (`0.4.6-beta.2`); le push CI Snap a échoué à cause du jeton limité à `edge,stable`, puis la publication a réussi avec la session Snapcraft locale sans modifier le jeton GitHub.
 
 ## Onboarding de configuration du collage direct
 
