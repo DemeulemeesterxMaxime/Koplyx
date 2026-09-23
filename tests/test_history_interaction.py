@@ -135,10 +135,13 @@ def test_settings_does_not_expose_backend_selector_and_onboarding_is_guided() ->
         settings = SettingsWindow(app, app.window)
         assert not any(type(widget).__name__ == "ComboBoxText" for widget in walk_widgets(settings))
         onboarding = OnboardingWindow(app, app.window)
-        onboarding.show_page(1)
-        assert onboarding.primary.get_label() == "Tester"
-        assert "solutions" in onboarding.status.get_text()
-        onboarding.on_primary(None)
+        with patch.object(app, "onboarding_test_plan", return_value=["wtype"]), patch.object(
+            app, "onboarding_display_summary", return_value="Session Wayland de test."
+        ):
+            onboarding.show_page(1)
+            assert onboarding.primary.get_label() == "Tester"
+            assert "solutions" in onboarding.status.get_text()
+            onboarding.on_primary(None)
         assert onboarding.page == 2
         assert onboarding.primary.get_label() == "Tester cette solution"
         onboarding.close()

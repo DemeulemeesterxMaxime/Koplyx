@@ -37,9 +37,9 @@
 
 - Installer le `.deb` sur un profil propre, redémarrer la session et confirmer l'autostart caché.
 - Répéter les contrôles de l'indicateur avec les paquets Snap et Flatpak.
-## Validation beta de l'assistant de collage (0.4.6-beta.1)
+## Validation beta de l'assistant de collage (0.4.6-beta.2)
 
 - Installer le Snap avec `sudo snap install koplyx --channel=latest/beta`, ou basculer avec `sudo snap refresh koplyx --channel=latest/beta`, puis confirmer `latest/beta` avec `snap info koplyx`.
 - Dans Paramètres, ouvrir l'assistant, suivre le test jusqu'au repli presse-papiers, puis vérifier que le marqueur reste copiable au clavier après le retour de l'assistant. Confirmer le mode et vérifier qu'une copie réelle suivante apparaît dans l'historique.
-- Pour ydotool, installer le `.deb` `koplyx_0.4.6-beta.1_all.deb` depuis la GitHub Release préversion, lancer cette installation plutôt que le Snap, puis utiliser l'assistant pour autoriser le helper. Se déconnecter/reconnecter et vérifier le daemon et son socket dans `$XDG_RUNTIME_DIR` avant le test réel dans un champ texte.
+- Pour ydotool, installer le `.deb` `koplyx_0.4.6-beta.2_all.deb` depuis la GitHub Release préversion, lancer cette installation plutôt que le Snap, puis utiliser l'assistant pour autoriser le helper. Se déconnecter/reconnecter et vérifier le daemon et son socket dans `$XDG_RUNTIME_DIR` avant le test réel dans un champ texte.
 - Revenir au Snap stable avec `sudo snap refresh koplyx --channel=latest/stable` après la validation beta.
