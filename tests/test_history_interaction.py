@@ -144,6 +144,10 @@ def test_settings_does_not_expose_backend_selector_and_onboarding_is_guided() ->
             onboarding.on_primary(None)
         assert onboarding.page == 2
         assert onboarding.primary.get_label() == "Tester cette solution"
+        onboarding.test_backend = "clipboard_only"
+        with patch.object(app, "begin_onboarding_test") as begin_test:
+            onboarding.on_primary(None)
+            begin_test.assert_called_once_with(onboarding, "clipboard_only")
         onboarding.close()
         settings.close()
     finally:

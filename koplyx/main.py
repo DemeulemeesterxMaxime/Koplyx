@@ -1823,10 +1823,7 @@ class OnboardingWindow(Gtk.Window):
             self.test_index = 0
             self.show_test_step()
         elif self.page == 2:
-            if self.test_backend == "clipboard_only":
-                self.finish_success("clipboard_only")
-            else:
-                self.app.begin_onboarding_test(self, self.test_backend)
+            self.app.begin_onboarding_test(self, self.test_backend)
 
     def on_secondary(self, _button) -> None:
         if self.page == 2 and self.test_backend == "portal" and self.app.portal_keyboard.pending:

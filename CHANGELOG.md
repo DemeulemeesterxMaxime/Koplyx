@@ -2,7 +2,7 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
-## [0.4.6-beta.2] - 2026-09-23
+## [0.4.6-beta.3] - 2026-09-23
 
 ### Modifié
 
@@ -10,6 +10,7 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 - Les échecs de collage direct reviennent dans l'assistant au lieu de quitter silencieusement le parcours.
 - La beta est publiée sur `latest/beta`. Le paquet `.deb` de la préversion permet aussi de tester ydotool, ce que le Snap strict ne peut pas configurer sur l'hôte.
 - Le test UI du parcours guidé ne dépend plus des outils ou de la session graphique installés sur la machine de CI.
+- Le bouton final « Tester le presse-papiers » lance maintenant réellement le test avant d'enregistrer ce mode.
 
 ## [Unreleased]
 

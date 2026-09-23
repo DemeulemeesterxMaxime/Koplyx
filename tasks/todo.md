@@ -1,5 +1,11 @@
 # État des tâches
 
+## Correctif final du test presse-papiers beta.3
+
+- [x] Faire passer le bouton « Tester le presse-papiers » par le test actif commun avant confirmation.
+- [x] Ajouter une régression UI, relancer le smoke test et reconstruire le `.deb`.
+- [ ] Publier `0.4.6-beta.3` sur `latest/beta`, publier le `.deb`, puis vérifier la révision Store.
+
 ## Validation beta de l'assistant de collage
 
 - [x] Vérifier et corriger les parcours de restauration presse-papiers et de test ydotool.
