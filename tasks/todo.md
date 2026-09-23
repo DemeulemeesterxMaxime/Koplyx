@@ -4,7 +4,8 @@
 
 - [x] Faire passer le bouton « Tester le presse-papiers » par le test actif commun avant confirmation.
 - [x] Ajouter une régression UI, relancer le smoke test et reconstruire le `.deb`.
-- [ ] Publier `0.4.6-beta.3` sur `latest/beta`, publier le `.deb`, puis vérifier la révision Store.
+- [x] Publier `0.4.6-beta.3` sur `latest/beta`, publier le `.deb`, puis vérifier la révision Store.
+- Note : `latest/beta` est maintenant sur la révision 17. La GitHub Release beta.3 est disponible; le test manuel du parcours reste à faire par l'utilisateur.
 
 ## Validation beta de l'assistant de collage
 
@@ -12,7 +13,7 @@
 - [x] Ajouter une publication de tag beta vers le canal `latest/beta` sans toucher à `stable`.
 - [x] Construire et valider le `.deb`, les tests et les métadonnées, puis confirmer les limites réelles de Snap pour ydotool.
 - [x] Publier la version beta et vérifier le canal ainsi que les instructions d'installation.
-- Note : Snap Store `latest/beta` vérifié sur la révision 16 (`0.4.6-beta.2`); le push CI Snap a échoué à cause du jeton limité à `edge,stable`, puis la publication a réussi avec la session Snapcraft locale sans modifier le jeton GitHub.
+- Note : beta.2 était la révision 16 et a été remplacée par beta.3. Le push CI Snap échoue toujours car le jeton GitHub est limité à `edge,stable`; les révisions beta.2 et beta.3 ont été publiées avec la session Snapcraft locale sans modifier le jeton GitHub.
 
 ## Onboarding de configuration du collage direct
 
