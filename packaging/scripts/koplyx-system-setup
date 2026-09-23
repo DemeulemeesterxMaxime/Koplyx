@@ -15,6 +15,7 @@ from pathlib import Path
 
 RULE_PATH = Path("/etc/udev/rules.d/90-koplyx-uinput.rules")
 RULE_CONTENT = 'KERNEL=="uinput", GROUP="ydotool", MODE="0660"\n'
+UINPUT_SYSFS_PATH = "/sys/devices/virtual/misc/uinput"
 GDM_PATH = Path("/etc/gdm3/custom.conf")
 GDM_DIR = Path("/var/lib/koplyx/gdm")
 GDM_BACKUP = GDM_DIR / "custom.conf.orig"
@@ -55,6 +56,10 @@ def ensure_group() -> bool:
         return run(["groupadd", "--system", "ydotool"])
 
 
+def trigger_uinput_device() -> bool:
+    return run(["udevadm", "trigger", "--action=change", UINPUT_SYSFS_PATH])
+
+
 def enable_ydotool() -> int:
     user = require_pkexec_user()
     if user is None:
@@ -71,7 +76,15 @@ def enable_ydotool() -> int:
         return fail(f"Impossible d'écrire la règle udev : {exc}")
     if not run(["udevadm", "control", "--reload-rules"]):
         return fail("Impossible de recharger les règles udev.")
-    run(["udevadm", "trigger", "--subsystem-match=misc", "--attr-match=name=uinput"])
+    if not trigger_uinput_device():
+        return fail("Impossible d'appliquer la règle udev à /dev/uinput.")
+    try:
+        device = Path("/dev/uinput").stat()
+        group_id = grp.getgrnam("ydotool").gr_gid
+    except (OSError, KeyError) as exc:
+        return fail(f"Impossible de vérifier les droits de /dev/uinput : {exc}")
+    if device.st_gid != group_id or device.st_mode & 0o777 != 0o660:
+        return fail("La règle udev n'a pas appliqué le groupe dédié à /dev/uinput.")
     print("ydotool configuré. Une reconnexion ou un redémarrage est nécessaire.")
     print("Koplyx envoie uniquement Ctrl+V comme événement virtuel et ne lit pas les périphériques clavier.")
     return 0
@@ -94,7 +107,8 @@ def disable_ydotool() -> int:
     if group and user in group.gr_mem and not run(["gpasswd", "--delete", user, "ydotool"]):
         return fail("Impossible de retirer l'utilisateur du groupe dédié.")
     run(["udevadm", "control", "--reload-rules"])
-    run(["udevadm", "trigger", "--subsystem-match=misc", "--attr-match=name=uinput"])
+    if not trigger_uinput_device():
+        return fail("Impossible d'actualiser les droits de /dev/uinput après le retrait.")
     print("Configuration ydotool retirée. Une reconnexion peut être nécessaire.")
     return 0
 

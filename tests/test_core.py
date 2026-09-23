@@ -158,11 +158,11 @@ class HistoryStoreTests(unittest.TestCase):
             ["xdotool", "getactivewindow"], check=False, capture_output=True, text=True
         )
 
-    def test_wayland_paste_tool_order_prefers_wtype_xwayland_then_ydotool(self) -> None:
+    def test_wayland_paste_tool_order_prefers_ydotool_before_xdotool(self) -> None:
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
         ), patch("koplyx.main.ydotool_available", return_value=True):
-            self.assertEqual(paste_tool_candidates("123"), ["wtype", "xdotool", "ydotool"])
+            self.assertEqual(paste_tool_candidates("123"), ["wtype", "ydotool", "xdotool"])
 
     def test_wayland_skips_xdotool_without_xwayland_target(self) -> None:
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
@@ -180,8 +180,8 @@ class HistoryStoreTests(unittest.TestCase):
         ):
             self.assertTrue(paste_clipboard_now("123"))
         self.assertEqual(calls[0][0], "wtype")
-        self.assertEqual(calls[1][:4], ["xdotool", "key", "--window", "123"])
-        self.assertEqual(calls[2][0], "ydotool")
+        self.assertEqual(calls[1][0], "ydotool")
+        self.assertEqual(calls[2][:4], ["xdotool", "key", "--window", "123"])
 
     def test_invalid_payload_does_not_break_history_rendering(self) -> None:
         self.store.add("text", "text/plain", b"ancienne cle", "aperçu")
@@ -252,7 +252,26 @@ class HistoryStoreTests(unittest.TestCase):
         app = KoplyxApplication()
         try:
             app.xwayland_relaunch = True
-            self.assertEqual(app.onboarding_test_plan(), ["xwayland", "portal"])
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "DISPLAY": ":0"}), patch(
+                "koplyx.main.command_available", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
+            ), patch("koplyx.main.helper_path", return_value=Path("/usr/lib/koplyx/koplyx-system-setup")), patch(
+                "koplyx.main.xorg_sessions", return_value=[]
+            ):
+                self.assertEqual(app.onboarding_test_plan(), ["xwayland", "ydotool", "portal"])
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
+
+    def test_xwayland_relaunch_skips_ydotool_without_packaged_helper(self) -> None:
+        app = KoplyxApplication()
+        try:
+            app.xwayland_relaunch = True
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "DISPLAY": ":0"}), patch(
+                "koplyx.main.command_available", side_effect=lambda command: command in {"wtype", "xdotool", "ydotool"}
+            ), patch("koplyx.main.helper_path", return_value=None), patch(
+                "koplyx.main.xorg_sessions", return_value=[]
+            ):
+                self.assertEqual(app.onboarding_test_plan(), ["xwayland", "portal"])
         finally:
             app.store.conn.close()
             app.control_server.close()

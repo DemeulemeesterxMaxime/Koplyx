@@ -26,7 +26,7 @@ Pour demander une mise à jour du canal stable :
 sudo snap refresh koplyx --channel=latest/stable
 ```
 
-Pour tester la préversion, installez le Snap beta avec `sudo snap install koplyx --channel=latest/beta`, ou passez une installation existante sur ce canal avec `sudo snap refresh koplyx --channel=latest/beta`. Vérifiez le canal avec `snap info koplyx`. Le Snap strict ne peut pas configurer `/dev/uinput`; pour tester ydotool, téléchargez le `.deb` de la préversion depuis les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases) et installez-le avec `sudo apt install ./koplyx_0.4.6-beta.3_all.deb`. Après avoir activé ydotool dans l'assistant, une reconnexion est nécessaire pour appliquer le groupe système dédié.
+Pour tester la préversion, installez le Snap beta avec `sudo snap install koplyx --channel=latest/beta`, ou passez une installation existante sur ce canal avec `sudo snap refresh koplyx --channel=latest/beta`. Vérifiez le canal avec `snap info koplyx`. Le Snap strict ne peut pas configurer `/dev/uinput`; pour tester ydotool, téléchargez le `.deb` de la préversion depuis les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases) et installez-le avec `sudo apt install ./koplyx_0.4.6-beta.4_all.deb`. Après avoir activé ydotool dans l'assistant, déconnectez-vous puis reconnectez-vous pour appliquer le groupe système dédié avant de lancer le service utilisateur.
 
 ### Debian et Ubuntu (.deb)
 

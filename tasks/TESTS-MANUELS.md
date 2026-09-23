@@ -37,9 +37,10 @@
 
 - Installer le `.deb` sur un profil propre, redémarrer la session et confirmer l'autostart caché.
 - Répéter les contrôles de l'indicateur avec les paquets Snap et Flatpak.
-## Validation beta de l'assistant de collage (0.4.6-beta.3)
+## Validation beta de l'assistant de collage (0.4.6-beta.4)
 
 - Installer le Snap avec `sudo snap install koplyx --channel=latest/beta`, ou basculer avec `sudo snap refresh koplyx --channel=latest/beta`, puis confirmer `latest/beta` avec `snap info koplyx`.
 - Dans Paramètres, ouvrir l'assistant, suivre le test jusqu'au repli presse-papiers, puis vérifier que le marqueur reste copiable au clavier après le retour de l'assistant. Confirmer le mode et vérifier qu'une copie réelle suivante apparaît dans l'historique.
-- Pour ydotool, installer le `.deb` `koplyx_0.4.6-beta.3_all.deb` depuis la GitHub Release préversion, lancer cette installation plutôt que le Snap, puis utiliser l'assistant pour autoriser le helper. Se déconnecter/reconnecter, démarrer le service utilisateur avec `systemctl --user start ydotool` s'il est inactif, et vérifier le socket `$XDG_RUNTIME_DIR/.ydotool_socket` avant le test réel dans un champ texte.
+- Pour ydotool, installer le `.deb` `koplyx_0.4.6-beta.4_all.deb` depuis la GitHub Release préversion, lancer cette installation plutôt que le Snap, puis utiliser l'assistant pour autoriser le helper. Après la relance XWayland, l'étape ydotool doit rester proposée. Vérifier `/dev/uinput` en `root:ydotool` avec le mode `660`, se déconnecter/reconnecter, démarrer le service utilisateur avec `systemctl --user start ydotool` s'il est inactif, et vérifier le socket `$XDG_RUNTIME_DIR/.ydotool_socket` avant le test réel dans un champ Wayland.
+- Pour xdotool sous Wayland, tester dans une cible XWayland et confirmer le texte réellement collé; le code retour seul ne valide pas l'essai.
 - Revenir au Snap stable avec `sudo snap refresh koplyx --channel=latest/stable` après la validation beta.

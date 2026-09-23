@@ -358,12 +358,12 @@ def paste_tool_candidates(window_id: str | None = None, paste_backend: str | Non
     if session == "wayland":
         if backend in {"auto", "wtype"} and command_exists("wtype"):
             candidates.append("wtype")
+        if backend in {"auto", "ydotool"} and ydotool_available():
+            candidates.append("ydotool")
         # xdotool ne doit être proposé que si une vraie cible XWayland a été
         # mémorisée. Sinon son code retour peut être positif sans rien coller.
         if backend in {"auto", "xwayland"} and window_id and command_exists("xdotool"):
             candidates.append("xdotool")
-        if backend in {"auto", "ydotool"} and ydotool_available():
-            candidates.append("ydotool")
         return candidates
     if backend in {"auto", "xorg", "xwayland"} and command_exists("xdotool"):
         candidates.append("xdotool")
@@ -2276,16 +2276,21 @@ class KoplyxApplication(Gtk.Application):
         return descriptions.get(self.config.get("paste_backend"), descriptions["auto"])
 
     def onboarding_test_plan(self) -> list[str]:
-        if self.xwayland_relaunch:
-            # Le processus enfant est déjà sous GDK X11. Il teste cette
-            # configuration avant de proposer le portail comme repli.
-            return ["xwayland", "portal"]
         plan: list[str] = []
-        if command_available("wtype"):
-            plan.append("wtype")
-        if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland" and os.environ.get("DISPLAY") and command_exists("xdotool"):
+        if self.xwayland_relaunch:
+            # Le processus enfant termine l'essai XWayland commencé par son
+            # parent, puis doit encore proposer les méthodes disponibles.
             plan.append("xwayland")
-        if xorg_sessions():
+        elif command_available("wtype"):
+            plan.append("wtype")
+        if (
+            not self.xwayland_relaunch
+            and os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+            and os.environ.get("DISPLAY")
+            and command_exists("xdotool")
+        ):
+            plan.append("xwayland")
+        if not self.xwayland_relaunch and xorg_sessions():
             plan.append("xorg")
         # Le binaire ydotool seul ne suffit pas : l'action demande le helper
         # root-owned du paquet, puis le groupe udev dédié. Ne montrons pas une
@@ -2433,7 +2438,7 @@ class KoplyxApplication(Gtk.Application):
                 }.get(candidate, backend)
                 if paste_clipboard_now(self.previous_window_id, candidate_backend):
                     sent = True
-                    used = candidate
+                    used = candidate_backend
                     break
         if backend == "portal":
             self.portal_keyboard.close()

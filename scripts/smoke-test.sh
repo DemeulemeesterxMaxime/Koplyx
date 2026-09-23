@@ -13,6 +13,7 @@ PY
 
 /usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
 /usr/bin/python3 tests/test_core.py
+/usr/bin/python3 tests/test_system_setup.py
 /usr/bin/python3 tests/test_control_socket.py
 /usr/bin/python3 tests/test_shortcut_installation.py
 /usr/bin/python3 tests/test_portal_keyboard.py

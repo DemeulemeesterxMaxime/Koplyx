@@ -1,5 +1,20 @@
 # État des tâches
 
+## Validation manuelle beta.3 sur la session active
+
+- [x] Installer le `.deb` beta.3 et vérifier le paquet installé.
+- [x] Confirmer Wayland, les droits `root:ydotool` sur `/dev/uinput` et la disponibilité d'un démon ydotool pour le test.
+- [ ] Confirmer le marqueur réellement inséré dans un champ texte et distinguer ce résultat du code retour de ydotool.
+- Note : le clic physique a renvoyé `True`, mais le champ ne contenait pas le marqueur. La restauration du presse-papiers a été confirmée; l'insertion du marqueur reste non validée.
+
+## Correctif du parcours ydotool après relance XWayland
+
+- [x] Conserver ydotool dans les étapes de l'assistant après la relance XWayland, avant le portail et le repli presse-papiers.
+- [x] Ajouter une régression couvrant le plan du processus relancé et vérifier les tests ciblés.
+- [x] Construire et contrôler le `.deb` beta.4, sa version Debian, son helper embarqué et son SHA-256.
+- [ ] Publier une nouvelle préversion beta.4 avec le `.deb`, puis l'installer et confirmer le collage réel dans un champ Wayland.
+- Empreinte construite : `0f8916423995be5ffeb213c08b42fe9376e0a79379ad0adabe0c10086a83d5b3`.
+
 ## Correctif final du test presse-papiers beta.3
 
 - [x] Faire passer le bouton « Tester le presse-papiers » par le test actif commun avant confirmation.

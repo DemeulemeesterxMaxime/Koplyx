@@ -2,6 +2,15 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.6-beta.4] - 2026-09-23
+
+### Corrigé
+
+- Après la relance XWayland, l'assistant continue vers ydotool au lieu de terminer après le portail.
+- Sous Wayland, le collage automatique essaie ydotool avant xdotool, dont le code retour ne garantit pas que le texte soit arrivé.
+- Le helper applique la règle udev au périphérique `/dev/uinput` et vérifie son groupe et son mode avant d'annoncer la configuration terminée.
+- La confirmation du test enregistre le backend fonctionnel (`xwayland` ou `xorg`) au lieu du nom du binaire `xdotool`.
+
 ## [0.4.6-beta.3] - 2026-09-23
 
 ### Modifié
