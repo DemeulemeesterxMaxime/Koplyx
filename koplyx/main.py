@@ -1689,6 +1689,8 @@ class OnboardingWindow(Gtk.Window):
     def on_close_request(self, _window) -> bool:
         if self.app.portal_keyboard.pending:
             self.app.portal_keyboard.close()
+        if self.action_mode == "clipboard_fallback":
+            self.app.restore_onboarding_clipboard()
         self.app.onboarding = None
         return False
 
@@ -1854,6 +1856,7 @@ class OnboardingWindow(Gtk.Window):
 
     def test_result(self, success: bool, backend: str) -> None:
         self.present()
+        self.app.release_onboarding_test()
         if success:
             self.test_backend = backend
             self.status.set_text("Le collage a été envoyé. Est-ce que le texte est apparu dans le champ cible ?")
@@ -1874,6 +1877,7 @@ class OnboardingWindow(Gtk.Window):
             self.action_mode = "failure"
 
     def finish_success(self, backend: str) -> None:
+        self.app.restore_onboarding_clipboard()
         self.app.config.set("paste_backend", backend)
         self.app.config.set("onboarding_completed", True)
         self.app.onboarding = None
@@ -2152,6 +2156,11 @@ class KoplyxApplication(Gtk.Application):
         self.onboarding_test_marker = ""
         self.onboarding_test_digest = ""
         self.onboarding_previous_text: str | None = None
+        # Gtk.Application peut terminer sa boucle lorsqu'aucune fenêtre n'est
+        # visible. L'assistant masque volontairement ses fenêtres pendant le
+        # test de collage, il faut donc maintenir l'application active jusqu'à
+        # la restitution du résultat.
+        self.onboarding_test_held = False
         # Une relance XWayland est une étape explicite de l'assistant. Le
         # drapeau est consommé au démarrage du processus enfant pour éviter
         # de relancer encore Koplyx lorsque l'assistant est rouvert ensuite.
@@ -2173,6 +2182,7 @@ class KoplyxApplication(Gtk.Application):
         return GLib.SOURCE_REMOVE
 
     def do_shutdown(self) -> None:
+        self.release_onboarding_test()
         self.portal_keyboard.close()
         Gtk.Application.do_shutdown(self)
 
@@ -2245,6 +2255,16 @@ class KoplyxApplication(Gtk.Application):
         self.ensure_window()
         self.onboarding = OnboardingWindow(self, parent)
         self.onboarding.present()
+
+    def hold_onboarding_test(self) -> None:
+        if not self.onboarding_test_held:
+            self.hold()
+            self.onboarding_test_held = True
+
+    def release_onboarding_test(self) -> None:
+        if self.onboarding_test_held:
+            self.onboarding_test_held = False
+            self.release()
 
     def paste_backend_description(self) -> str:
         descriptions = {
@@ -2364,6 +2384,7 @@ class KoplyxApplication(Gtk.Application):
         self.onboarding_test_digest = sha256("text", self.onboarding_test_marker.encode("utf-8"))
         self.onboarding_previous_text = None
         self.watcher.paused_until = time.time() + 7.0
+        self.hold_onboarding_test()
 
         def save_previous(_clipboard, result) -> None:
             try:
@@ -2419,7 +2440,11 @@ class KoplyxApplication(Gtk.Application):
                     break
         if backend == "portal":
             self.portal_keyboard.close()
-        GLib.timeout_add(700, self.restore_onboarding_clipboard)
+        # En mode presse-papiers, l'utilisateur doit pouvoir coller lui-même
+        # le marqueur après le retour de l'assistant. Le conserver jusqu'à sa
+        # réponse, puis restaurer le texte antérieur à la fermeture.
+        if backend != "clipboard_only" or sent:
+            GLib.timeout_add(700, self.restore_onboarding_clipboard)
         GLib.idle_add(onboarding.test_result, sent, used)
         return GLib.SOURCE_REMOVE
 

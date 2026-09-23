@@ -2,6 +2,14 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.6-beta.1] - 2026-09-23
+
+### Modifié
+
+- Le mode presse-papiers de l'assistant garde le texte de test disponible pour un Ctrl+V manuel, puis restaure le texte précédent après la réponse.
+- Les échecs de collage direct reviennent dans l'assistant au lieu de quitter silencieusement le parcours.
+- La beta est publiée sur `latest/beta`. Le paquet `.deb` de la préversion permet aussi de tester ydotool, ce que le Snap strict ne peut pas configurer sur l'hôte.
+
 ## [Unreleased]
 
 ### Ajouté

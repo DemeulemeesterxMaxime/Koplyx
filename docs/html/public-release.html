@@ -119,9 +119,18 @@
 cd dist
 sha256sum -c SHA256SUMS
 </code></pre>
+<h2>Publication beta</h2>
+<p>Les tags <code>vX.Y.Z-beta.N</code> publient le Snap sur <code>latest/beta</code> et créent une GitHub Release en préversion avec les paquets <code>.deb</code> et les sommes de contrôle. Les tags stables sans suffixe continuent de publier sur <code>stable</code>.</p>
+<pre><code>
+sudo snap install koplyx --channel=latest/beta
+sudo snap refresh koplyx --channel=latest/beta
+snap info koplyx
+</code></pre>
+<p>Pour valider ydotool, installer le fichier <code>.deb</code> attaché à la même GitHub Release beta. Le Snap ne permet pas de donner au processus l&#x27;accès système requis à <code>/dev/uinput</code>.</p>
 <h2>Verification manuelle</h2>
 <ul>
 <li>Sous Wayland, tester d&#x27;abord <code>wtype</code>, <code>xdotool</code> avec une cible XWayland et <code>ydotool</code> lorsque son helper est installé. Si aucun outil direct ne fonctionne, vérifier que l&#x27;assistant annonce puis affiche la demande « Bureau à distance », autoriser uniquement le clavier, revenir au champ cible et vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l&#x27;indicateur après le collage. Tester également le refus et la révocation de l&#x27;autorisation.</li>
+<li>Pour ydotool, installer le <code>.deb</code> de la préversion GitHub, utiliser l&#x27;assistant pour installer son helper, se déconnecter puis se reconnecter afin d&#x27;appliquer le groupe <code>ydotool</code>, et vérifier que le daemon crée un socket accessible dans <code>$XDG_RUNTIME_DIR</code>. Le Snap strict ne peut pas configurer <code>/dev/uinput</code> sur l&#x27;hôte et masque cette étape.</li>
 <li>Sur un profil neuf, suivre l&#x27;assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l&#x27;assistant depuis Paramètres.</li>
 <li>Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.</li>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
@@ -142,7 +151,7 @@ sha256sum -c SHA256SUMS
 <li>Utiliser <code>Quitter Koplyx</code> depuis la barre systeme et verifier que le processus s&#x27;arrete.</li>
 <li>Redemarrer la session et verifier la persistance de l&#x27;historique.</li>
 <li>Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.</li>
-<li>Installer le snap depuis <code>edge</code> et refaire le lancement, l&#x27;icone, la zone systeme et l&#x27;historique.</li>
+<li>Installer le snap depuis <code>latest/beta</code> et refaire le lancement, l&#x27;icone, la zone systeme, l&#x27;historique et le repli presse-papiers manuel.</li>
 </ul>
 <h2>Snapcraft</h2>
 <p>Installer l&#x27;outil :</p>

@@ -24,9 +24,22 @@ cd dist
 sha256sum -c SHA256SUMS
 ```
 
+## Publication beta
+
+Les tags `vX.Y.Z-beta.N` publient le Snap sur `latest/beta` et créent une GitHub Release en préversion avec les paquets `.deb` et les sommes de contrôle. Les tags stables sans suffixe continuent de publier sur `stable`.
+
+```bash
+sudo snap install koplyx --channel=latest/beta
+sudo snap refresh koplyx --channel=latest/beta
+snap info koplyx
+```
+
+Pour valider ydotool, installer le fichier `.deb` attaché à la même GitHub Release beta. Le Snap ne permet pas de donner au processus l'accès système requis à `/dev/uinput`.
+
 ## Verification manuelle
 
 - Sous Wayland, tester d'abord `wtype`, `xdotool` avec une cible XWayland et `ydotool` lorsque son helper est installé. Si aucun outil direct ne fonctionne, vérifier que l'assistant annonce puis affiche la demande « Bureau à distance », autoriser uniquement le clavier, revenir au champ cible et vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l'indicateur après le collage. Tester également le refus et la révocation de l'autorisation.
+- Pour ydotool, installer le `.deb` de la préversion GitHub, utiliser l'assistant pour installer son helper, se déconnecter puis se reconnecter afin d'appliquer le groupe `ydotool`, et vérifier que le daemon crée un socket accessible dans `$XDG_RUNTIME_DIR`. Le Snap strict ne peut pas configurer `/dev/uinput` sur l'hôte et masque cette étape.
 - Sur un profil neuf, suivre l'assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l'assistant depuis Paramètres.
 - Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
@@ -47,7 +60,7 @@ sha256sum -c SHA256SUMS
 - Utiliser `Quitter Koplyx` depuis la barre systeme et verifier que le processus s'arrete.
 - Redemarrer la session et verifier la persistance de l'historique.
 - Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.
-- Installer le snap depuis `edge` et refaire le lancement, l'icone, la zone systeme et l'historique.
+- Installer le snap depuis `latest/beta` et refaire le lancement, l'icone, la zone systeme, l'historique et le repli presse-papiers manuel.
 
 ## Snapcraft
 

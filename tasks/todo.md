@@ -1,5 +1,12 @@
 # État des tâches
 
+## Validation beta de l'assistant de collage
+
+- [x] Vérifier et corriger les parcours de restauration presse-papiers et de test ydotool.
+- [x] Ajouter une publication de tag beta vers le canal `latest/beta` sans toucher à `stable`.
+- [x] Construire et valider le `.deb`, les tests et les métadonnées, puis confirmer les limites réelles de Snap pour ydotool.
+- [ ] Publier la version beta et vérifier le canal ainsi que les instructions d'installation.
+
 ## Onboarding de configuration du collage direct
 
 - [x] Migrer la configuration avec `onboarding_completed` et `paste_backend` sans interrompre les profils existants.
@@ -13,10 +20,11 @@
 
 ## Correction du parcours de test du collage direct
 
-- [ ] Rendre le repli presse-papiers réellement actif : restaurer l'élément, le laisser en première position et tenter Ctrl+V, avec un message clair si aucune injection n'est possible.
-- [ ] Ne proposer ydotool que lorsque le helper système est réellement installé, et expliquer la disponibilité depuis un paquet installé.
-- [ ] Rendre la demande « Bureau à distance » visible et diagnosticable, sans session persistante ouverte après le test.
-- [ ] Rejouer les tests et relancer l'application pour validation manuelle avant tout push.
+- [x] Rendre le repli presse-papiers réellement actif : restaurer l'élément, le laisser en première position et tenter Ctrl+V, avec un message clair si aucune injection n'est possible.
+- [x] Ne proposer ydotool que lorsque le helper système est réellement installé, et expliquer la disponibilité depuis un paquet installé.
+- [x] Rendre la demande « Bureau à distance » visible et diagnosticable, sans session persistante ouverte après le test.
+- [x] Rejouer les tests, le smoke test et le build `.deb`; le build Snap local est bloqué par le réseau de l'instance LXD.
+- [ ] Tester manuellement la beta publiée sous Wayland, notamment la restauration du presse-papiers et ydotool depuis le `.deb`.
 
 ## Parcours XWayland et Xorg dans l'assistant
 
@@ -169,6 +177,13 @@
 - [x] Passer au nom et au chemin StatusNotifierItem standard, puis retirer le bouton autostart redondant.
 - [x] Ajouter les tests de régression et valider les contrôles automatisés du menu.
 - [ ] Valider le menu réel sur le Snap publié.
+
+## Correctif réaffichage de l'assistant pendant les tests
+
+- [x] Maintenir l'application active lorsque l'assistant et la fenêtre principale sont masqués pendant un test.
+- [x] Réafficher l'assistant après succès ou échec du backend, puis libérer proprement l'application.
+- [x] Ajouter un test de régression sur le cycle masquage, injection et réaffichage.
+- [ ] Valider manuellement l'étape 2 sous Wayland.
 
 ## Release corrective 0.4.4
 

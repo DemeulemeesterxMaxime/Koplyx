@@ -275,6 +275,23 @@ class HistoryStoreTests(unittest.TestCase):
         finally:
             app.store.conn.close()
 
+    def test_onboarding_test_holds_application_until_result(self) -> None:
+        app = KoplyxApplication()
+        try:
+            with patch.object(app, "hold") as hold, patch.object(app, "release") as release:
+                app.hold_onboarding_test()
+                app.hold_onboarding_test()
+                self.assertTrue(app.onboarding_test_held)
+                hold.assert_called_once_with()
+
+                app.release_onboarding_test()
+                app.release_onboarding_test()
+                self.assertFalse(app.onboarding_test_held)
+                release.assert_called_once_with()
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
+
     def test_clipboard_only_onboarding_still_attempts_ctrl_v(self) -> None:
         app = KoplyxApplication()
         try:
@@ -290,11 +307,37 @@ class HistoryStoreTests(unittest.TestCase):
 
                 app.portal_keyboard = FakePortal()
                 onboarding = type("Onboarding", (), {"test_result": lambda *_args: None})()
-                with patch.object(app, "remember_active_window"), patch.object(koplyx_main.GLib, "timeout_add", return_value=1), patch.object(
+                with patch.object(app, "remember_active_window"), patch.object(koplyx_main.GLib, "timeout_add", return_value=1) as timeout_add, patch.object(
                     koplyx_main.GLib, "idle_add", side_effect=lambda callback, *args: callback(*args) or 1
                 ):
                     app.inject_onboarding_test(onboarding, "clipboard_only")
                 paste.assert_called_once_with("target", "auto")
+                timeout_add.assert_called_once_with(700, app.restore_onboarding_clipboard)
+        finally:
+            app.store.conn.close()
+            app.control_server.close()
+
+    def test_clipboard_only_failure_keeps_test_text_available_for_manual_paste(self) -> None:
+        app = KoplyxApplication()
+        try:
+            app.previous_window_id = "target"
+            with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
+                "koplyx.main.paste_tool_candidates", return_value=[]
+            ), patch("koplyx.main.paste_clipboard_now", return_value=False), patch.object(
+                app, "remember_active_window"
+            ), patch.object(koplyx_main.GLib, "timeout_add") as timeout_add, patch.object(
+                koplyx_main.GLib, "idle_add", return_value=1
+            ):
+                class FakePortal:
+                    ready = False
+
+                    def close(self):
+                        return None
+
+                app.portal_keyboard = FakePortal()
+                app.inject_onboarding_test(type("Onboarding", (), {"test_result": lambda *_args: None})(), "clipboard_only")
+
+            timeout_add.assert_not_called()
         finally:
             app.store.conn.close()
             app.control_server.close()

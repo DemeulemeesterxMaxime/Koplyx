@@ -5,6 +5,7 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
+DEB_VERSION="$(printf '%s' "$VERSION" | tr '-' '~')"
 DIST_DIR="$ROOT_DIR/dist"
 STAGE_DIR="$DIST_DIR/koplyx-$VERSION"
 DEB_ROOT="$DIST_DIR/deb-root"
@@ -47,7 +48,7 @@ cp packaging/metainfo/dev.limax.koplyx.metainfo.xml "$DEB_ROOT/usr/share/metainf
 
 cat > "$DEB_ROOT/DEBIAN/control" <<EOF
 Package: $PACKAGE_NAME
-Version: $VERSION
+Version: $DEB_VERSION
 Section: utils
 Priority: optional
 Architecture: all
