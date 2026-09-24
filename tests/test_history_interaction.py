@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import sys
@@ -193,6 +194,94 @@ def test_onboarding_hides_duplicate_action_after_failure_and_restores_it() -> No
         shutil.rmtree(TEST_HOME, ignore_errors=True)
 
 
+def test_onboarding_collects_successes_then_saves_the_final_choice() -> None:
+    app = new_test_app()
+    try:
+        app.ensure_window()
+        onboarding = OnboardingWindow(app, app.window)
+        with patch.object(app, "onboarding_test_plan", return_value=["wtype", "portal"]), patch.object(
+            app, "onboarding_display_summary", return_value="Session Wayland de test."
+        ):
+            onboarding.show_page(1)
+            onboarding.on_primary(None)
+            assert onboarding.progress_label.get_text() == "Étape 3 sur 4 · Essais comparatifs"
+            assert onboarding.title_label.get_text().startswith("Étape 3.1")
+
+            onboarding.test_result(True, "wtype")
+            onboarding.on_primary(None)
+            assert onboarding.test_index == 1
+            assert onboarding.verified_backends == ["wtype"]
+            assert app.config.get("paste_backend") == "auto"
+            assert onboarding.title_label.get_text().startswith("Étape 3.2")
+
+            onboarding.test_result(True, "portal")
+            onboarding.on_primary(None)
+            assert onboarding.verified_backends == ["wtype", "portal"]
+            assert onboarding.test_backend == "clipboard_only"
+
+            onboarding.test_result(False, "clipboard_only")
+            onboarding.on_secondary(None)
+            assert onboarding.page == 3
+            assert set(onboarding.choice_buttons) == {"wtype", "portal", "clipboard_only"}
+            assert onboarding.choice_buttons["wtype"].get_active()
+
+            onboarding.choice_buttons["portal"].set_active(True)
+            onboarding.on_primary(None)
+            assert app.config.get("paste_backend") == "portal"
+            assert app.config.get("onboarding_completed")
+    finally:
+        app.quit()
+        app.store.conn.close()
+        app.control_server.close()
+        shutil.rmtree(TEST_HOME, ignore_errors=True)
+
+
+def test_onboarding_keeps_successes_across_xwayland_relaunch() -> None:
+    app = new_test_app()
+    child = None
+    try:
+        app.ensure_window()
+        onboarding = OnboardingWindow(app, app.window)
+        app.onboarding = onboarding
+        with patch.object(app, "onboarding_test_plan", return_value=["wtype", "xwayland", "ydotool"]), patch.object(
+            app, "onboarding_display_summary", return_value="Session Wayland de test."
+        ):
+            onboarding.show_page(1)
+            onboarding.test_plan = ["wtype", "xwayland", "ydotool"]
+            onboarding.test_index = 1
+            onboarding.test_backend = "xwayland"
+            onboarding.verified_backends = ["wtype"]
+            onboarding.prepared_backends = ["xorg"]
+            with patch.object(koplyx_main.subprocess, "Popen") as popen, patch.object(app, "quit"):
+                app.launch_xwayland_backend()
+
+        child_environment = popen.call_args.kwargs["env"]
+        resume_state = json.loads(child_environment["KOPLYX_ONBOARDING_RESUME"])
+        assert resume_state == {
+            "remaining_backends": ["xwayland", "ydotool"],
+            "verified_backends": ["wtype"],
+            "prepared_backends": ["xorg"],
+        }
+        with patch.dict(os.environ, child_environment, clear=True):
+            child = new_test_app()
+            child.ensure_window()
+            resumed = OnboardingWindow(child, child.window)
+            assert resumed.test_plan == ["xwayland", "ydotool"]
+            assert resumed.verified_backends == ["wtype"]
+            assert resumed.prepared_backends == ["xorg"]
+            assert resumed.progress_label.get_text().startswith("Étape 2 sur 4")
+            resumed.close()
+    finally:
+        if child is not None:
+            child.quit()
+            child.store.conn.close()
+            child.control_server.close()
+        app.quit()
+        app.store.conn.close()
+        app.control_server.close()
+        shutil.rmtree(TEST_HOME, ignore_errors=True)
+
+
 def iter_children(widget):
     child = widget.get_first_child()
     while child is not None:
@@ -224,4 +313,6 @@ if __name__ == "__main__":
     test_restore_pastes_to_previous_window_without_new_history_item()
     test_settings_does_not_expose_backend_selector_and_onboarding_is_guided()
     test_onboarding_hides_duplicate_action_after_failure_and_restores_it()
+    test_onboarding_collects_successes_then_saves_the_final_choice()
+    test_onboarding_keeps_successes_across_xwayland_relaunch()
     raise SystemExit(result)
