@@ -2,26 +2,7 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
-## [0.4.6-beta.4] - 2026-09-23
-
-### Corrigé
-
-- Après la relance XWayland, l'assistant continue vers ydotool au lieu de terminer après le portail.
-- Sous Wayland, le collage automatique essaie ydotool avant xdotool, dont le code retour ne garantit pas que le texte soit arrivé.
-- Le helper applique la règle udev au périphérique `/dev/uinput` et vérifie son groupe et son mode avant d'annoncer la configuration terminée.
-- La confirmation du test enregistre le backend fonctionnel (`xwayland` ou `xorg`) au lieu du nom du binaire `xdotool`.
-
-## [0.4.6-beta.3] - 2026-09-23
-
-### Modifié
-
-- Le mode presse-papiers de l'assistant garde le texte de test disponible pour un Ctrl+V manuel, puis restaure le texte précédent après la réponse.
-- Les échecs de collage direct reviennent dans l'assistant au lieu de quitter silencieusement le parcours.
-- La beta est publiée sur `latest/beta`. Le paquet `.deb` de la préversion permet aussi de tester ydotool, ce que le Snap strict ne peut pas configurer sur l'hôte.
-- Le test UI du parcours guidé ne dépend plus des outils ou de la session graphique installés sur la machine de CI.
-- Le bouton final « Tester le presse-papiers » lance maintenant réellement le test avant d'enregistrer ce mode.
-
-## [Unreleased]
+## [0.4.6] - 2026-09-24
 
 ### Ajouté
 
@@ -34,20 +15,25 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
 - Les textes longs restent sur une seule ligne avec ellipse et infobulle.
 - Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
-- Le collage direct essaie `wtype`, `xdotool` pour XWayland, puis `ydotool` avant de recourir au portail Wayland.
+- Le collage direct essaie `wtype`, `ydotool`, puis `xdotool` sur une cible XWayland avant de recourir au portail Wayland.
 - La session du portail est fermée après l'autorisation ou le collage afin de ne pas laisser l'indicateur « Bureau à distance » affiché en permanence.
 - Le backend de collage est persistant (`auto`, `wtype`, `xwayland`, `xorg`, `ydotool`, `portal` ou `clipboard_only`) et le portail n'est jamais ouvert automatiquement depuis un clic non configuré.
 - Les profils existants sont migrés sans afficher l'assistant ; seuls les profils réellement neufs suivent le parcours de premier lancement.
 - L'assistant essaie désormais les méthodes l'une après l'autre avec des libellés compréhensibles ; les Paramètres n'exposent plus de sélecteur technique de backend.
-- Le mode presse-papiers restaure maintenant le contenu en première position et tente également Ctrl+V, même lorsque l'indicateur système n'est pas disponible.
+- Le mode presse-papiers restaure maintenant le contenu en première position, le garde disponible pour un Ctrl+V manuel, puis restaure le presse-papiers précédent après la réponse.
+- Le bouton final « Tester le presse-papiers » lance maintenant réellement le test avant d'enregistrer ce mode.
 - L'assistant ne propose plus `ydotool` si le helper système du paquet n'est pas installé et explique explicitement l'ouverture de la demande « Bureau à distance » avant le test du portail.
+- Le Snap stable ne configure pas `/dev/uinput`; ydotool est réservé aux paquets non confinés équipés du helper système.
 
 ### Corrigé
 
 - Le collage Wayland utilise une session clavier autorisée et réutilisée, au lieu de relancer `xdotool` et sa demande de connexion à distance à chaque clic.
+- Après une relance XWayland, l'assistant poursuit l'essai vers ydotool; le helper vérifie les permissions de groupe appliquées à `/dev/uinput`.
+- La confirmation mémorise le backend validé (`xwayland` ou `xorg`) plutôt que le nom du binaire `xdotool`.
 - Les boutons natifs réduire, agrandir et fermer conservent les dimensions et le style du bureau.
 - Le raccourci d'une exécution depuis les sources rouvre le même profil local, même si le Snap est installé.
 - Une entrée locale impossible à déchiffrer ne bloque plus l'ouverture de l'historique.
+- Le test de collage affiche une seule action après l'échec d'une méthode, puis rétablit les choix pour l'essai suivant.
 
 ## [0.4.5] - 2026-09-21
 

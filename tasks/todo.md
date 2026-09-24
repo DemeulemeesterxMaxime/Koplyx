@@ -1,5 +1,20 @@
 # État des tâches
 
+## Publication stable 0.4.6 et retrait des préversions beta
+
+- [x] Préparer les métadonnées 0.4.6, la documentation et les changements locaux du bouton.
+- [x] Exécuter les vérifications, les artefacts de distribution et contrôler leurs sommes.
+- [ ] Pousser la branche, créer la PR, attendre les contrôles, puis publier le tag stable.
+- [ ] Vérifier la publication Snap stable, fermer `latest/beta` et retirer les releases/tags GitHub beta.
+- [ ] Vérifier l'installation Snap stable sur cette machine.
+
+## Bouton en double après un échec de collage
+
+- [x] Masquer le bouton secondaire pendant l'état d'échec et le réafficher aux étapes suivantes.
+- [x] Couvrir les transitions échec, nouvel essai et réussite dans la vérification de l'assistant.
+- [x] Vérifier que l'interface n'affiche plus qu'une seule action après un échec.
+- Vérification : `NO_AT_BRIDGE=1 timeout 30s dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py` réussit.
+
 ## Validation manuelle beta.3 sur la session active
 
 - [x] Installer le `.deb` beta.3 et vérifier le paquet installé.

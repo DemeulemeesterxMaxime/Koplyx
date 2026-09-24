@@ -20,3 +20,4 @@
 [2026-09-23] | Le bouton « Tester le presse-papiers » enregistrait directement le mode sans lancer l'essai actif. | Garder tous les boutons de test dans le même flux d'exécution et ne mémoriser le backend qu'après le retour de résultat.
 [2026-09-23] | La sonde navigateur recevait un retour positif de ydotool sans retrouver le marqueur dans le champ cible. | Vérifier le texte réellement inséré après le délai de traitement du presse-papiers; un code retour positif ne suffit pas.
 [2026-09-24] | Une fenêtre GTK Wayland lancée par une sonde n'obtenait pas le focus avec `present()` et `grab_focus()`. | Ne jamais injecter une touche avant de vérifier le focus et le texte dans un champ cible actif.
+[2026-09-24] | Un test GTK instancie `CryptoBox` et peut contacter le trousseau GNOME réel, ce qui bloque sous Xvfb. | Isoler les tests en simulant `load_secret_service_key` afin qu'ils restent confinés à leur profil temporaire.

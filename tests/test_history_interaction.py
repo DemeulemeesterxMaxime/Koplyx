@@ -23,7 +23,8 @@ from koplyx.main import HistoryRow, KoplyxApplication, OnboardingWindow, Setting
 
 
 def main() -> int:
-    app = KoplyxApplication()
+    with patch.object(koplyx_main.CryptoBox, "load_secret_service_key", return_value=None):
+        app = KoplyxApplication()
     try:
         assert app.register(None)
         app.ensure_window()
@@ -157,6 +158,41 @@ def test_settings_does_not_expose_backend_selector_and_onboarding_is_guided() ->
         shutil.rmtree(TEST_HOME, ignore_errors=True)
 
 
+def test_onboarding_hides_duplicate_action_after_failure_and_restores_it() -> None:
+    app = new_test_app()
+    try:
+        app.ensure_window()
+        assert app.window is not None
+        onboarding = OnboardingWindow(app, app.window)
+        with patch.object(app, "onboarding_test_plan", return_value=["wtype", "ydotool"]), patch.object(
+            app, "onboarding_display_summary", return_value="Session Wayland de test."
+        ):
+            onboarding.show_page(1)
+            onboarding.on_primary(None)
+            onboarding.test_result(False, "wtype")
+            assert onboarding.action_mode == "failure"
+            assert onboarding.primary.get_label() == "Essayer la suivante"
+            assert onboarding.primary.get_visible()
+            assert not onboarding.secondary.get_visible()
+
+            onboarding.on_primary(None)
+            assert onboarding.test_index == 1
+            assert onboarding.secondary.get_visible()
+            assert onboarding.secondary.get_label() == "Passer à la suivante"
+
+            onboarding.test_result(True, "ydotool")
+            assert onboarding.primary.get_visible()
+            assert onboarding.secondary.get_visible()
+            assert onboarding.primary.get_label() == "Oui, ça fonctionne"
+            assert onboarding.secondary.get_label() == "Non, essayer la suivante"
+        onboarding.close()
+    finally:
+        app.quit()
+        app.store.conn.close()
+        app.control_server.close()
+        shutil.rmtree(TEST_HOME, ignore_errors=True)
+
+
 def iter_children(widget):
     child = widget.get_first_child()
     while child is not None:
@@ -173,7 +209,8 @@ def walk_widgets(widget):
 
 
 def new_test_app() -> KoplyxApplication:
-    app = KoplyxApplication()
+    with patch.object(koplyx_main.CryptoBox, "load_secret_service_key", return_value=None):
+        app = KoplyxApplication()
     app.set_flags(koplyx_main.Gio.ApplicationFlags.NON_UNIQUE)
     app.set_application_id("dev.limax.koplyx.Test" + uuid4().hex)
     with patch.object(app, "sync_autostart"), patch.object(app, "sync_global_shortcut"), patch.object(app, "sync_tray"):
@@ -186,4 +223,5 @@ if __name__ == "__main__":
     test_global_pinned_filter_and_single_line_title()
     test_restore_pastes_to_previous_window_without_new_history_item()
     test_settings_does_not_expose_backend_selector_and_onboarding_is_guided()
+    test_onboarding_hides_duplicate_action_after_failure_and_restores_it()
     raise SystemExit(result)

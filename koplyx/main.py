@@ -1708,6 +1708,7 @@ class OnboardingWindow(Gtk.Window):
         self.clear_content()
         self.status.set_text("")
         self.primary.set_sensitive(True)
+        self.secondary.set_visible(True)
         if page == 0:
             self.title_label.set_text("Bienvenue dans Koplyx")
             self.body.set_text(
@@ -1753,6 +1754,7 @@ class OnboardingWindow(Gtk.Window):
     def show_test_step(self, message: str = "") -> None:
         self.page = 2
         self.action_mode = "page"
+        self.secondary.set_visible(True)
         self.clear_content()
         if self.test_index < 0:
             self.test_index = 0
@@ -1854,6 +1856,7 @@ class OnboardingWindow(Gtk.Window):
     def test_result(self, success: bool, backend: str) -> None:
         self.present()
         self.app.release_onboarding_test()
+        self.secondary.set_visible(True)
         if success:
             self.test_backend = backend
             self.status.set_text("Le collage a été envoyé. Est-ce que le texte est apparu dans le champ cible ?")
@@ -1870,7 +1873,7 @@ class OnboardingWindow(Gtk.Window):
         else:
             self.status.set_text("Cette solution n'a pas fonctionné dans votre session.")
             self.primary.set_label("Essayer la suivante")
-            self.secondary.set_label("Essayer la suivante")
+            self.secondary.set_visible(False)
             self.action_mode = "failure"
 
     def finish_success(self, backend: str) -> None:
