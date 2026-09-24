@@ -13,9 +13,11 @@
 - [x] Ajouter une régression couvrant le plan du processus relancé et vérifier les tests ciblés.
 - [x] Construire et contrôler le `.deb` beta.4, sa version Debian, son helper embarqué et son SHA-256.
 - [x] Publier la préversion GitHub beta.4 avec le `.deb`, publier le Snap sur `latest/beta` et installer le `.deb` sur la session Wayland.
-- [ ] Confirmer l'insertion réelle du marqueur par ydotool depuis l'assistant beta.4 dans un champ cible.
+- [x] Confirmer dans un champ visible que le code beta.4 insère le marqueur par ydotool et restaure le presse-papiers précédent.
+- [ ] Parcourir l'assistant Koplyx lui-même après sa relance XWayland et confirmer le backend ydotool.
 - Empreinte construite : `0f8916423995be5ffeb213c08b42fe9376e0a79379ad0adabe0c10086a83d5b3`.
 - Note : GitHub Release `v0.4.6-beta.4` créée. Le job Snap CI est refusé car son jeton limite les canaux à `edge,stable`; le Snap construit par CI a ensuite été publié avec la session locale en révision 18 de `latest/beta`.
+- Vérification directe du 2026-09-24 : retour ydotool positif, marqueur observé dans le champ et contenu antérieur du presse-papiers restauré. Le test du parcours graphique complet reste à faire.
 
 ## Correctif final du test presse-papiers beta.3
 

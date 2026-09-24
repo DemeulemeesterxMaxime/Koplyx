@@ -44,3 +44,9 @@
 - Pour ydotool, installer le `.deb` `koplyx_0.4.6-beta.4_all.deb` depuis la GitHub Release préversion, lancer cette installation plutôt que le Snap, puis utiliser l'assistant pour autoriser le helper. Après la relance XWayland, l'étape ydotool doit rester proposée. Vérifier `/dev/uinput` en `root:ydotool` avec le mode `660`, se déconnecter/reconnecter, démarrer le service utilisateur avec `systemctl --user start ydotool` s'il est inactif, et vérifier le socket `$XDG_RUNTIME_DIR/.ydotool_socket` avant le test réel dans un champ Wayland.
 - Pour xdotool sous Wayland, tester dans une cible XWayland et confirmer le texte réellement collé; le code retour seul ne valide pas l'essai.
 - Revenir au Snap stable avec `sudo snap refresh koplyx --channel=latest/stable` après la validation beta.
+
+### Résultat du test direct beta.4, 2026-09-24
+
+- Sous la session Wayland, le champ de test actif a reçu le marqueur via `paste_clipboard_now` du paquet installé, en forçant `ydotool`.
+- Le code retour était positif, le marqueur exact a été observé et le contenu antérieur du presse-papiers a été restauré.
+- Ce contrôle valide l'injection ydotool et la restauration dans la sonde; il ne remplace pas le parcours complet de l'assistant Koplyx après relance XWayland.
