@@ -1637,8 +1637,12 @@ class OnboardingWindow(Gtk.Window):
         self.test_plan: list[str] = []
         self.test_index = -1
         self.test_backend = ""
-        self.set_default_size(560, 500)
-        self.set_size_request(460, 420)
+        self.verified_backends: list[str] = []
+        self.prepared_backends: list[str] = []
+        self.clipboard_fallback_tested = False
+        self.choice_buttons: dict[str, Gtk.CheckButton] = {}
+        self.set_default_size(580, 540)
+        self.set_size_request(460, 460)
         self.add_css_class("settings-window")
         self.connect("close-request", self.on_close_request)
 
@@ -1650,6 +1654,11 @@ class OnboardingWindow(Gtk.Window):
         root.add_css_class("settings-shell")
         self.set_child(root)
 
+        self.progress_label = Gtk.Label()
+        self.progress_label.set_xalign(0)
+        self.progress_label.set_wrap(True)
+        self.progress_label.add_css_class("settings-note")
+        root.append(self.progress_label)
         self.title_label = Gtk.Label()
         self.title_label.set_xalign(0)
         self.title_label.add_css_class("settings-title")
@@ -1666,9 +1675,12 @@ class OnboardingWindow(Gtk.Window):
         self.status.add_css_class("settings-feedback")
         root.append(self.status)
 
+        self.content_scroll = Gtk.ScrolledWindow()
+        self.content_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.content_scroll.set_vexpand(True)
+        root.append(self.content_scroll)
         self.content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        self.content.set_vexpand(True)
-        root.append(self.content)
+        self.content_scroll.set_child(self.content)
 
         actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         actions.set_halign(Gtk.Align.END)
@@ -1689,7 +1701,7 @@ class OnboardingWindow(Gtk.Window):
     def on_close_request(self, _window) -> bool:
         if self.app.portal_keyboard.pending:
             self.app.portal_keyboard.close()
-        if self.action_mode == "clipboard_fallback":
+        if self.action_mode == "clipboard_review":
             self.app.restore_onboarding_clipboard()
         self.app.onboarding = None
         return False
@@ -1710,6 +1722,7 @@ class OnboardingWindow(Gtk.Window):
         self.primary.set_sensitive(True)
         self.secondary.set_visible(True)
         if page == 0:
+            self.progress_label.set_text("Étape 1 sur 4 · Présentation")
             self.title_label.set_text("Bienvenue dans Koplyx")
             self.body.set_text(
                 "Koplyx va essayer automatiquement plusieurs façons de coller dans la fenêtre précédente. "
@@ -1730,16 +1743,38 @@ class OnboardingWindow(Gtk.Window):
             self.secondary.set_label("Quitter")
             self.primary.set_label("Commencer les tests")
         elif page == 1:
+            self.progress_label.set_text("Étape 2 sur 4 · Préparer le test")
             self.title_label.set_text("Préparons le test")
             self.body.set_text(
                 "Ouvrez un champ texte dans une autre application. Ensuite, revenez ici et cliquez sur « Tester ». "
                 "Koplyx masquera sa fenêtre, collera un texte de test puis reviendra automatiquement. "
                 "Ce texte de test est volontairement exclu de l'historique : copiez ensuite un texte réel pour vérifier la liste."
             )
-            self.test_plan = self.app.onboarding_test_plan()
+            resume = self.app.onboarding_resume_state
+            if resume:
+                allowed = PASTE_BACKENDS - {"auto", "clipboard_only"}
+
+                def resume_backends(key: str, accepted: set[str]) -> list[str]:
+                    values = resume.get(key, [])
+                    if not isinstance(values, list):
+                        return []
+                    return [backend for backend in values if isinstance(backend, str) and backend in accepted]
+
+                self.test_plan = resume_backends("remaining_backends", allowed)
+                self.verified_backends = resume_backends("verified_backends", PASTE_BACKENDS)
+                self.prepared_backends = resume_backends("prepared_backends", PASTE_BACKENDS)
+                self.app.onboarding_resume_state = {}
+            else:
+                self.test_plan = self.app.onboarding_test_plan()
+                self.verified_backends = []
+                self.prepared_backends = []
             self.test_index = -1
+            self.clipboard_fallback_tested = False
+            solution_count = len(self.test_plan) + 1
+            solution_word = "solution" if solution_count == 1 else "solutions"
             self.status.set_text(
-                f"Koplyx va essayer jusqu'à {len(self.test_plan)} solutions, de la plus discrète à la plus assistée."
+                f"L'étape 3 essaiera jusqu'à {solution_count} {solution_word}, de la plus discrète à la plus assistée. "
+                "Vous pourrez ensuite choisir celle à conserver."
             )
             diagnostic = Gtk.Label(label=self.app.onboarding_display_summary())
             diagnostic.set_xalign(0)
@@ -1759,15 +1794,20 @@ class OnboardingWindow(Gtk.Window):
         if self.test_index < 0:
             self.test_index = 0
         if self.test_index >= len(self.test_plan):
+            if self.clipboard_fallback_tested:
+                self.show_selection_step()
+                return
+            self.clipboard_fallback_tested = True
             self.test_backend = "clipboard_only"
-            self.title_label.set_text("Dernière solution")
+            self.progress_label.set_text("Étape 3 sur 4 · Essais comparatifs")
+            self.title_label.set_text(f"Étape 3.{len(self.test_plan) + 1} · Presse-papiers et Ctrl+V")
             self.body.set_text("Aucun collage automatique n'est disponible dans cette session. Koplyx restaurera chaque élément dans le presse-papiers, puis tentera encore Ctrl+V. Le texte de test ne sera pas ajouté à l'historique.")
             self.status.set_text("Ce choix n'active aucun accès système.")
             self.primary.set_label("Tester le presse-papiers")
-            self.secondary.set_label("Retour")
+            self.secondary.set_label("Passer cette méthode")
             return
         self.test_backend = self.test_plan[self.test_index]
-        self.title_label.set_text(f"Essai {self.test_index + 1} sur {len(self.test_plan)}")
+        self.progress_label.set_text("Étape 3 sur 4 · Essais comparatifs")
         descriptions = {
             "wtype": "une méthode silencieuse adaptée à votre bureau",
             "xwayland": "une relance locale de Koplyx sous XWayland",
@@ -1777,6 +1817,14 @@ class OnboardingWindow(Gtk.Window):
             "clipboard_only": "la restauration du presse-papiers suivie de Ctrl+V",
         }
         description = descriptions.get(self.test_backend, "une autre méthode de collage")
+        titles = {
+            "wtype": "Collage discret",
+            "xwayland": "Collage via XWayland",
+            "xorg": "Préparer une session Xorg",
+            "ydotool": "Collage avec ydotool",
+            "portal": "Autorisation clavier GNOME",
+        }
+        self.title_label.set_text(f"Étape 3.{self.test_index + 1} · {titles.get(self.test_backend, 'Tester une méthode')}")
         self.body.set_text(
             f"Nous allons essayer {description}. Placez le curseur dans votre champ texte, puis cliquez sur « Tester cette solution ». "
             "Koplyx se masquera pendant quelques secondes pour laisser la fenêtre cible active. Si le texte n'apparaît pas, passez à la suivante."
@@ -1786,7 +1834,7 @@ class OnboardingWindow(Gtk.Window):
         elif self.test_backend == "ydotool":
             self.status.set_text("Ubuntu peut demander votre mot de passe. Koplyx envoie uniquement Ctrl+V et ne lit pas le clavier.")
         elif self.test_backend == "portal":
-            self.status.set_text("Ubuntu affichera une autorisation « Bureau à distance ». Aucun écran ne sera partagé.")
+            self.status.set_text("Bureau GNOME, autorisation 1/2 : acceptez uniquement l'accès au clavier dans la fenêtre « Bureau à distance ». Aucun écran ne sera partagé.")
         elif self.test_backend == "clipboard_only":
             self.status.set_text("Le texte sera remis en première position du presse-papiers, puis Koplyx tentera Ctrl+V.")
         elif self.test_backend == "xwayland":
@@ -1797,6 +1845,75 @@ class OnboardingWindow(Gtk.Window):
             self.status.set_text("Aucun accès supplémentaire n'est demandé pour cet essai.")
         self.primary.set_label("Tester cette solution")
         self.secondary.set_label("Passer à la suivante")
+
+    def show_selection_step(self) -> None:
+        self.page = 3
+        self.action_mode = "selection"
+        self.test_backend = ""
+        self.app.restore_onboarding_clipboard()
+        self.progress_label.set_text("Étape 4 sur 4 · Choisir la méthode à conserver")
+        self.title_label.set_text("Choisissez votre méthode de collage")
+        self.body.set_text(
+            "Les méthodes confirmées restent disponibles ici. Sélectionnez celle que vous préférez; "
+            "vous pourrez relancer cet assistant depuis les paramètres pour changer de choix."
+        )
+        self.clear_content()
+        self.choice_buttons = {}
+        choices: list[str] = []
+        for backend in self.verified_backends + self.prepared_backends + ["clipboard_only"]:
+            if backend not in choices:
+                choices.append(backend)
+        if self.verified_backends:
+            names = ", ".join(self.backend_label(backend) for backend in self.verified_backends)
+            self.status.set_text(f"Méthodes confirmées : {names}.")
+        else:
+            self.status.set_text(
+                "Aucun collage automatique n'a été confirmé. Vous pouvez choisir le presse-papiers avec Ctrl+V manuel."
+            )
+
+        details = {
+            "clipboard_only": "Koplyx restaure l'élément dans le presse-papiers; appuyez sur Ctrl+V dans l'application cible.",
+            "xorg": "Configuration préparée; le collage devra être confirmé après la reconnexion à la session Xorg.",
+        }
+        previous: Gtk.CheckButton | None = None
+        for backend in choices:
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+            row.add_css_class("settings-row")
+            button = Gtk.CheckButton(label=self.backend_label(backend))
+            if previous is not None:
+                button.set_group(previous)
+            previous = button
+            self.choice_buttons[backend] = button
+            row.append(button)
+            note = Gtk.Label(
+                label=details.get(backend, "Le texte est apparu dans le champ pendant le test.")
+            )
+            note.set_xalign(0)
+            note.set_wrap(True)
+            note.set_hexpand(True)
+            note.add_css_class("settings-note")
+            row.append(note)
+            self.content.append(row)
+
+        preferred = self.verified_backends[0] if self.verified_backends else "clipboard_only"
+        if preferred in self.choice_buttons:
+            self.choice_buttons[preferred].set_active(True)
+        self.secondary.set_visible(True)
+        self.secondary.set_label("Quitter sans enregistrer")
+        self.primary.set_sensitive(True)
+        self.primary.set_label("Enregistrer mon choix")
+
+    @staticmethod
+    def backend_label(backend: str) -> str:
+        labels = {
+            "wtype": "Collage discret (wtype)",
+            "xwayland": "Collage via XWayland",
+            "xorg": "Session Xorg",
+            "ydotool": "Collage avec ydotool",
+            "portal": "Autorisation clavier GNOME",
+            "clipboard_only": "Presse-papiers et Ctrl+V manuel",
+        }
+        return labels.get(backend, backend)
 
     def open_shortcut(self, value: Gtk.Label) -> None:
         dialog = ShortcutCaptureDialog(self, self.app.config.get("shortcut"))
@@ -1811,13 +1928,33 @@ class OnboardingWindow(Gtk.Window):
 
     def on_primary(self, _button) -> None:
         if self.action_mode == "success":
-            self.finish_success(self.test_backend)
+            if self.test_backend not in self.verified_backends:
+                self.verified_backends.append(self.test_backend)
+            self.next_test(
+                f"Réussite confirmée avec {self.backend_label(self.test_backend)}. Continuons pour comparer les autres méthodes."
+            )
             return
-        if self.action_mode == "clipboard_fallback":
-            self.finish_success("clipboard_only")
+        if self.action_mode == "clipboard_review":
+            self.app.restore_onboarding_clipboard()
+            if "clipboard_only" not in self.verified_backends:
+                self.verified_backends.append("clipboard_only")
+            self.next_test("Le mode presse-papiers est conservé comme option. Voici le choix final.")
+            return
+        if self.action_mode == "prepared":
+            self.next_test("La configuration Xorg est prête pour la reconnexion. Continuons les essais disponibles.")
+            return
+        if self.action_mode == "selection":
+            backend = next(
+                (name for name, button in self.choice_buttons.items() if button.get_active()),
+                None,
+            )
+            if backend is None:
+                self.status.set_text("Sélectionnez une méthode avant de continuer.")
+                return
+            self.finish_success(backend)
             return
         if self.action_mode == "failure":
-            self.next_test()
+            self.next_test("Cette méthode n'a pas fonctionné. Essayons la suivante.")
             return
         if self.page == 0:
             self.show_page(1)
@@ -1834,24 +1971,31 @@ class OnboardingWindow(Gtk.Window):
             self.show_test_step("Demande annulée. Vous pouvez réessayer ou passer à la solution suivante.")
             return
         if self.action_mode == "success":
-            self.next_test()
+            self.next_test("Vous avez indiqué que le collage n'est pas apparu. Essayons la méthode suivante.")
             return
-        if self.action_mode == "clipboard_fallback":
+        if self.action_mode == "clipboard_review":
+            self.app.restore_onboarding_clipboard()
+            self.next_test("Le mode presse-papiers n'a pas été confirmé. Voici les choix disponibles.")
+            return
+        if self.action_mode == "prepared":
+            self.next_test("La configuration Xorg est prête; les autres méthodes continuent.")
+            return
+        if self.action_mode == "selection":
             self.close()
             return
         if self.action_mode == "failure":
-            self.next_test()
+            self.next_test("Cette méthode n'a pas fonctionné. Essayons la suivante.")
             return
         if self.page == 0:
             self.close()
         elif self.page == 1:
             self.show_page(0)
         elif self.page == 2:
-            self.next_test()
+            self.next_test("Méthode passée. Essayons la suivante.")
 
-    def next_test(self) -> None:
+    def next_test(self, message: str = "") -> None:
         self.test_index += 1
-        self.show_test_step("Cette solution n'a pas été confirmée. Essayons la suivante.")
+        self.show_test_step(message)
 
     def test_result(self, success: bool, backend: str) -> None:
         self.present()
@@ -1860,21 +2004,35 @@ class OnboardingWindow(Gtk.Window):
         if success:
             self.test_backend = backend
             self.status.set_text("Le collage a été envoyé. Est-ce que le texte est apparu dans le champ cible ?")
-            self.body.set_text("Répondez simplement oui ou non. La méthode ne sera mémorisée qu'après votre confirmation.")
+            self.body.set_text("Répondez oui ou non. En cas de réussite, nous continuerons les essais et vous choisirez votre méthode à la fin.")
             self.primary.set_label("Oui, ça fonctionne")
             self.secondary.set_label("Non, essayer la suivante")
             self.action_mode = "success"
         elif backend == "clipboard_only":
-            self.status.set_text("Le presse-papiers a été restauré, mais aucun outil ne peut envoyer Ctrl+V automatiquement dans cette session.")
-            self.body.set_text("Vous pouvez tout de même garder ce mode : un clic restaurera l'élément en première position et vous pourrez appuyer sur Ctrl+V dans votre fenêtre.")
-            self.primary.set_label("Utiliser le presse-papiers")
-            self.secondary.set_label("Fermer")
-            self.action_mode = "clipboard_fallback"
+            self.status.set_text("Aucun outil n'a envoyé Ctrl+V automatiquement. Le texte de test est encore dans le presse-papiers.")
+            self.body.set_text("Passez dans votre champ texte, essayez Ctrl+V, puis revenez ici. Vous pourrez confirmer ce mode manuel ou le passer.")
+            self.primary.set_label("J'ai confirmé Ctrl+V manuel")
+            self.secondary.set_label("Passer cette méthode")
+            self.action_mode = "clipboard_review"
         else:
             self.status.set_text("Cette solution n'a pas fonctionné dans votre session.")
             self.primary.set_label("Essayer la suivante")
             self.secondary.set_visible(False)
             self.action_mode = "failure"
+
+    def test_prepared(self, backend: str, message: str) -> None:
+        self.present()
+        self.app.release_onboarding_test()
+        if backend not in self.prepared_backends:
+            self.prepared_backends.append(backend)
+        self.status.set_text("Configuration enregistrée. Le collage devra être confirmé après la reconnexion.")
+        self.body.set_text(
+            f"{message} Cette étape prépare la session, mais ne confirme pas encore que le texte se collera. "
+            "Les autres méthodes vont continuer."
+        )
+        self.primary.set_label("Continuer les essais")
+        self.secondary.set_visible(False)
+        self.action_mode = "prepared"
 
     def finish_success(self, backend: str) -> None:
         self.app.restore_onboarding_clipboard()
@@ -1882,7 +2040,8 @@ class OnboardingWindow(Gtk.Window):
         self.app.config.set("onboarding_completed", True)
         self.app.onboarding = None
         self.close()
-        self.app.set_status("Collage direct configuré.")
+        status = "Xorg sera utilisé après reconnexion." if backend == "xorg" else "Collage direct configuré."
+        self.app.set_status(status)
 
 
 class TrayIndicator:
@@ -2165,6 +2324,12 @@ class KoplyxApplication(Gtk.Application):
         # drapeau est consommé au démarrage du processus enfant pour éviter
         # de relancer encore Koplyx lorsque l'assistant est rouvert ensuite.
         self.xwayland_relaunch = os.environ.pop("KOPLYX_XWAYLAND_TEST", "") == "1"
+        resume_json = os.environ.pop("KOPLYX_ONBOARDING_RESUME", "")
+        try:
+            resume_state = json.loads(resume_json) if resume_json and self.xwayland_relaunch else {}
+        except (TypeError, ValueError):
+            resume_state = {}
+        self.onboarding_resume_state = resume_state if isinstance(resume_state, dict) else {}
 
     def do_startup(self) -> None:
         Gtk.Application.do_startup(self)
@@ -2271,7 +2436,7 @@ class KoplyxApplication(Gtk.Application):
             "auto": "Le collage direct est en cours de configuration par l'assistant.",
             "wtype": "Le collage direct fonctionne avec la méthode validée par l'assistant.",
             "xwayland": "Le collage direct fonctionne avec la méthode validée par l'assistant.",
-            "xorg": "Le collage direct est préparé pour la session graphique validée par l'assistant.",
+            "xorg": "La session Xorg est configurée; le collage reste à confirmer après reconnexion.",
             "ydotool": "Le collage direct fonctionne avec la méthode système validée par l'assistant.",
             "portal": "Le collage direct utilise l'autorisation Ubuntu validée par l'assistant.",
             "clipboard_only": "Koplyx restaure les éléments dans le presse-papiers. Utilisez Ctrl+V pour les insérer.",
@@ -2345,8 +2510,7 @@ class KoplyxApplication(Gtk.Application):
                 return
             ok, message = run_privileged("gdm-xorg-enable", str(sessions[0]))
             if ok:
-                onboarding.test_result(True, backend)
-                onboarding.status.set_text(message + " Après le redémarrage, confirmez que le collage fonctionne.")
+                onboarding.test_prepared(backend, message)
             else:
                 onboarding.test_result(False, backend)
                 onboarding.status.set_text(message)
@@ -2365,7 +2529,7 @@ class KoplyxApplication(Gtk.Application):
                 return
         if backend == "portal":
             onboarding.status.set_text(
-                "Une demande Ubuntu « Bureau à distance » doit apparaître maintenant. "
+                "Bureau GNOME, autorisation 1/2 : la demande « Bureau à distance » va apparaître. "
                 "Acceptez uniquement l'accès au clavier pour continuer."
             )
             onboarding.primary.set_sensitive(False)
@@ -2377,7 +2541,7 @@ class KoplyxApplication(Gtk.Application):
                     onboarding.test_result(False, backend)
                     onboarding.status.set_text(message)
                     return
-                onboarding.status.set_text("Autorisation reçue. Choisissez maintenant votre champ texte pendant le test.")
+                onboarding.status.set_text("Bureau GNOME, test 2/2 : autorisation reçue. Choisissez votre champ texte pendant le test.")
                 self.prepare_onboarding_injection(onboarding, backend)
 
             self.portal_keyboard.prepare(portal_ready)
@@ -2436,7 +2600,9 @@ class KoplyxApplication(Gtk.Application):
             for candidate in candidates:
                 candidate_backend = {
                     "wtype": "wtype",
-                    "xdotool": "xorg" if running_x11() else "xwayland",
+                    "xdotool": "xwayland"
+                    if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+                    else "xorg",
                     "ydotool": "ydotool",
                 }.get(candidate, backend)
                 if paste_clipboard_now(self.previous_window_id, candidate_backend):
@@ -2464,6 +2630,13 @@ class KoplyxApplication(Gtk.Application):
         environment = os.environ.copy()
         environment["GDK_BACKEND"] = "x11"
         environment["KOPLYX_XWAYLAND_TEST"] = "1"
+        if self.onboarding and self.onboarding.test_backend == "xwayland":
+            resume_state = {
+                "remaining_backends": self.onboarding.test_plan[self.onboarding.test_index :],
+                "verified_backends": self.onboarding.verified_backends,
+                "prepared_backends": self.onboarding.prepared_backends,
+            }
+            environment["KOPLYX_ONBOARDING_RESUME"] = json.dumps(resume_state, separators=(",", ":"))
         self.control_server.close()
         try:
             subprocess.Popen([sys.executable, str(Path(__file__)), "--show"], env=environment)

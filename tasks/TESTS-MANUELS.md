@@ -16,10 +16,12 @@
 ## À valider sur Wayland
 
 - Sur un profil réellement neuf, vérifier que l'assistant s'ouvre au premier lancement, synchronise le raccourci GNOME et affiche le diagnostic de session.
-- Vérifier que l'étape XWayland explique la relance locale de Koplyx avec `GDK_BACKEND=x11`, sans redémarrer Ubuntu, puis que l'assistant reprend le test dans le nouveau processus. Si aucun fichier `/usr/share/xsessions/*.desktop` n'existe, vérifier que l'assistant explique pourquoi l'étape Xorg avec redémarrage est indisponible.
+- Vérifier que l'assistant numérote les étapes d'introduction 1 et 2, puis les méthodes comme 3.1, 3.2, etc. Pour le portail GNOME, vérifier les sous-étapes explicites « autorisation 1/2 » et « test 2/2 ».
+- Vérifier que l'étape XWayland explique la relance locale de Koplyx avec `GDK_BACKEND=x11`, sans redémarrer Ubuntu, puis que l'assistant reprend le test dans le nouveau processus en conservant les méthodes déjà confirmées. Si aucun fichier `/usr/share/xsessions/*.desktop` n'existe, vérifier que l'assistant explique pourquoi l'étape Xorg avec redémarrage est indisponible.
 - Dans l'assistant, préparer un champ texte cible, lancer le test actif et confirmer le texte identifiable. Vérifier qu'il n'est pas ajouté à l'historique et que l'ancien presse-papiers revient lorsque le bureau le permet.
 - Déclarer un échec, vérifier que l'assistant propose la solution suivante sans exposer de jargon, puis parcourir les méthodes jusqu'à la demande « Bureau à distance » et au mode presse-papiers. Le portail doit annoncer sa demande avant de l'afficher et ne doit jamais s'ouvrir automatiquement depuis un clic non configuré.
-- Relancer l'assistant depuis Paramètres et vérifier qu'aucun sélecteur de backend n'est présent : la méthode est mémorisée uniquement après « Oui, ça fonctionne ».
+- Confirmer qu'une méthode fonctionne, puis vérifier que l'assistant continue les essais. À la fin, choisir une des méthodes confirmées et vérifier qu'elle seule est mémorisée.
+- Relancer l'assistant depuis Paramètres et vérifier qu'aucun sélecteur de backend n'est présent avant le récapitulatif final.
 - Si une session Xorg est disponible, vérifier la sauvegarde GDM, le message de redémarrage, le bouton « Restaurer Wayland » et le refus de restauration après modification externe. Tester aussi `koplyx --restore-display-session`.
 - Si `ydotool` et son helper de paquet sont disponibles, vérifier que le bouton demande explicitement `pkexec`, crée uniquement le groupe `ydotool`, installe la règle `/dev/uinput`, n'utilise jamais le groupe `input`, puis demande une reconnexion. Depuis les sources sans helper, l'étape ne doit pas être proposée. Sous Snap ou Flatpak, vérifier que le bouton est désactivé.
 
@@ -43,6 +45,15 @@
 - Lancer l'application installée, ouvrir Paramètres puis l'assistant, et vérifier que les étapes Wayland disponibles s'affichent sans proposer ydotool sous Snap.
 - Tester le mode presse-papiers et confirmer qu'une copie réelle apparaît dans l'historique après le test.
 - Vérifier que l'installation stable se met à jour avec `sudo snap refresh koplyx --channel=latest/stable`.
+
+### Parcours de l'assistant beta 0.4.7-beta.1
+
+- Installer la préversion avec `sudo snap refresh koplyx --channel=latest/beta`, puis vérifier `snap info koplyx`.
+- Parcourir les étapes 1 et 2, puis vérifier que les méthodes apparaissent comme 3.1, 3.2, etc.; l'étape finale doit être 4 sur 4.
+- Pour le portail GNOME, accepter l'accès clavier à l'étape 1/2, puis vérifier que l'étape 2/2 teste bien le collage.
+- Confirmer qu'une méthode fonctionne et vérifier que les méthodes suivantes restent proposées; choisir ensuite une méthode confirmée et relancer un collage réel.
+- Si le parcours relance Koplyx sous XWayland, vérifier que les méthodes confirmées avant la relance restent dans le choix final.
+- Revenir à la version stable avec `sudo snap refresh koplyx --channel=latest/stable`.
 
 Pour valider ydotool, utiliser le `.deb` stable. Après l'installation du helper, déconnectez-vous puis reconnectez-vous, vérifiez `/dev/uinput` en `root:ydotool` avec le mode `660`, démarrez le service utilisateur avec `systemctl --user start ydotool` si nécessaire et contrôlez le socket `$XDG_RUNTIME_DIR/.ydotool_socket` avant le test dans un champ Wayland.
 

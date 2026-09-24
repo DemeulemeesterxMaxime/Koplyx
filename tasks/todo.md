@@ -1,12 +1,24 @@
 # État des tâches
 
+## Parcours de l'assistant de collage
+
+- [x] Cartographier l'état actuel des étapes, leur numérotation et la persistance des méthodes.
+- [x] Représenter les sous-étapes GNOME/XWayland sans recommencer la numérotation à 1.
+- [x] Continuer l'assistant après chaque réussite et permettre de choisir la méthode à conserver à la fin.
+- [x] Mettre à jour la version beta, le changelog et les métadonnées pour l'assistant remanié.
+- [x] Exécuter les vérifications du projet et contrôler les artefacts.
+- [ ] Fusionner après CI, publier une nouvelle beta Snap, puis l'installer pour la vérification manuelle.
+- [ ] Confirmer dans l'interface que les succès s'enchaînent et que le choix final est mémorisé.
+- Vérifications : `xvfb-run -a ./scripts/smoke-test.sh`, build `.deb`, SHA-256, métadonnée AppStream et compilation Python réussis.
+
 ## Publication stable 0.4.6 et retrait des préversions beta
 
 - [x] Préparer les métadonnées 0.4.6, la documentation et les changements locaux du bouton.
 - [x] Exécuter les vérifications, les artefacts de distribution et contrôler leurs sommes.
-- [ ] Pousser la branche, créer la PR, attendre les contrôles, puis publier le tag stable.
-- [ ] Vérifier la publication Snap stable, fermer `latest/beta` et retirer les releases/tags GitHub beta.
-- [ ] Vérifier l'installation Snap stable sur cette machine.
+- [x] Pousser la branche, créer la PR, attendre les contrôles, puis publier le tag stable.
+- [x] Vérifier la publication Snap stable, fermer `latest/beta` et retirer les releases/tags GitHub beta.
+- [x] Vérifier l'installation Snap stable sur cette machine.
+- Résultat : PR #16 fusionnée, tag `v0.4.6` publié, workflow de release réussi. Snap `latest/stable` est en 0.4.6 révision 19; `latest/beta` est fermé et les releases/tags GitHub beta ont été supprimés. Installation locale confirmée, application démarrée depuis `/snap/koplyx/19/`.
 
 ## Bouton en double après un échec de collage
 

@@ -2,6 +2,16 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.7-beta.1] - 2026-09-24
+
+### Modifié
+
+- L'assistant numérote séparément l'accueil, la préparation, les méthodes de collage et le choix final.
+- L'autorisation GNOME distingue clairement la demande d'accès clavier et le test de collage qui la suit.
+- Une méthode confirmée n'interrompt plus le parcours : toutes les méthodes disponibles sont essayées avant le choix final.
+- Les réussites confirmées sont conservées pendant la relance XWayland et proposées dans le récapitulatif final.
+- La configuration Xorg est présentée comme préparée, sans être déclarée fonctionnelle avant la reconnexion.
+
 ## [0.4.6] - 2026-09-24
 
 ### Ajouté
