@@ -13,13 +13,16 @@ PY
 
 /usr/bin/python3 -m py_compile koplyx/main.py koplyx/__init__.py
 /usr/bin/python3 tests/test_core.py
+/usr/bin/python3 tests/test_system_setup.py
 /usr/bin/python3 tests/test_control_socket.py
 /usr/bin/python3 tests/test_shortcut_installation.py
+/usr/bin/python3 tests/test_portal_keyboard.py
 
-if command -v xvfb-run >/dev/null 2>&1; then
-  xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py
+if command -v dbus-run-session >/dev/null 2>&1 && command -v xvfb-run >/dev/null 2>&1; then
+  dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py
+  dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_window_controls.py
 else
-  printf '%s\n' "history interaction skipped: xvfb-run missing"
+  printf '%s\n' "history interaction skipped: dbus-run-session or xvfb-run missing"
 fi
 
 if ! grep -q 'MENU_PATH = "/StatusNotifierItem/menu"' koplyx/main.py; then
@@ -97,7 +100,7 @@ store = HistoryStore(crypto, config)
 store.add("text", "text/plain", b"koplyx smoke pinned", "koplyx smoke pinned")
 item = store.list("")[0]
 store.toggle_pin(item.id)
-pinned = store.list("", pinned_text_only=True)
+pinned = store.list("", pinned_only=True)
 assert len(pinned) == 1
 assert pinned[0].preview != "koplyx smoke pinned"
 assert store.payload(pinned[0].id)[2] == b"koplyx smoke pinned"

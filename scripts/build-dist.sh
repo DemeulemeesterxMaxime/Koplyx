@@ -5,6 +5,7 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
+DEB_VERSION="$(printf '%s' "$VERSION" | tr '-' '~')"
 DIST_DIR="$ROOT_DIR/dist"
 STAGE_DIR="$DIST_DIR/koplyx-$VERSION"
 DEB_ROOT="$DIST_DIR/deb-root"
@@ -24,6 +25,8 @@ mkdir -p \
   "$DEB_ROOT/DEBIAN" \
   "$DEB_ROOT/opt/koplyx" \
   "$DEB_ROOT/usr/bin" \
+  "$DEB_ROOT/usr/lib/koplyx" \
+  "$DEB_ROOT/usr/share/polkit-1/actions" \
   "$DEB_ROOT/usr/share/applications" \
   "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps" \
   "$DEB_ROOT/usr/share/metainfo"
@@ -38,21 +41,23 @@ EOF
 chmod 0755 "$DEB_ROOT/usr/bin/koplyx"
 
 cp packaging/dev.limax.koplyx.desktop "$DEB_ROOT/usr/share/applications/dev.limax.koplyx.desktop"
+install -Dm755 packaging/scripts/koplyx-system-setup "$DEB_ROOT/usr/lib/koplyx/koplyx-system-setup"
+install -Dm644 packaging/polkit/org.limax.koplyx.system-setup.policy "$DEB_ROOT/usr/share/polkit-1/actions/org.limax.koplyx.system-setup.policy"
 cp assets/icons/dev.limax.koplyx.svg "$DEB_ROOT/usr/share/icons/hicolor/scalable/apps/dev.limax.koplyx.svg"
 cp packaging/metainfo/dev.limax.koplyx.metainfo.xml "$DEB_ROOT/usr/share/metainfo/dev.limax.koplyx.metainfo.xml"
 
 cat > "$DEB_ROOT/DEBIAN/control" <<EOF
 Package: $PACKAGE_NAME
-Version: $VERSION
+Version: $DEB_VERSION
 Section: utils
 Priority: optional
 Architecture: all
 Maintainer: Limax <limax@example.local>
-Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-gdkpixbuf-2.0, python3-cryptography, python3-pil, python3-dbus, python3-secretstorage, dbus-user-session, xdotool
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-gdkpixbuf-2.0, python3-cryptography, python3-pil, python3-dbus, python3-secretstorage, dbus-user-session, xdotool, wtype, ydotool
 Recommends: gnome-shell-extension-appindicator
 Description: Local encrypted clipboard history for Linux
  Koplyx stores text and image clipboard history locally with encryption,
- search, pinned text, quick restore, optional auto paste, and system tray support.
+ search, global pin visibility filter, direct restore and paste, and system tray support.
 EOF
 
 cat > "$DEB_ROOT/DEBIAN/postinst" <<'EOF'

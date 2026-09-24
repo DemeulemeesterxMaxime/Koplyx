@@ -2,6 +2,39 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.6] - 2026-09-24
+
+### Ajouté
+
+- Filtre global des éléments épinglés : affichage en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Onglet `Épinglés` étendu aux textes, images et fichiers.
+- Assistant de premier lancement pour le raccourci, le diagnostic de session et le test actif du collage direct.
+- Helper privilégié limité à `ydotool` et à la sauvegarde/restauration GDM, avec règle udev dédiée à `/dev/uinput`.
+
+### Modifié
+
+- Les textes longs restent sur une seule ligne avec ellipse et infobulle.
+- Un clic sur une entrée restaure puis colle directement le contenu dans la fenêtre précédente, sans nouvelle entrée d'historique.
+- Le collage direct essaie `wtype`, `ydotool`, puis `xdotool` sur une cible XWayland avant de recourir au portail Wayland.
+- La session du portail est fermée après l'autorisation ou le collage afin de ne pas laisser l'indicateur « Bureau à distance » affiché en permanence.
+- Le backend de collage est persistant (`auto`, `wtype`, `xwayland`, `xorg`, `ydotool`, `portal` ou `clipboard_only`) et le portail n'est jamais ouvert automatiquement depuis un clic non configuré.
+- Les profils existants sont migrés sans afficher l'assistant ; seuls les profils réellement neufs suivent le parcours de premier lancement.
+- L'assistant essaie désormais les méthodes l'une après l'autre avec des libellés compréhensibles ; les Paramètres n'exposent plus de sélecteur technique de backend.
+- Le mode presse-papiers restaure maintenant le contenu en première position, le garde disponible pour un Ctrl+V manuel, puis restaure le presse-papiers précédent après la réponse.
+- Le bouton final « Tester le presse-papiers » lance maintenant réellement le test avant d'enregistrer ce mode.
+- L'assistant ne propose plus `ydotool` si le helper système du paquet n'est pas installé et explique explicitement l'ouverture de la demande « Bureau à distance » avant le test du portail.
+- Le Snap stable ne configure pas `/dev/uinput`; ydotool est réservé aux paquets non confinés équipés du helper système.
+
+### Corrigé
+
+- Le collage Wayland utilise une session clavier autorisée et réutilisée, au lieu de relancer `xdotool` et sa demande de connexion à distance à chaque clic.
+- Après une relance XWayland, l'assistant poursuit l'essai vers ydotool; le helper vérifie les permissions de groupe appliquées à `/dev/uinput`.
+- La confirmation mémorise le backend validé (`xwayland` ou `xorg`) plutôt que le nom du binaire `xdotool`.
+- Les boutons natifs réduire, agrandir et fermer conservent les dimensions et le style du bureau.
+- Le raccourci d'une exécution depuis les sources rouvre le même profil local, même si le Snap est installé.
+- Une entrée locale impossible à déchiffrer ne bloque plus l'ouverture de l'historique.
+- Le test de collage affiche une seule action après l'échec d'une méthode, puis rétablit les choix pour l'essai suivant.
+
 ## [0.4.5] - 2026-09-21
 
 ### Corrigé

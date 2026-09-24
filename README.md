@@ -26,12 +26,14 @@ Pour demander une mise à jour du canal stable :
 sudo snap refresh koplyx --channel=latest/stable
 ```
 
+Le Snap strict ne peut pas configurer `/dev/uinput`, donc l'assistant n'y propose pas ydotool. Pour tester ydotool, installez le paquet Debian stable depuis les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest), puis déconnectez-vous et reconnectez-vous après l'installation du helper système.
+
 ### Debian et Ubuntu (.deb)
 
-Téléchargez `koplyx_<version>_all.deb` dans les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest). Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release `0.4.5` :
+Téléchargez `koplyx_<version>_all.deb` dans les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest). Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release stable `0.4.6` :
 
 ```bash
-sudo apt install ./koplyx_0.4.5_all.deb
+sudo apt install ./koplyx_0.4.6_all.deb
 ```
 
 Pour mettre à jour, téléchargez et installez le paquet de la nouvelle release.
@@ -41,7 +43,7 @@ Pour mettre à jour, téléchargez et installez le paquet de la nouvelle release
 Sur Debian ou Ubuntu, installez les dépendances puis lancez le projet :
 
 ```bash
-sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool
+sudo apt install python3 python3-gi gir1.2-gtk-4.0 gir1.2-gdkpixbuf-2.0 python3-cryptography python3-pil python3-dbus python3-secretstorage dbus-user-session xdotool wtype ydotool
 git clone https://github.com/DemeulemeesterxMaxime/Koplyx.git
 cd Koplyx
 ./bin/koplyx
@@ -78,11 +80,18 @@ Le [workflow de release](.github/workflows/release.yml) vérifie les pull reques
 </p>
 
 - Recherchez parmi les textes, images et fichiers copiés.
-- Épinglez les textes à conserver et restaurez une entrée d'un clic.
+- Épinglez les textes, images et fichiers à conserver. Le filtre global choisit si les épingles apparaissent en haut, en bas ou uniquement dans l'onglet `Épinglés`.
+- Cliquez sur une ligne pour restaurer puis coller immédiatement l'élément dans la fenêtre précédente, sans créer une nouvelle entrée d'historique.
 - Ouvrez la fenêtre avec `Ctrl+Alt+V`, configurable dans les paramètres et installé automatiquement sous GNOME.
 - Le menu de la barre système propose `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`. L'historique se consulte dans la fenêtre principale.
 
-Koplyx peut démarrer en arrière-plan à l'ouverture de session. Le collage automatique utilise `xdotool` sous X11. Sous Wayland, les fonctionnalités du presse-papiers et les raccourcis dépendent du bureau. L'indicateur nécessite un hôte AppIndicator/KStatusNotifierItem.
+Koplyx peut démarrer en arrière-plan à l'ouverture de session. L'assistant essaie automatiquement les solutions de collage dans l'ordre adapté à votre session, puis s'arrête dès que vous confirmez qu'une méthode fonctionne. Le portail du bureau Wayland n'est utilisé qu'après votre accord explicite et affiche une demande « Bureau à distance » limitée au clavier. `wtype` dépend du support du compositeur ; `ydotool` nécessite son daemon, l'accès à `uinput` et le helper système fourni par le paquet installé. Koplyx ne demande ni partage d'écran ni contrôle de souris. Le bureau peut révoquer une autorisation dans ses paramètres de confidentialité. Le mode presse-papiers restaure chaque élément en première position, tente Ctrl+V, puis vous indique clairement d'utiliser Ctrl+V manuellement si aucun outil d'injection n'est disponible. L'indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.
+
+Au premier lancement, l'assistant de collage configure le raccourci GNOME, prépare le test actif dans le champ que vous choisissez puis essaie chaque solution l'une après l'autre. Le test est exclu de l'historique et le presse-papiers précédent est restauré lorsque le bureau le permet. L'assistant reste relançable depuis Paramètres. Les Paramètres affichent seulement l'état de la configuration : le choix d'une méthode est mémorisé uniquement après votre confirmation dans l'assistant. Aucun privilège n'est demandé sans clic de votre part.
+
+Le test XWayland relance uniquement Koplyx avec `GDK_BACKEND=x11` : il ne transforme pas toute la session Wayland. Une session Xorg n'est proposée que si un fichier `/usr/share/xsessions/*.desktop` est présent. Sa configuration sauvegarde `/etc/gdm3/custom.conf`, prend effet au prochain redémarrage et peut être annulée par le bouton « Restaurer Wayland » ou par `koplyx --restore-display-session`. La restauration refuse de remplacer un fichier GDM modifié depuis la sauvegarde.
+
+L'option `ydotool` utilise uniquement un groupe système dédié et une règle udev pour `/dev/uinput`. Koplyx envoie des événements virtuels de collage et ne lit pas les périphériques clavier. Une reconnexion ou un redémarrage est nécessaire après l'autorisation. Le test est masqué dans une exécution depuis les sources tant que le helper root-owned n'est pas installé par le paquet. Snap et Flatpak ne peuvent pas modifier l'uinput de l'hôte depuis leur sandbox : l'assistant masque cette étape et propose le portail ou le mode presse-papiers.
 
 Les contenus sont chiffrés avant leur stockage local dans SQLite et les aperçus sont déchiffrés en mémoire. La clé utilise Secret Service/libsecret si disponible, avec un fichier local en solution de repli. Consultez la [politique de sécurité](SECURITY.md) pour les précautions concernant les anciens historiques.
 

@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import sys
+import os
+import shlex
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -12,10 +14,18 @@ from unittest.mock import patch
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from koplyx.main import APP_NAME, install_gnome_shortcut
+from koplyx.main import APP_NAME, install_gnome_shortcut, shortcut_command
 
 
 class ShortcutInstallationTests(unittest.TestCase):
+    def test_source_shortcut_keeps_profile_even_with_installed_snap(self):
+        with patch.dict(os.environ, {"XDG_CONFIG_HOME": "/tmp/profil avec espaces"}, clear=True), patch(
+            "koplyx.main.shutil.which", return_value="/snap/bin/koplyx"
+        ):
+            command = shlex.split(shortcut_command())
+        self.assertIn("XDG_CONFIG_HOME=/tmp/profil avec espaces", command)
+        self.assertEqual(command[-2:], [str(PROJECT_ROOT / "bin/koplyx"), "--toggle"])
+
     def test_installs_and_updates_the_koplyx_binding(self) -> None:
         calls: list[list[str]] = []
 

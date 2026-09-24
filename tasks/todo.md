@@ -1,5 +1,97 @@
 # État des tâches
 
+## Publication stable 0.4.6 et retrait des préversions beta
+
+- [x] Préparer les métadonnées 0.4.6, la documentation et les changements locaux du bouton.
+- [x] Exécuter les vérifications, les artefacts de distribution et contrôler leurs sommes.
+- [ ] Pousser la branche, créer la PR, attendre les contrôles, puis publier le tag stable.
+- [ ] Vérifier la publication Snap stable, fermer `latest/beta` et retirer les releases/tags GitHub beta.
+- [ ] Vérifier l'installation Snap stable sur cette machine.
+
+## Bouton en double après un échec de collage
+
+- [x] Masquer le bouton secondaire pendant l'état d'échec et le réafficher aux étapes suivantes.
+- [x] Couvrir les transitions échec, nouvel essai et réussite dans la vérification de l'assistant.
+- [x] Vérifier que l'interface n'affiche plus qu'une seule action après un échec.
+- Vérification : `NO_AT_BRIDGE=1 timeout 30s dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/test_history_interaction.py` réussit.
+
+## Validation manuelle beta.3 sur la session active
+
+- [x] Installer le `.deb` beta.3 et vérifier le paquet installé.
+- [x] Confirmer Wayland, les droits `root:ydotool` sur `/dev/uinput` et la disponibilité d'un démon ydotool pour le test.
+- [ ] Confirmer le marqueur réellement inséré dans un champ texte et distinguer ce résultat du code retour de ydotool.
+- Note : le clic physique a renvoyé `True`, mais le champ ne contenait pas le marqueur. La restauration du presse-papiers a été confirmée; l'insertion du marqueur reste non validée.
+
+## Correctif du parcours ydotool après relance XWayland
+
+- [x] Conserver ydotool dans les étapes de l'assistant après la relance XWayland, avant le portail et le repli presse-papiers.
+- [x] Ajouter une régression couvrant le plan du processus relancé et vérifier les tests ciblés.
+- [x] Construire et contrôler le `.deb` beta.4, sa version Debian, son helper embarqué et son SHA-256.
+- [x] Publier la préversion GitHub beta.4 avec le `.deb`, publier le Snap sur `latest/beta` et installer le `.deb` sur la session Wayland.
+- [x] Confirmer dans un champ visible que le code beta.4 insère le marqueur par ydotool et restaure le presse-papiers précédent.
+- [ ] Parcourir l'assistant Koplyx lui-même après sa relance XWayland et confirmer le backend ydotool.
+- Empreinte construite : `0f8916423995be5ffeb213c08b42fe9376e0a79379ad0adabe0c10086a83d5b3`.
+- Note : GitHub Release `v0.4.6-beta.4` créée. Le job Snap CI est refusé car son jeton limite les canaux à `edge,stable`; le Snap construit par CI a ensuite été publié avec la session locale en révision 18 de `latest/beta`.
+- Vérification directe du 2026-09-24 : retour ydotool positif, marqueur observé dans le champ et contenu antérieur du presse-papiers restauré. Le test du parcours graphique complet reste à faire.
+
+## Correctif final du test presse-papiers beta.3
+
+- [x] Faire passer le bouton « Tester le presse-papiers » par le test actif commun avant confirmation.
+- [x] Ajouter une régression UI, relancer le smoke test et reconstruire le `.deb`.
+- [x] Publier `0.4.6-beta.3` sur `latest/beta`, publier le `.deb`, puis vérifier la révision Store.
+- Note : `latest/beta` est maintenant sur la révision 17. La GitHub Release beta.3 est disponible; le test manuel du parcours reste à faire par l'utilisateur.
+
+## Validation beta de l'assistant de collage
+
+- [x] Vérifier et corriger les parcours de restauration presse-papiers et de test ydotool.
+- [x] Ajouter une publication de tag beta vers le canal `latest/beta` sans toucher à `stable`.
+- [x] Construire et valider le `.deb`, les tests et les métadonnées, puis confirmer les limites réelles de Snap pour ydotool.
+- [x] Publier la version beta et vérifier le canal ainsi que les instructions d'installation.
+- Note : beta.2 était la révision 16 et a été remplacée par beta.3. Le push CI Snap échoue toujours car le jeton GitHub est limité à `edge,stable`; les révisions beta.2 et beta.3 ont été publiées avec la session Snapcraft locale sans modifier le jeton GitHub.
+
+## Onboarding de configuration du collage direct
+
+- [x] Migrer la configuration avec `onboarding_completed` et `paste_backend` sans interrompre les profils existants.
+- [x] Ajouter l'assistant GTK relançable depuis Paramètres : raccourci, diagnostic, test actif et replis explicites.
+- [x] Ajouter la détection XWayland/Xorg et la commande de restauration de session GDM sans modifier automatiquement le système.
+- [x] Ajouter le helper `pkexec` dédié à `ydotool` et la règle udev restreinte à l'utilisateur courant.
+- [x] Intégrer la sélection du backend au collage runtime et fermer les sessions du portail après usage.
+- [x] Remplacer le sélecteur technique par un parcours guidé qui essaie les méthodes successivement et ne mémorise qu'une réussite confirmée.
+- [x] Mettre à jour le packaging, le README, le changelog et les tests manuels.
+- [ ] Exécuter les tests, les artefacts et le lancement manuel avant tout push.
+
+## Correction du parcours de test du collage direct
+
+- [x] Rendre le repli presse-papiers réellement actif : restaurer l'élément, le laisser en première position et tenter Ctrl+V, avec un message clair si aucune injection n'est possible.
+- [x] Ne proposer ydotool que lorsque le helper système est réellement installé, et expliquer la disponibilité depuis un paquet installé.
+- [x] Rendre la demande « Bureau à distance » visible et diagnosticable, sans session persistante ouverte après le test.
+- [x] Rejouer les tests, le smoke test et le build `.deb`; le build Snap local est bloqué par le réseau de l'instance LXD.
+- [ ] Tester manuellement la beta publiée sous Wayland, notamment la restauration du presse-papiers et ydotool depuis le `.deb`.
+
+## Parcours XWayland et Xorg dans l'assistant
+
+- [ ] Relier la relance `GDK_BACKEND=x11` à une étape réelle de l'assistant et reprendre le test au redémarrage de Koplyx.
+- [ ] Afficher le diagnostic XWayland/Xorg et expliquer lorsqu'aucune session Xorg ne peut demander un redémarrage.
+
+## Repli de collage silencieux Wayland
+
+- [x] Détecter et essayer les outils dans l'ordre `wtype`, `xdotool` XWayland, `ydotool`, puis le portail.
+- [x] Ajouter les tests de sélection, d'échec et de repli entre les outils.
+- [x] Mettre à jour les dépendances et la documentation sans rendre `ydotool` obligatoire.
+- [x] Rejouer les tests, le smoke test et le build, puis relancer l'instance locale pour validation manuelle.
+
+## Épinglage, affichage et collage direct
+
+- [x] Remplacer le collage XTEST sous Wayland par une session clavier du portail, avec autorisation explicite et réutilisable.
+- [x] Restreindre le style des boutons au contenu pour préserver les contrôles natifs de fenêtre.
+- [x] Tester les erreurs, refus et collages successifs simulés ; vérifier la création/sélection clavier sur le portail GNOME réel et reconstruire les artefacts.
+- [ ] Valider l'insertion réelle au curseur après autorisation dans l'instance locale et obtenir le retour utilisateur avant push.
+
+- [x] Ajouter le filtre global persistant des éléments épinglés avec trois modes d'affichage.
+- [x] Afficher tous les types dans l'onglet des éléments épinglés et tronquer les textes sur une ligne.
+- [ ] Valider le collage direct sur le bureau réel après autorisation GNOME.
+- [x] Mettre à jour la documentation et les tests.
+
 ## README orienté distribution et contributions
 
 - [x] Mettre les installations, releases et contributions au premier plan.
@@ -127,6 +219,13 @@
 - [x] Passer au nom et au chemin StatusNotifierItem standard, puis retirer le bouton autostart redondant.
 - [x] Ajouter les tests de régression et valider les contrôles automatisés du menu.
 - [ ] Valider le menu réel sur le Snap publié.
+
+## Correctif réaffichage de l'assistant pendant les tests
+
+- [x] Maintenir l'application active lorsque l'assistant et la fenêtre principale sont masqués pendant un test.
+- [x] Réafficher l'assistant après succès ou échec du backend, puis libérer proprement l'application.
+- [x] Ajouter un test de régression sur le cycle masquage, injection et réaffichage.
+- [ ] Valider manuellement l'étape 2 sous Wayland.
 
 ## Release corrective 0.4.4
 

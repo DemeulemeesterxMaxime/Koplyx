@@ -104,7 +104,11 @@
 <li>Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.</li>
 <li>Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.</li>
 <li>Publier les checksums <code>SHA256SUMS</code> avec la release.</li>
-<li>Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.</li>
+<li>Documenter explicitement les limites Wayland : Koplyx essaie <code>wtype</code>, <code>xdotool</code> pour XWayland et <code>ydotool</code> uniquement lorsque le helper du paquet est installé, avant le portail. Le mode presse-papiers restaure l&#x27;élément en première position et tente Ctrl+V, mais le collage automatique dépend du bureau.</li>
+<li>Valider le parcours d&#x27;onboarding sur un profil neuf, puis vérifier qu&#x27;un profil existant est migré avec <code>onboarding_completed=true</code> sans interruption.</li>
+<li>Vérifier le test actif dans un champ utilisateur, l&#x27;exclusion du texte de test de l&#x27;historique et la restauration du presse-papiers précédent.</li>
+<li>Si une session Xorg existe, vérifier la sauvegarde GDM, le réglage au prochain redémarrage, le refus de rollback après modification externe et <code>koplyx --restore-display-session</code>.</li>
+<li>Vérifier que la configuration <code>ydotool</code> utilise uniquement le groupe dédié et n&#x27;ajoute jamais l&#x27;utilisateur au groupe global <code>input</code>. Les boutons doivent être désactivés sous Snap et Flatpak.</li>
 <li>Purger l&#x27;historique local si des donnees reelles ont ete copiees avec une version anterieure a <code>0.2.2</code>, car les anciens apercus pouvaient contenir du texte en clair.</li>
 <li>Tester une installation propre depuis le <code>.deb</code>, puis suppression et reinstall.</li>
 </ul>
@@ -115,16 +119,30 @@
 cd dist
 sha256sum -c SHA256SUMS
 </code></pre>
+<h2>Publication beta</h2>
+<p>Les tags <code>vX.Y.Z-beta.N</code> publient le Snap sur <code>latest/beta</code> et créent une GitHub Release en préversion avec les paquets <code>.deb</code> et les sommes de contrôle. Les tags stables sans suffixe continuent de publier sur <code>stable</code>.</p>
+<pre><code>
+sudo snap install koplyx --channel=latest/beta
+sudo snap refresh koplyx --channel=latest/beta
+snap info koplyx
+</code></pre>
+<p>Pour valider ydotool, installer le fichier <code>.deb</code> attaché à la même GitHub Release beta. Le Snap ne permet pas de donner au processus l&#x27;accès système requis à <code>/dev/uinput</code>.</p>
 <h2>Verification manuelle</h2>
 <ul>
+<li>Sous Wayland, tester d&#x27;abord <code>wtype</code>, <code>xdotool</code> avec une cible XWayland et <code>ydotool</code> lorsque son helper est installé. Si aucun outil direct ne fonctionne, vérifier que l&#x27;assistant annonce puis affiche la demande « Bureau à distance », autoriser uniquement le clavier, revenir au champ cible et vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l&#x27;indicateur après le collage. Tester également le refus et la révocation de l&#x27;autorisation.</li>
+<li>Pour ydotool, installer le <code>.deb</code> de la release GitHub, utiliser l&#x27;assistant pour installer son helper, se déconnecter puis se reconnecter afin d&#x27;appliquer le groupe <code>ydotool</code>, et vérifier que le daemon crée un socket accessible dans <code>$XDG_RUNTIME_DIR</code>. Le Snap strict ne peut pas configurer <code>/dev/uinput</code> sur l&#x27;hôte et masque cette étape.</li>
+<li>Sur un profil neuf, suivre l&#x27;assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l&#x27;assistant depuis Paramètres.</li>
+<li>Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.</li>
 <li>Installer le <code>.deb</code>, lancer Koplyx, verifier l&#x27;icone du lanceur et de la zone systeme.</li>
 <li>Copier/coller un texte et verifier son apparition dans l&#x27;historique avec un extrait lisible.</li>
+<li>Copier un texte long et verifier que sa carte reste sur une seule ligne avec une ellipse et une infobulle.</li>
 <li>Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.</li>
 <li>Copier une image et verifier l&#x27;apparition d&#x27;une vignette stable dans l&#x27;historique.</li>
 <li>Copier un fichier et verifier que son nom complet avec extension apparait dans l&#x27;historique.</li>
 <li>Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans <code>preview</code>.</li>
-<li>Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.</li>
-<li>Epingler un texte et verifier sa presence dans l&#x27;onglet dedie.</li>
+<li>Cliquer une entree texte depuis un editeur actif et verifier le collage direct a l&#x27;emplacement du curseur sur X11, sans nouvelle entree dans l&#x27;historique.</li>
+<li>Epingler un texte, une image et un fichier, puis verifier leur presence dans l&#x27;onglet dedie.</li>
+<li>Utiliser le filtre global et tester <code>Épingles en haut</code>, <code>Épingles en bas</code> et <code>Épingles uniquement dans Épinglés</code>.</li>
 <li>Ouvrir les parametres, tester l&#x27;autostart et l&#x27;installation du raccourci GNOME.</li>
 <li>Verifier <code>~/.config/autostart/koplyx.desktop</code> et la presence de <code>Exec=koplyx --hidden</code> ou d&#x27;un fallback Python local en mode source.</li>
 <li>Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l&#x27;indicateur est disponible.</li>
@@ -133,7 +151,7 @@ sha256sum -c SHA256SUMS
 <li>Utiliser <code>Quitter Koplyx</code> depuis la barre systeme et verifier que le processus s&#x27;arrete.</li>
 <li>Redemarrer la session et verifier la persistance de l&#x27;historique.</li>
 <li>Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.</li>
-<li>Installer le snap depuis <code>edge</code> et refaire le lancement, l&#x27;icone, la zone systeme et l&#x27;historique.</li>
+<li>Installer le snap depuis <code>latest/stable</code> et refaire le lancement, l&#x27;icone, la zone systeme, l&#x27;historique et le repli presse-papiers manuel.</li>
 </ul>
 <h2>Snapcraft</h2>
 <p>Installer l&#x27;outil :</p>
@@ -162,8 +180,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.4.5_amd64.snap
-snapcraft upload --release=stable koplyx_0.4.5_amd64.snap
+ls -lh koplyx_0.4.6_amd64.snap
+snapcraft upload --release=stable koplyx_0.4.6_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -213,9 +231,9 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 </ol>
 <p>Tag GitHub :</p>
 <pre><code>
-git push origin main
-git tag v0.4.5
-git push origin v0.4.5
+git fetch origin main
+git tag -a v0.4.6 origin/main -m &quot;Koplyx 0.4.6&quot;
+git push origin v0.4.6
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
 <h2>Nettoyage historique Git</h2>

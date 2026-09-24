@@ -7,7 +7,11 @@ Koplyx est pret pour une release publique stable lorsque la validation locale pa
 - Verifier juridiquement le nom Koplyx sur INPI, EUIPO, USPTO et WIPO.
 - Creer une cle mainteneur GPG et signer les artifacts ou le depot APT.
 - Publier les checksums `SHA256SUMS` avec la release.
-- Documenter explicitement les limites Wayland : raccourcis globaux et collage automatique dependent du bureau.
+- Documenter explicitement les limites Wayland : Koplyx essaie `wtype`, `xdotool` pour XWayland et `ydotool` uniquement lorsque le helper du paquet est installé, avant le portail. Le mode presse-papiers restaure l'élément en première position et tente Ctrl+V, mais le collage automatique dépend du bureau.
+- Valider le parcours d'onboarding sur un profil neuf, puis vérifier qu'un profil existant est migré avec `onboarding_completed=true` sans interruption.
+- Vérifier le test actif dans un champ utilisateur, l'exclusion du texte de test de l'historique et la restauration du presse-papiers précédent.
+- Si une session Xorg existe, vérifier la sauvegarde GDM, le réglage au prochain redémarrage, le refus de rollback après modification externe et `koplyx --restore-display-session`.
+- Vérifier que la configuration `ydotool` utilise uniquement le groupe dédié et n'ajoute jamais l'utilisateur au groupe global `input`. Les boutons doivent être désactivés sous Snap et Flatpak.
 - Purger l'historique local si des donnees reelles ont ete copiees avec une version anterieure a `0.2.2`, car les anciens apercus pouvaient contenir du texte en clair.
 - Tester une installation propre depuis le `.deb`, puis suppression et reinstall.
 
@@ -20,16 +24,34 @@ cd dist
 sha256sum -c SHA256SUMS
 ```
 
+## Publication beta
+
+Les tags `vX.Y.Z-beta.N` publient le Snap sur `latest/beta` et créent une GitHub Release en préversion avec les paquets `.deb` et les sommes de contrôle. Les tags stables sans suffixe continuent de publier sur `stable`.
+
+```bash
+sudo snap install koplyx --channel=latest/beta
+sudo snap refresh koplyx --channel=latest/beta
+snap info koplyx
+```
+
+Pour valider ydotool, installer le fichier `.deb` attaché à la même GitHub Release beta. Le Snap ne permet pas de donner au processus l'accès système requis à `/dev/uinput`.
+
 ## Verification manuelle
 
+- Sous Wayland, tester d'abord `wtype`, `xdotool` avec une cible XWayland et `ydotool` lorsque son helper est installé. Si aucun outil direct ne fonctionne, vérifier que l'assistant annonce puis affiche la demande « Bureau à distance », autoriser uniquement le clavier, revenir au champ cible et vérifier plusieurs collages réels sans nouvelle demande, ainsi que la disparition de l'indicateur après le collage. Tester également le refus et la révocation de l'autorisation.
+- Pour ydotool, installer le `.deb` de la release GitHub, utiliser l'assistant pour installer son helper, se déconnecter puis se reconnecter afin d'appliquer le groupe `ydotool`, et vérifier que le daemon crée un socket accessible dans `$XDG_RUNTIME_DIR`. Le Snap strict ne peut pas configurer `/dev/uinput` sur l'hôte et masque cette étape.
+- Sur un profil neuf, suivre l'assistant : raccourci, diagnostic, test actif, échec puis choix du mode presse-papiers uniquement. Relancer ensuite l'assistant depuis Paramètres.
+- Vérifier les dimensions natives des boutons réduire, agrandir et fermer dans toutes les fenêtres.
 - Installer le `.deb`, lancer Koplyx, verifier l'icone du lanceur et de la zone systeme.
 - Copier/coller un texte et verifier son apparition dans l'historique avec un extrait lisible.
+- Copier un texte long et verifier que sa carte reste sur une seule ligne avec une ellipse et une infobulle.
 - Rechercher un mot present dans le texte copie et verifier que la recherche memoire le retrouve.
 - Copier une image et verifier l'apparition d'une vignette stable dans l'historique.
 - Copier un fichier et verifier que son nom complet avec extension apparait dans l'historique.
 - Verifier dans SQLite que les nouvelles lignes ne stockent plus le texte copie en clair dans `preview`.
-- Cliquer une entree texte depuis un editeur actif et verifier le collage automatique sur X11.
-- Epingler un texte et verifier sa presence dans l'onglet dedie.
+- Cliquer une entree texte depuis un editeur actif et verifier le collage direct a l'emplacement du curseur sur X11, sans nouvelle entree dans l'historique.
+- Epingler un texte, une image et un fichier, puis verifier leur presence dans l'onglet dedie.
+- Utiliser le filtre global et tester `Épingles en haut`, `Épingles en bas` et `Épingles uniquement dans Épinglés`.
 - Ouvrir les parametres, tester l'autostart et l'installation du raccourci GNOME.
 - Verifier `~/.config/autostart/koplyx.desktop` et la presence de `Exec=koplyx --hidden` ou d'un fallback Python local en mode source.
 - Fermer la fenetre avec la croix et verifier que Koplyx reste actif dans la barre systeme lorsque l'indicateur est disponible.
@@ -38,7 +60,7 @@ sha256sum -c SHA256SUMS
 - Utiliser `Quitter Koplyx` depuis la barre systeme et verifier que le processus s'arrete.
 - Redemarrer la session et verifier la persistance de l'historique.
 - Redemarrer la session et verifier que Koplyx demarre sans fenetre visible mais avec son indicateur de barre systeme.
-- Installer le snap depuis `edge` et refaire le lancement, l'icone, la zone systeme et l'historique.
+- Installer le snap depuis `latest/stable` et refaire le lancement, l'icone, la zone systeme, l'historique et le repli presse-papiers manuel.
 
 ## Snapcraft
 
@@ -79,8 +101,8 @@ Construire et publier :
 
 ```bash
 snapcraft pack
-ls -lh koplyx_0.4.5_amd64.snap
-snapcraft upload --release=stable koplyx_0.4.5_amd64.snap
+ls -lh koplyx_0.4.6_amd64.snap
+snapcraft upload --release=stable koplyx_0.4.6_amd64.snap
 ```
 
 Pour une premiere publication, reserver le nom si necessaire :
@@ -149,9 +171,9 @@ Soumission Flathub :
 Tag GitHub :
 
 ```bash
-git push origin main
-git tag v0.4.5
-git push origin v0.4.5
+git fetch origin main
+git tag -a v0.4.6 origin/main -m "Koplyx 0.4.6"
+git push origin v0.4.6
 ```
 
 La GitHub Action publie les artifacts en release pour les tags `v*`.

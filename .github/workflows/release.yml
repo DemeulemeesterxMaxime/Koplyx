@@ -73,7 +73,7 @@ jobs:
             dist/SHA256SUMS
 
   build-snap:
-    needs: security-scan
+    needs: build
     if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04
     env:
@@ -93,8 +93,15 @@ jobs:
           name: koplyx-snap
           path: ${{ steps.snapcraft.outputs.snap }}
 
+      - name: Publish snap to beta
+        if: startsWith(github.ref, 'refs/tags/') && contains(github.ref, '-beta.') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        uses: canonical/action-publish@v1
+        with:
+          snap: ${{ steps.snapcraft.outputs.snap }}
+          release: beta
+
       - name: Publish snap to stable
-        if: startsWith(github.ref, 'refs/tags/') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
         uses: canonical/action-publish@v1
         with:
           snap: ${{ steps.snapcraft.outputs.snap }}
@@ -117,6 +124,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          prerelease: ${{ contains(github.ref, '-') }}
           files: |
             dist/*.tar.gz
             dist/*.deb
