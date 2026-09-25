@@ -71,7 +71,9 @@ def graphical_main() -> int:
             if predicate():
                 return
             pump(0.05)
-        raise AssertionError(message)
+        status = app.status_message if app is not None else "application non démarrée"
+        target_text = state.read_text() if state.exists() else "cible non démarrée"
+        raise AssertionError(f"{message} Statut Koplyx : {status!r}; cible : {target_text!r}")
 
     def xd(*args):
         return subprocess.check_output(["xdotool", *map(str, args)], text=True, timeout=5).strip()

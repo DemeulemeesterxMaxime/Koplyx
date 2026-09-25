@@ -2939,7 +2939,11 @@ class KoplyxApplication(Gtk.Application):
         return GLib.SOURCE_REMOVE
 
     def try_auto_paste(self) -> bool:
-        if self.window and self.window.is_active():
+        # GTK 4.14 peut garder is_active() vrai après hide(), alors que le
+        # gestionnaire de fenêtres a déjà rendu le focus à la cible.
+        # Une fenêtre masquée ne doit pas bloquer le collage; sous X11,
+        # paste_clipboard_now vérifie aussi la fenêtre réellement active.
+        if self.window and self.window.is_visible() and self.window.is_active():
             self.paste_failed("Koplyx a encore le focus. Sélectionnez le champ cible puis réessayez.")
             return GLib.SOURCE_REMOVE
         backend = self.config.get("paste_backend") or "auto"

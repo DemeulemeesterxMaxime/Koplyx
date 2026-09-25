@@ -7,6 +7,7 @@ Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 ### Corrigé
 
 - Le collage X11 utilise le clavier de la fenêtre active, après vérification de la cible, au lieu d'événements ciblés ignorés par GTK.
+- Sous GTK 4.14, une fenêtre Koplyx masquée ne bloque plus le collage avec un état de focus périmé.
 - Une copie de fichier ne crée plus une seconde entrée texte contenant son chemin.
 
 ### Ajouté

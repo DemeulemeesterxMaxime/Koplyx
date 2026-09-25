@@ -268,3 +268,5 @@
 - [x] Synchroniser version, changelog, métadonnées et documentation; construire les artefacts.
 - [ ] Créer la PR, attendre tous les contrôles, fusionner et publier le tag beta.
 - [ ] Vérifier les artefacts GitHub et la version publiée sur `latest/beta`.
+
+- Régression CI Ubuntu 24.04 reproduite localement : `is_active()` restait vrai après `hide()` sous GTK 4.14. Le garde-fou vérifie désormais également la visibilité; la fenêtre X11 cible reste vérifiée avant injection.
