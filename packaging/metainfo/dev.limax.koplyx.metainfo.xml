@@ -19,6 +19,15 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.4.7-beta.2" date="2026-09-25" type="development">
+      <description>
+        <ul>
+          <li>Le collage X11 utilise la fenêtre active vérifiée pour fonctionner avec les champs GTK.</li>
+          <li>Les fichiers copiés ne génèrent plus une entrée texte parasite contenant leur chemin.</li>
+          <li>La version est affichée dans les paramètres.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.7-beta.1" date="2026-09-24">
       <description>
         <ul>

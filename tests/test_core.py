@@ -172,7 +172,10 @@ class HistoryStoreTests(unittest.TestCase):
 
     def test_direct_paste_continues_after_a_tool_failure(self) -> None:
         calls = []
-        results = iter([SimpleNamespace(returncode=1), SimpleNamespace(returncode=1), SimpleNamespace(returncode=0)])
+        results = iter([
+            SimpleNamespace(returncode=1), SimpleNamespace(returncode=1),
+            SimpleNamespace(returncode=0, stdout="123\n"), SimpleNamespace(returncode=0),
+        ])
         with patch.dict(os.environ, {"XDG_SESSION_TYPE": "wayland", "GDK_BACKEND": ""}), patch(
             "koplyx.main.command_exists", return_value=True
         ), patch("koplyx.main.ydotool_available", return_value=True), patch(
@@ -181,7 +184,22 @@ class HistoryStoreTests(unittest.TestCase):
             self.assertTrue(paste_clipboard_now("123"))
         self.assertEqual(calls[0][0], "wtype")
         self.assertEqual(calls[1][0], "ydotool")
-        self.assertEqual(calls[2][:4], ["xdotool", "key", "--window", "123"])
+        self.assertEqual(calls[2], ["xdotool", "getactivewindow"])
+        self.assertEqual(calls[3], ["xdotool", "key", "--clearmodifiers", "ctrl+v"])
+
+    def test_x11_paste_refuses_a_different_active_window(self) -> None:
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "x11"}), patch(
+            "koplyx.main.command_exists", return_value=True
+        ), patch("koplyx.main.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="456\n")) as run:
+            self.assertFalse(paste_clipboard_now("123", "xorg"))
+        run.assert_called_once_with(["xdotool", "getactivewindow"], check=False, capture_output=True, text=True)
+
+    def test_x11_paste_refuses_an_unknown_target(self) -> None:
+        with patch.dict(os.environ, {"XDG_SESSION_TYPE": "x11"}), patch(
+            "koplyx.main.command_exists", return_value=True
+        ), patch("koplyx.main.subprocess.run") as run:
+            self.assertFalse(paste_clipboard_now(None, "xorg"))
+        run.assert_not_called()
 
     def test_invalid_payload_does_not_break_history_rendering(self) -> None:
         self.store.add("text", "text/plain", b"ancienne cle", "aperçu")

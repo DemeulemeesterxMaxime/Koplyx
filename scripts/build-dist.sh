@@ -16,7 +16,7 @@ mkdir -p "$STAGE_DIR" "$DEB_ROOT"
 
 ./scripts/build-html-docs.py
 
-cp -R .github assets bin docs koplyx packaging scripts snap CHANGELOG.md CODE_OF_CONDUCT.md CONTRIBUTING.md LICENSE README.md SECURITY.md VERSION "$STAGE_DIR/"
+cp -R .github assets bin docs koplyx packaging scripts snap tests CHANGELOG.md CODE_OF_CONDUCT.md CONTRIBUTING.md LICENSE README.md SECURITY.md VERSION "$STAGE_DIR/"
 find "$STAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 tar -C "$DIST_DIR" -czf "$DIST_DIR/koplyx-$VERSION-linux-source.tar.gz" "koplyx-$VERSION"

@@ -181,3 +181,9 @@ La GitHub Action publie les artifacts en release pour les tags `v*`.
 ## Nettoyage historique Git
 
 Avant de rendre le depot public sans traces personnelles, garder un backup puis reecrire l'historique local pour remplacer l'email auteur par l'email GitHub noreply et supprimer les anciens chemins locaux. Apres verification, publier avec `git push --force-with-lease origin main` seulement si aucun contributeur externe n'a base de travail sur l'ancien historique.
+
+## Beta 0.4.7-beta.2
+
+Cette préversion corrige le collage GTK sur X11 et la capture multi-format des fichiers, et affiche la version dans les paramètres. Publier le tag `v0.4.7-beta.2` uniquement après les contrôles de PR. Vérifier `latest/beta` indépendamment du statut de la release GitHub.
+
+Avant publication, exécuter `python3 tests/test_clipboard_e2e.py` en plus du smoke. La sonde isole D-Bus, Xvfb, les paramètres et le profil; elle exige `xfwm4`, `xdotool`, `xvfb` et `xauth`. Elle vérifie le texte réellement inséré et échoue si le fichier crée une entrée texte supplémentaire.
