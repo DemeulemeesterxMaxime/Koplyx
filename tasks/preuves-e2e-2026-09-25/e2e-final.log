@@ -1,0 +1,25 @@
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+PASS copie clavier dans application cible -> capture -> stockage chiffre
+FAIL collage automatique: champ='' statut=Commande de collage envoyée à la fenêtre active.
+DIAGNOSTIC xdotool --window sur cible active: ''
+PASS Ctrl+V classique sur cible active: texte exact restaure
+PASS absence de doublon apres restauration
+PASS recherche contenu et onglet epingles
+PASS version affichee dans Parametres
+/tmp/koplyx-audit-20260925/e2e.py:69: DeprecationWarning: Gdk.Texture.new_for_pixbuf is deprecated
+  texture=Gdk.Texture.new_for_pixbuf(pix);clip=Gdk.Display.get_default().get_clipboard();clip.set_content(Gdk.ContentProvider.new_for_value(texture));pump(1.4)
+PASS capture image via presse-papiers GDK
+PASS capture fichier via presse-papiers GDK
+DEBUT restauration image
+retour restore_item image
+DEBUT restauration file
+retour restore_item file
+PASS restauration image et fichier lus par API presse-papiers
+Textes du profil test: ['Koplyx E2E : été, € et texte exact 2026-09-25', '/tmp/koplyx-e2e-84t717y8/fichier-test.txt']
+Elements avant reouverture: [(1, 'text'), (3, 'file'), (4, 'text'), (2, 'image')]
+PASS reouverture base et cle: elements persistants
+PASS suppression unitaire et effacement profil test
+PARCOURS ISOLE TERMINE: consulter les lignes PASS et FAIL

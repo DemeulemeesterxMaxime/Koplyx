@@ -28,6 +28,16 @@ sudo snap refresh koplyx --channel=latest/stable
 
 Le Snap strict ne peut pas configurer `/dev/uinput`, donc l'assistant n'y propose pas ydotool. Pour tester ydotool, installez le paquet Debian stable depuis les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest), puis déconnectez-vous et reconnectez-vous après l'installation du helper système.
 
+### Beta 0.4.7-beta.2
+
+Cette beta corrige le collage vers GTK sur X11 et les entrées texte parasites lors de la copie d'un fichier. La version apparaît dans les paramètres.
+
+```bash
+sudo snap refresh koplyx --channel=latest/beta
+```
+
+Le paquet `.deb` est proposé dans la [préversion GitHub](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/tag/v0.4.7-beta.2). Le test E2E vérifie une cible GTK sur X11 isolé; le parcours complet du portail GNOME/Wayland reste à valider sur le bureau.
+
 ### Debian et Ubuntu (.deb)
 
 Téléchargez `koplyx_<version>_all.deb` dans les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest). Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release stable `0.4.6` :
@@ -85,7 +95,7 @@ Le [workflow de release](.github/workflows/release.yml) vérifie les pull reques
 - Ouvrez la fenêtre avec `Ctrl+Alt+V`, configurable dans les paramètres et installé automatiquement sous GNOME.
 - Le menu de la barre système propose `Afficher Koplyx`, `Paramètres` et `Quitter Koplyx`. L'historique se consulte dans la fenêtre principale.
 
-Koplyx peut démarrer en arrière-plan à l'ouverture de session. L'assistant essaie automatiquement les solutions de collage dans l'ordre adapté à votre session, puis s'arrête dès que vous confirmez qu'une méthode fonctionne. Le portail du bureau Wayland n'est utilisé qu'après votre accord explicite et affiche une demande « Bureau à distance » limitée au clavier. `wtype` dépend du support du compositeur ; `ydotool` nécessite son daemon, l'accès à `uinput` et le helper système fourni par le paquet installé. Koplyx ne demande ni partage d'écran ni contrôle de souris. Le bureau peut révoquer une autorisation dans ses paramètres de confidentialité. Le mode presse-papiers restaure chaque élément en première position, tente Ctrl+V, puis vous indique clairement d'utiliser Ctrl+V manuellement si aucun outil d'injection n'est disponible. L'indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.
+Koplyx peut démarrer en arrière-plan à l'ouverture de session. L'assistant essaie automatiquement les solutions de collage dans l'ordre adapté à votre session, conserve les réussites confirmées, puis vous laisse choisir la méthode à utiliser à la fin du parcours. Le portail du bureau Wayland n'est utilisé qu'après votre accord explicite et affiche une demande « Bureau à distance » limitée au clavier. `wtype` dépend du support du compositeur ; `ydotool` nécessite son daemon, l'accès à `uinput` et le helper système fourni par le paquet installé. Koplyx ne demande ni partage d'écran ni contrôle de souris. Le bureau peut révoquer une autorisation dans ses paramètres de confidentialité. Le mode presse-papiers restaure chaque élément en première position, tente Ctrl+V, puis vous indique clairement d'utiliser Ctrl+V manuellement si aucun outil d'injection n'est disponible. L'indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.
 
 Au premier lancement, l'assistant de collage configure le raccourci GNOME, prépare le test actif dans le champ que vous choisissez puis essaie chaque solution l'une après l'autre. Le test est exclu de l'historique et le presse-papiers précédent est restauré lorsque le bureau le permet. L'assistant reste relançable depuis Paramètres. Les Paramètres affichent seulement l'état de la configuration : le choix d'une méthode est mémorisé uniquement après votre confirmation dans l'assistant. Aucun privilège n'est demandé sans clic de votre part.
 
@@ -112,6 +122,7 @@ Depuis la racine du dépôt, avec les dépendances de développement et de packa
 
 ```bash
 ./scripts/smoke-test.sh
+/usr/bin/python3 tests/test_clipboard_e2e.py
 /usr/bin/python3 -m py_compile scripts/build-html-docs.py koplyx/main.py koplyx/__init__.py
 ./scripts/build-dist.sh
 (cd dist && sha256sum -c SHA256SUMS)

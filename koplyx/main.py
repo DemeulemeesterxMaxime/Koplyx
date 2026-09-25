@@ -22,6 +22,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+APP_VERSION = (PROJECT_ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
 import gi
 
@@ -434,10 +435,20 @@ def activate_x11_window(window_id: str | None) -> bool:
 def paste_clipboard_now(window_id: str | None = None, paste_backend: str | None = None) -> bool:
     for tool in paste_tool_candidates(window_id, paste_backend):
         if tool == "xdotool":
-            command = ["xdotool", "key"]
-            if window_id:
-                command.extend(["--window", window_id])
-            command.extend(["--clearmodifiers", "ctrl+v"])
+            # --window utilise XSendEvent, ignoré par certains widgets GTK.
+            # XTEST colle dans la fenêtre active : vérifier la cible juste
+            # avant l'injection, y compris pour une cible XWayland.
+            if not window_id:
+                continue
+            try:
+                active = subprocess.run(
+                    ["xdotool", "getactivewindow"], check=False, capture_output=True, text=True
+                )
+            except OSError:
+                continue
+            if active.returncode != 0 or active.stdout.strip() != str(window_id):
+                continue
+            command = ["xdotool", "key", "--clearmodifiers", "ctrl+v"]
         elif tool == "wtype":
             command = ["wtype", "-M", "ctrl", "v", "-m", "ctrl"]
         else:
@@ -797,19 +808,25 @@ class ClipboardWatcher:
     def poll(self) -> bool:
         if time.time() < self.paused_until:
             return True
-        if self.app.config.get("capture_text"):
+        if self.app.config.get("capture_text") and not self.has_files():
             self.clipboard.read_text_async(None, self.on_text)
         if self.app.config.get("capture_images"):
             self.clipboard.read_texture_async(None, self.on_texture)
         self.clipboard.read_value_async(Gdk.FileList.__gtype__, GLib.PRIORITY_DEFAULT, None, self.on_files)
         return True
 
+    def has_files(self) -> bool:
+        formats = self.clipboard.get_formats()
+        return formats.contain_gtype(Gdk.FileList.__gtype__) or formats.contain_mime_type("text/uri-list")
+
     def on_text(self, clipboard, result) -> None:
         try:
             text = clipboard.read_text_finish(result)
         except GLib.Error:
             return
-        if not text or not text.strip():
+        # Un fichier peut aussi exposer son chemin sous forme de texte brut.
+        # Le format structuré doit rester la seule entrée de cette copie.
+        if self.has_files() or not text or not text.strip():
             return
         if text.strip().startswith("file://"):
             return
@@ -1365,6 +1382,16 @@ class SettingsWindow(Gtk.Window):
         note.set_xalign(0)
         note.add_css_class("settings-note")
         content.append(note)
+
+        self.section(content, "À PROPOS")
+        version_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        version_card.add_css_class("settings-card")
+        content.append(version_card)
+        version_row = self.row(version_card, "Version")
+        version = Gtk.Label(label=APP_VERSION)
+        version.set_selectable(True)
+        version.add_css_class("settings-version")
+        version_row.append(version)
 
     def section(self, root: Gtk.Box, label: str) -> None:
         title = Gtk.Label(label=label)
@@ -2912,7 +2939,11 @@ class KoplyxApplication(Gtk.Application):
         return GLib.SOURCE_REMOVE
 
     def try_auto_paste(self) -> bool:
-        if self.window and self.window.is_active():
+        # GTK 4.14 peut garder is_active() vrai après hide(), alors que le
+        # gestionnaire de fenêtres a déjà rendu le focus à la cible.
+        # Une fenêtre masquée ne doit pas bloquer le collage; sous X11,
+        # paste_clipboard_now vérifie aussi la fenêtre réellement active.
+        if self.window and self.window.is_visible() and self.window.is_active():
             self.paste_failed("Koplyx a encore le focus. Sélectionnez le champ cible puis réessayez.")
             return GLib.SOURCE_REMOVE
         backend = self.config.get("paste_backend") or "auto"
@@ -3287,6 +3318,11 @@ def apply_css() -> None:
     .settings-card .settings-row {
       margin: 0;
       border-color: #3b6649;
+    }
+    .settings-version {
+      color: #94efb7;
+      font-size: 13px;
+      font-weight: 700;
     }
     .shortcut-state {
       font-size: 12px;

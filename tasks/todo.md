@@ -1,5 +1,12 @@
 # État des tâches
 
+## Afficher la version dans les paramètres
+
+- [x] Lire la version depuis le fichier centralisé `VERSION`.
+- [x] Ajouter une section « À propos » en bas de la fenêtre des paramètres.
+- [x] Vérifier le diff et consigner l’état de validation.
+- Vérification : diff relu; aucun test exécuté.
+
 ## Parcours de l'assistant de collage
 
 - [x] Cartographier l'état actuel des étapes, leur numérotation et la persistance des méthodes.
@@ -7,9 +14,9 @@
 - [x] Continuer l'assistant après chaque réussite et permettre de choisir la méthode à conserver à la fin.
 - [x] Mettre à jour la version beta, le changelog et les métadonnées pour l'assistant remanié.
 - [x] Exécuter les vérifications du projet et contrôler les artefacts.
-- [ ] Fusionner après CI, publier une nouvelle beta Snap, puis l'installer pour la vérification manuelle.
+- [x] Fusionner après CI, publier `0.4.7-beta.1` sur `latest/beta` (révision 20), puis l'installer localement.
 - [ ] Confirmer dans l'interface que les succès s'enchaînent et que le choix final est mémorisé.
-- Vérifications : `xvfb-run -a ./scripts/smoke-test.sh`, build `.deb`, SHA-256, métadonnée AppStream et compilation Python réussis.
+- Vérifications automatisées : `xvfb-run -a ./scripts/smoke-test.sh`, build `.deb`, SHA-256, métadonnée AppStream et compilation Python réussis; CI GitHub réussie sauf la publication Snap, faite localement car le jeton CI n'autorise pas `beta`.
 
 ## Publication stable 0.4.6 et retrait des préversions beta
 
@@ -244,3 +251,22 @@
 - [x] Mettre à jour la version centralisée, les métadonnées, la documentation et le changelog.
 - [ ] Créer la pull request et attendre la CI complète.
 - [ ] Merger vers `main`, créer le tag `v0.4.4` et vérifier la publication Snap stable.
+
+## État des lieux E2E du 2026-09-25
+
+- [x] Vérifier le runtime, la version installée et les différences locales.
+- [x] Exécuter les contrôles automatisés dans une session isolée.
+- [x] Tester une chaîne réelle copie, capture, historique, restauration et collage avec un profil temporaire.
+- [x] Consigner les résultats, les anomalies et les limites dans un rapport daté.
+
+- Bilan : voir `tasks/ETAT-DES-LIEUX-2026-09-25.md` et ses preuves. Smoke réussi avec trousseau isolé. Deux anomalies reproduites en X11 : collage automatique GTK et entrée texte parasite pour un fichier. Le parcours réel Snap/GNOME/Wayland reste non validé.
+
+## Beta 0.4.7-beta.2 : corrections après audit E2E
+
+- [x] Corriger le collage X11 sur la cible active et empêcher les entrées texte parasites des fichiers.
+- [x] Ajouter une régression E2E avec une vraie cible GTK et vérifier le smoke.
+- [x] Synchroniser version, changelog, métadonnées et documentation; construire les artefacts.
+- [ ] Créer la PR, attendre tous les contrôles, fusionner et publier le tag beta.
+- [ ] Vérifier les artefacts GitHub et la version publiée sur `latest/beta`.
+
+- Régression CI Ubuntu 24.04 reproduite localement : `is_active()` restait vrai après `hide()` sous GTK 4.14. Le garde-fou vérifie désormais également la visibilité; la fenêtre X11 cible reste vérifiée avant injection.

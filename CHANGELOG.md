@@ -2,6 +2,19 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.7-beta.2] - 2026-09-25
+
+### Corrigé
+
+- Le collage X11 utilise le clavier de la fenêtre active, après vérification de la cible, au lieu d'événements ciblés ignorés par GTK.
+- Sous GTK 4.14, une fenêtre Koplyx masquée ne bloque plus le collage avec un état de focus périmé.
+- Une copie de fichier ne crée plus une seconde entrée texte contenant son chemin.
+
+### Ajouté
+
+- La version centralisée est visible dans la section « À propos » des paramètres.
+- Un test E2E isolé vérifie le texte réellement collé dans une autre application GTK et l'absence d'entrée parasite pour les fichiers.
+
 ## [0.4.7-beta.1] - 2026-09-24
 
 ### Modifié

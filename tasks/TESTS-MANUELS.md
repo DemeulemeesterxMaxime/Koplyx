@@ -62,3 +62,11 @@ Pour valider ydotool, utiliser le `.deb` stable. Après l'installation du helper
 - Sous la session Wayland, le champ de test actif a reçu le marqueur via `paste_clipboard_now` du paquet installé, en forçant `ydotool`.
 - Le code retour était positif, le marqueur exact a été observé et le contenu antérieur du presse-papiers a été restauré.
 - Ce contrôle valide l'injection ydotool et la restauration dans la sonde; il ne remplace pas le parcours complet de l'assistant Koplyx après relance XWayland.
+
+## Régression beta 0.4.7-beta.2
+
+- Lancer `/usr/bin/python3 tests/test_clipboard_e2e.py` pour vérifier sur X11 isolé la copie, le collage réel dans une cible GTK, l'absence de doublon fichier, la recherche, les épingles, la restauration des formats et la persistance.
+- Sur le Snap installé, copier un texte depuis une application GTK, sélectionner sa carte dans Koplyx et vérifier le texte exact au curseur. Répéter sur une cible XWayland et avec le portail GNOME.
+- Copier un fichier puis plusieurs fichiers depuis le gestionnaire de fichiers : chaque copie doit créer une seule carte fichier, sans carte texte contenant le chemin.
+- Ouvrir Paramètres et vérifier « À propos », version `0.4.7-beta.2`.
+- Les contrôles du portail, de la relance XWayland et de l'autostart sur la session réelle restent nécessaires; le test Xvfb ne les remplace pas.

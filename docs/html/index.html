@@ -116,6 +116,12 @@ sudo snap install koplyx
 sudo snap refresh koplyx --channel=latest/stable
 </code></pre>
 <p>Le Snap strict ne peut pas configurer <code>/dev/uinput</code>, donc l&#x27;assistant n&#x27;y propose pas ydotool. Pour tester ydotool, installez le paquet Debian stable depuis les <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest">GitHub Releases</a>, puis déconnectez-vous et reconnectez-vous après l&#x27;installation du helper système.</p>
+<h3>Beta 0.4.7-beta.2</h3>
+<p>Cette beta corrige le collage vers GTK sur X11 et les entrées texte parasites lors de la copie d&#x27;un fichier. La version apparaît dans les paramètres.</p>
+<pre><code>
+sudo snap refresh koplyx --channel=latest/beta
+</code></pre>
+<p>Le paquet <code>.deb</code> est proposé dans la <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases/tag/v0.4.7-beta.2">préversion GitHub</a>. Le test E2E vérifie une cible GTK sur X11 isolé; le parcours complet du portail GNOME/Wayland reste à valider sur le bureau.</p>
 <h3>Debian et Ubuntu (.deb)</h3>
 <p>Téléchargez <code>koplyx_&lt;version&gt;_all.deb</code> dans les <a href="https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest">GitHub Releases</a>. Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release stable <code>0.4.6</code> :</p>
 <pre><code>
@@ -157,7 +163,7 @@ sha256sum -c SHA256SUMS
 <li>Ouvrez la fenêtre avec <code>Ctrl+Alt+V</code>, configurable dans les paramètres et installé automatiquement sous GNOME.</li>
 <li>Le menu de la barre système propose <code>Afficher Koplyx</code>, <code>Paramètres</code> et <code>Quitter Koplyx</code>. L&#x27;historique se consulte dans la fenêtre principale.</li>
 </ul>
-<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. L&#x27;assistant essaie automatiquement les solutions de collage dans l&#x27;ordre adapté à votre session, puis s&#x27;arrête dès que vous confirmez qu&#x27;une méthode fonctionne. Le portail du bureau Wayland n&#x27;est utilisé qu&#x27;après votre accord explicite et affiche une demande « Bureau à distance » limitée au clavier. <code>wtype</code> dépend du support du compositeur ; <code>ydotool</code> nécessite son daemon, l&#x27;accès à <code>uinput</code> et le helper système fourni par le paquet installé. Koplyx ne demande ni partage d&#x27;écran ni contrôle de souris. Le bureau peut révoquer une autorisation dans ses paramètres de confidentialité. Le mode presse-papiers restaure chaque élément en première position, tente Ctrl+V, puis vous indique clairement d&#x27;utiliser Ctrl+V manuellement si aucun outil d&#x27;injection n&#x27;est disponible. L&#x27;indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
+<p>Koplyx peut démarrer en arrière-plan à l&#x27;ouverture de session. L&#x27;assistant essaie automatiquement les solutions de collage dans l&#x27;ordre adapté à votre session, conserve les réussites confirmées, puis vous laisse choisir la méthode à utiliser à la fin du parcours. Le portail du bureau Wayland n&#x27;est utilisé qu&#x27;après votre accord explicite et affiche une demande « Bureau à distance » limitée au clavier. <code>wtype</code> dépend du support du compositeur ; <code>ydotool</code> nécessite son daemon, l&#x27;accès à <code>uinput</code> et le helper système fourni par le paquet installé. Koplyx ne demande ni partage d&#x27;écran ni contrôle de souris. Le bureau peut révoquer une autorisation dans ses paramètres de confidentialité. Le mode presse-papiers restaure chaque élément en première position, tente Ctrl+V, puis vous indique clairement d&#x27;utiliser Ctrl+V manuellement si aucun outil d&#x27;injection n&#x27;est disponible. L&#x27;indicateur système nécessite un hôte AppIndicator/KStatusNotifierItem.</p>
 <p>Au premier lancement, l&#x27;assistant de collage configure le raccourci GNOME, prépare le test actif dans le champ que vous choisissez puis essaie chaque solution l&#x27;une après l&#x27;autre. Le test est exclu de l&#x27;historique et le presse-papiers précédent est restauré lorsque le bureau le permet. L&#x27;assistant reste relançable depuis Paramètres. Les Paramètres affichent seulement l&#x27;état de la configuration : le choix d&#x27;une méthode est mémorisé uniquement après votre confirmation dans l&#x27;assistant. Aucun privilège n&#x27;est demandé sans clic de votre part.</p>
 <p>Le test XWayland relance uniquement Koplyx avec <code>GDK_BACKEND=x11</code> : il ne transforme pas toute la session Wayland. Une session Xorg n&#x27;est proposée que si un fichier <code>/usr/share/xsessions/*.desktop</code> est présent. Sa configuration sauvegarde <code>/etc/gdm3/custom.conf</code>, prend effet au prochain redémarrage et peut être annulée par le bouton « Restaurer Wayland » ou par <code>koplyx --restore-display-session</code>. La restauration refuse de remplacer un fichier GDM modifié depuis la sauvegarde.</p>
 <p>L&#x27;option <code>ydotool</code> utilise uniquement un groupe système dédié et une règle udev pour <code>/dev/uinput</code>. Koplyx envoie des événements virtuels de collage et ne lit pas les périphériques clavier. Une reconnexion ou un redémarrage est nécessaire après l&#x27;autorisation. Le test est masqué dans une exécution depuis les sources tant que le helper root-owned n&#x27;est pas installé par le paquet. Snap et Flatpak ne peuvent pas modifier l&#x27;uinput de l&#x27;hôte depuis leur sandbox : l&#x27;assistant masque cette étape et propose le portail ou le mode presse-papiers.</p>
@@ -175,6 +181,7 @@ sha256sum -c SHA256SUMS
 <p>Depuis la racine du dépôt, avec les dépendances de développement et de packaging installées :</p>
 <pre><code>
 ./scripts/smoke-test.sh
+/usr/bin/python3 tests/test_clipboard_e2e.py
 /usr/bin/python3 -m py_compile scripts/build-html-docs.py koplyx/main.py koplyx/__init__.py
 ./scripts/build-dist.sh
 (cd dist &amp;&amp; sha256sum -c SHA256SUMS)

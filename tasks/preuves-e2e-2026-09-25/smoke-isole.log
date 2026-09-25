@@ -1,0 +1,132 @@
+deps ok
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+test_clipboard_only_failure_keeps_test_text_available_for_manual_paste (__main__.HistoryStoreTests.test_clipboard_only_failure_keeps_test_text_available_for_manual_paste) ... ok
+test_clipboard_only_onboarding_still_attempts_ctrl_v (__main__.HistoryStoreTests.test_clipboard_only_onboarding_still_attempts_ctrl_v) ... ok
+test_direct_paste_continues_after_a_tool_failure (__main__.HistoryStoreTests.test_direct_paste_continues_after_a_tool_failure) ... ok
+test_duplicate_is_refreshed_without_creating_a_second_row (__main__.HistoryStoreTests.test_duplicate_is_refreshed_without_creating_a_second_row) ... ok
+test_existing_database_with_legacy_pin_column_remains_readable (__main__.HistoryStoreTests.test_existing_database_with_legacy_pin_column_remains_readable) ... ok
+test_file_title_is_human_readable (__main__.HistoryStoreTests.test_file_title_is_human_readable) ... ok
+test_gdk_x11_is_treated_as_an_x11_runtime (__main__.HistoryStoreTests.test_gdk_x11_is_treated_as_an_x11_runtime) ... ok
+test_global_pinned_filter_controls_history_order (__main__.HistoryStoreTests.test_global_pinned_filter_controls_history_order) ... ok
+test_invalid_payload_does_not_break_history_rendering (__main__.HistoryStoreTests.test_invalid_payload_does_not_break_history_rendering) ... ok
+test_long_text_has_single_line_content_and_safe_tooltip (__main__.HistoryStoreTests.test_long_text_has_single_line_content_and_safe_tooltip) ... ok
+test_new_profile_requires_onboarding_and_legacy_profile_is_migrated (__main__.HistoryStoreTests.test_new_profile_requires_onboarding_and_legacy_profile_is_migrated) ... ok
+test_onboarding_does_not_offer_ydotool_without_packaged_helper (__main__.HistoryStoreTests.test_onboarding_does_not_offer_ydotool_without_packaged_helper) ... ok
+test_onboarding_test_holds_application_until_result (__main__.HistoryStoreTests.test_onboarding_test_holds_application_until_result) ... ok
+test_paste_backend_can_limit_direct_candidates (__main__.HistoryStoreTests.test_paste_backend_can_limit_direct_candidates) ... ok
+test_pinned_items_are_exposed_in_their_dedicated_view (__main__.HistoryStoreTests.test_pinned_items_are_exposed_in_their_dedicated_view) ... ok
+test_pinned_view_keeps_images_and_files (__main__.HistoryStoreTests.test_pinned_view_keeps_images_and_files) ... ok
+test_text_payload_is_encrypted_and_preview_stays_private (__main__.HistoryStoreTests.test_text_payload_is_encrypted_and_preview_stays_private) ... ok
+test_wayland_paste_tool_order_prefers_ydotool_before_xdotool (__main__.HistoryStoreTests.test_wayland_paste_tool_order_prefers_ydotool_before_xdotool) ... ok
+test_wayland_skips_xdotool_without_xwayland_target (__main__.HistoryStoreTests.test_wayland_skips_xdotool_without_xwayland_target) ... ok
+test_xdotool_active_window_is_available_on_x11 (__main__.HistoryStoreTests.test_xdotool_active_window_is_available_on_x11) ... ok
+test_xdotool_active_window_is_not_used_on_wayland (__main__.HistoryStoreTests.test_xdotool_active_window_is_not_used_on_wayland) ... ok
+test_xwayland_launch_keeps_onboarding_pending (__main__.HistoryStoreTests.test_xwayland_launch_keeps_onboarding_pending) ... ok
+test_xwayland_relaunch_has_a_dedicated_follow_up_plan (__main__.HistoryStoreTests.test_xwayland_relaunch_has_a_dedicated_follow_up_plan) ... ok
+test_xwayland_relaunch_skips_ydotool_without_packaged_helper (__main__.HistoryStoreTests.test_xwayland_relaunch_skips_ydotool_without_packaged_helper) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.064s
+
+OK
+test_trigger_failure_is_reported (__main__.UinputTriggerTests.test_trigger_failure_is_reported) ... ok
+test_trigger_targets_the_uinput_sysfs_device (__main__.UinputTriggerTests.test_trigger_targets_the_uinput_sysfs_device) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+test_show_is_delivered_to_the_existing_instance (__main__.LocalControlServerTests.test_show_is_delivered_to_the_existing_instance) ... /usr/lib/python3/dist-packages/gi/events.py:803: DeprecationWarning: 'asyncio.AbstractEventLoopPolicy' is deprecated and slated for removal in Python 3.16
+  AbstractEventLoopPolicy = getattr(asyncio, "AbstractEventLoopPolicy", object)
+/usr/lib/python3/dist-packages/gi/events.py:890: DeprecationWarning: 'asyncio.get_event_loop_policy' is deprecated and slated for removal in Python 3.16
+  if not isinstance(_get_event_loop_policy(), GLibEventLoopPolicy):
+ok
+test_socket_is_private (__main__.LocalControlServerTests.test_socket_is_private) ... ok
+test_toggle_is_delivered_to_the_existing_instance (__main__.LocalControlServerTests.test_toggle_is_delivered_to_the_existing_instance) ... /usr/lib/python3/dist-packages/gi/events.py:890: DeprecationWarning: 'asyncio.get_event_loop_policy' is deprecated and slated for removal in Python 3.16
+  if not isinstance(_get_event_loop_policy(), GLibEventLoopPolicy):
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.041s
+
+OK
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+test_installs_and_updates_the_koplyx_binding (__main__.ShortcutInstallationTests.test_installs_and_updates_the_koplyx_binding) ... ok
+test_source_shortcut_keeps_profile_even_with_installed_snap (__main__.ShortcutInstallationTests.test_source_shortcut_keeps_profile_even_with_installed_snap) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+OK
+test_denied_permission_closes_session_without_keys (__main__.PortalTests.test_denied_permission_closes_session_without_keys) ... ok
+test_partial_key_failure_closes_session (__main__.PortalTests.test_partial_key_failure_closes_session) ... ok
+test_permission_before_keys_and_reuse (__main__.PortalTests.test_permission_before_keys_and_reuse) ... ok
+test_revoked_session_requires_new_authorization (__main__.PortalTests.test_revoked_session_requires_new_authorization) ... ok
+test_timeout_cancels_request (__main__.PortalTests.test_timeout_cancels_request) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+OK
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.2' (uid=1000 pid=780551 comm="/usr/bin/python3 tests/test_history_interaction.py" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.3' (uid=1000 pid=780574 comm="/usr/libexec/xdg-desktop-portal" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.portal.Documents' requested by ':1.3' (uid=1000 pid=780574 comm="/usr/libexec/xdg-desktop-portal" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.freedesktop.portal.Documents'
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gnome' requested by ':1.3' (uid=1000 pid=780574 comm="/usr/libexec/xdg-desktop-portal" label="chatgpt (unconfined)")
+
+** (xdg-desktop-portal-gnome:780600): WARNING **: 14:06:27.298: GDK backend forced via env var, portal dialogs will not work properly.
+Non-compatible display server, exposing settings only.
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.6' (uid=1000 pid=780600 comm="/usr/libexec/xdg-desktop-portal-gnome" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.gnome'
+fusermount3: failed to access mountpoint /run/user/1000/gvfs: Permission denied
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.3' (uid=1000 pid=780574 comm="/usr/libexec/xdg-desktop-portal" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.a11y.Bus' requested by ':1.8' (uid=1000 pid=780623 comm="/usr/libexec/xdg-desktop-portal-gtk" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[780633]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1000 pid=780623 comm="/usr/libexec/xdg-desktop-portal-gtk" label="chatgpt (unconfined)")
+dbus-daemon[780633]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.gtk'
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='org.freedesktop.secrets' requested by ':1.3' (uid=1000 pid=780574 comm="/usr/libexec/xdg-desktop-portal" label="chatgpt (unconfined)")
+discover_other_daemon: 1GNOME_KEYRING_CONTROL=/run/user/1000/keyring
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'org.freedesktop.portal.Desktop'
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Activating service name='ca.desrt.dconf' requested by ':1.16' (uid=1000 pid=780656 comm="gsettings set org.gnome.settings-daemon.plugins.me" label="chatgpt (unconfined)")
+dbus-daemon[780535]: [session uid=1000 pid=780535 pidfd=5] Successfully activated service 'ca.desrt.dconf'
+MESA: info: vulkan: No DRI3 support detected - required for presentation
+Note: you can probably enable DRI3 in your Xorg config
+MESA: info: vulkan: No DRI3 support detected - required for presentation
+Note: you can probably enable DRI3 in your Xorg config
+history interaction passed
+
+(/usr/libexec/xdg-desktop-portal:780574): xdg-desktop-portal-WARNING **: 14:06:27.622: Failed to create secret proxy: Error calling StartServiceByName for org.freedesktop.secrets: The connection is closed
+A connection to the bus can't be made
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+dbus-daemon[780690]: [session uid=1000 pid=780690 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.2' (uid=1000 pid=780716 comm="/usr/bin/python3 tests/test_window_controls.py" label="chatgpt (unconfined)")
+dbus-daemon[780690]: [session uid=1000 pid=780690 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
+fusermount3: failed to access mountpoint /run/user/1000/gvfs: Permission denied
+dbus-daemon[780690]: [session uid=1000 pid=780690 pidfd=5] Activating service name='org.a11y.Bus' requested by ':1.2' (uid=1000 pid=780716 comm="/usr/bin/python3 tests/test_window_controls.py" label="chatgpt (unconfined)")
+dbus-daemon[780690]: [session uid=1000 pid=780690 pidfd=5] Successfully activated service 'org.a11y.Bus'
+MESA: info: vulkan: No DRI3 support detected - required for presentation
+Note: you can probably enable DRI3 in your Xorg config
+dbus-daemon[780757]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1000 pid=780716 comm="/usr/bin/python3 tests/test_window_controls.py" label="chatgpt (unconfined)")
+dbus-daemon[780757]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+Dimensions natives préservées pour réduire, agrandir et fermer.
+A connection to the bus can't be made
+snap launcher runtime environment ok
+tray integration passed
+auto paste tool ok
+tray watcher missing: install/enable AppIndicator support for your desktop
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+storage ok
+gtk startup ok
+smoke test passed
