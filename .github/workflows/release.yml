@@ -92,6 +92,14 @@ jobs:
         id: snapcraft
         uses: canonical/action-build@v1
 
+      - name: Installer les outils de vérification Snap
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends squashfs-tools
+
+      - name: Vérifier les correctifs libx11 embarqués
+        run: ./scripts/check-snap-security.sh "${{ steps.snapcraft.outputs.snap }}"
+
       - name: Upload snap artifact
         uses: actions/upload-artifact@v4
         with:

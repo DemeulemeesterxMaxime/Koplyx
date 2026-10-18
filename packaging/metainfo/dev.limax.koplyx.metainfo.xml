@@ -19,21 +19,13 @@
   </provides>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="0.4.7-beta.2" date="2026-09-25" type="development">
+    <release version="0.4.7" date="2026-10-18" type="stable">
       <description>
         <ul>
-          <li>Le collage X11 utilise la fenêtre active vérifiée pour fonctionner avec les champs GTK.</li>
-          <li>Les fichiers copiés ne génèrent plus une entrée texte parasite contenant leur chemin.</li>
+          <li>Le Snap est reconstruit avec les correctifs Ubuntu de libx11 pour USN-8913-1.</li>
+          <li>Le collage X11 vers GTK et la capture des fichiers sans entrée texte parasite sont stabilisés.</li>
+          <li>L'assistant poursuit les méthodes après chaque réussite et conserve le choix final.</li>
           <li>La version est affichée dans les paramètres.</li>
-        </ul>
-      </description>
-    </release>
-    <release version="0.4.7-beta.1" date="2026-09-24">
-      <description>
-        <ul>
-          <li>L'assistant distingue les étapes de préparation, les méthodes de collage et le choix final.</li>
-          <li>Il poursuit les essais après chaque réussite et conserve les méthodes confirmées jusqu'au récapitulatif.</li>
-          <li>La demande GNOME sépare l'autorisation clavier du test de collage.</li>
         </ul>
       </description>
     </release>
@@ -144,6 +136,6 @@
   <url type="homepage">https://github.com/DemeulemeesterxMaxime/Koplyx</url>
   <url type="bugtracker">https://github.com/DemeulemeesterxMaxime/Koplyx/issues</url>
   <custom>
-    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.6/packaging/flatpak/dev.limax.koplyx.yml</value>
+    <value key="flathub::manifest">https://github.com/DemeulemeesterxMaxime/Koplyx/blob/v0.4.7/packaging/flatpak/dev.limax.koplyx.yml</value>
   </custom>
 </component>

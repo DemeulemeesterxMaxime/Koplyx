@@ -2,6 +2,23 @@
 
 Toutes les versions notables de Koplyx sont documentées dans ce fichier.
 
+## [0.4.7] - 2026-10-18
+
+### Sécurité
+
+- Reconstruction du Snap avec les paquets Ubuntu corrigés pour [USN-8913-1](https://ubuntu.com/security/notices/USN-8913-1) : `libx11-6` et `libx11-data` en version `2:1.8.7-1ubuntu0.1` ou supérieure sur core24.
+- Vérification des versions libx11 embarquées avant toute publication Snap par la CI.
+
+### Corrigé
+
+- Stabilisation des corrections beta : collage X11 dans une fenêtre GTK active vérifiée, prise en compte de la visibilité sous GTK 4.14 et copie des fichiers sans entrée texte parasite.
+
+### Modifié
+
+- Stabilisation de l'assistant : étapes de préparation distinctes, poursuite après chaque réussite, conservation des méthodes confirmées après relance XWayland et choix final mémorisé.
+- La version est visible dans la section « À propos » des paramètres.
+- Le canal `latest/beta` est fermé après validation de la nouvelle stable et suit son repli vers celle-ci.
+
 ## [0.4.7-beta.2] - 2026-09-25
 
 ### Corrigé

@@ -70,3 +70,12 @@ Pour valider ydotool, utiliser le `.deb` stable. Après l'installation du helper
 - Copier un fichier puis plusieurs fichiers depuis le gestionnaire de fichiers : chaque copie doit créer une seule carte fichier, sans carte texte contenant le chemin.
 - Ouvrir Paramètres et vérifier « À propos », version `0.4.7-beta.2`.
 - Les contrôles du portail, de la relance XWayland et de l'autostart sur la session réelle restent nécessaires; le test Xvfb ne les remplace pas.
+
+
+## Release stable 0.4.7 et USN-8913-1, 2026-10-18
+
+- Validation locale réussie : smoke, E2E X11 dans deux processus GTK avec profil et bus isolés, build `.deb`/archive, SHA-256, desktop et AppStream.
+- Le nouveau contrôle de sécurité refuse le manifeste vulnérable de r21 (`2:1.8.7-1build1`), accepte le minimum corrigé et refuse l'absence de `libx11-data`, à partir de fixtures SquashFS.
+- Sur le Snap construit en CI, contrôler `./scripts/check-snap-security.sh fichier.snap`, puis démarrer avec un profil isolé, vérifier « À propos : 0.4.7 », la capture et la restauration d'un texte. Consigner le résultat effectif avant publication.
+- Après publication, vérifier `snap info koplyx` et `snapcraft status koplyx` : stable en `0.4.7`, candidate en repli sur stable, puis beta fermé avec repli sur la même stable.
+- Le portail GNOME/Wayland, la relance XWayland et l'autostart après reconnexion restent à valider sur une session réelle. L'E2E Xvfb ne prouve pas ces parcours.
