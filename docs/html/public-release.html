@@ -114,7 +114,8 @@
 </ul>
 <h2>Commandes release</h2>
 <pre><code>
-./scripts/smoke-test.sh
+xvfb-run -a ./scripts/smoke-test.sh
+/usr/bin/python3 tests/test_clipboard_e2e.py
 ./scripts/build-dist.sh
 cd dist
 sha256sum -c SHA256SUMS
@@ -180,8 +181,8 @@ groups
 <p>Construire et publier :</p>
 <pre><code>
 snapcraft pack
-ls -lh koplyx_0.4.6_amd64.snap
-snapcraft upload --release=stable koplyx_0.4.6_amd64.snap
+ls -lh koplyx_0.4.7_amd64.snap
+snapcraft upload --release=stable koplyx_0.4.7_amd64.snap
 </code></pre>
 <p>Pour une premiere publication, reserver le nom si necessaire :</p>
 <pre><code>
@@ -232,8 +233,8 @@ appstreamcli validate --no-net packaging/metainfo/dev.limax.koplyx.metainfo.xml
 <p>Tag GitHub :</p>
 <pre><code>
 git fetch origin main
-git tag -a v0.4.6 origin/main -m &quot;Koplyx 0.4.6&quot;
-git push origin v0.4.6
+git tag -a v0.4.7 origin/main -m &quot;Koplyx 0.4.7&quot;
+git push origin v0.4.7
 </code></pre>
 <p>La GitHub Action publie les artifacts en release pour les tags <code>v*</code>.</p>
 <h2>Nettoyage historique Git</h2>
@@ -241,6 +242,20 @@ git push origin v0.4.6
 <h2>Beta 0.4.7-beta.2</h2>
 <p>Cette préversion corrige le collage GTK sur X11 et la capture multi-format des fichiers, et affiche la version dans les paramètres. Publier le tag <code>v0.4.7-beta.2</code> uniquement après les contrôles de PR. Vérifier <code>latest/beta</code> indépendamment du statut de la release GitHub.</p>
 <p>Avant publication, exécuter <code>python3 tests/test_clipboard_e2e.py</code> en plus du smoke. La sonde isole D-Bus, Xvfb, les paramètres et le profil; elle exige <code>xfwm4</code>, <code>xdotool</code>, <code>xvfb</code> et <code>xauth</code>. Elle vérifie le texte réellement inséré et échoue si le fichier crée une entrée texte supplémentaire.</p>
+<h2>Stable 0.4.7 et reconstruction de sécurité</h2>
+<p>Cette stable reprend les corrections de <code>0.4.7-beta.1</code> et <code>0.4.7-beta.2</code>. Construire le Snap dans un environnement propre pour récupérer les mises à jour Ubuntu. Avant publication, contrôler le manifeste embarqué :</p>
+<pre><code>
+./scripts/check-snap-security.sh koplyx_0.4.7_amd64.snap
+</code></pre>
+<p>Le contrôle exige <code>unsquashfs</code> et <code>dpkg</code> et refuse un manifeste absent, un paquet manquant ou une version de <code>libx11-6</code>/<code>libx11-data</code> antérieure à <code>2:1.8.7-1ubuntu0.1</code> (USN-8913-1, Ubuntu 24.04). La CI effectue ce contrôle avant de publier le Snap.</p>
+<p>Attendre les trois jobs de PR (<code>security-scan</code>, <code>build</code>, <code>build-snap</code>) sur le dernier commit avant de fusionner et de créer <code>v0.4.7</code>. Vérifier ensuite la GitHub Release, ses sommes de contrôle et la nouvelle révision Store <code>latest/stable</code>. Le canal <code>candidate</code>, fermé, doit suivre la stable.</p>
+<p>Après validation de la stable uniquement, fermer beta et vérifier les replis :</p>
+<pre><code>
+snapcraft close koplyx latest/beta
+snapcraft status koplyx
+snap info koplyx
+</code></pre>
+<p>Si la CI ne peut pas publier malgré un build réussi, contrôler puis publier l&#x27;artefact Snap exact du tag avec la session Snapcraft locale autorisée. Conserver les anciennes releases GitHub et ne pas modifier <code>latest/edge</code>.</p>
   </main>
 </body>
 </html>

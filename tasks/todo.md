@@ -270,3 +270,18 @@
 - [ ] Vérifier les artefacts GitHub et la version publiée sur `latest/beta`.
 
 - Régression CI Ubuntu 24.04 reproduite localement : `is_active()` restait vrai après `hide()` sous GTK 4.14. Le garde-fou vérifie désormais également la visibilité; la fenêtre X11 cible reste vérifiée avant injection.
+
+
+## Release stable 0.4.7 et USN-8913-1
+
+- [x] Synchroniser la version 0.4.7, les métadonnées, le changelog et la documentation.
+- [x] Exécuter smoke, E2E GTK, build des distributions, SHA-256 et validations desktop/AppStream.
+- [ ] Construire un Snap propre et vérifier libx11-6/libx11-data >= 2:1.8.7-1ubuntu0.1.
+- [ ] Vérifier le runtime Snap sur un profil isolé et documenter les limites Wayland.
+- [ ] Créer la PR, attendre security-scan/build/build-snap sur le dernier commit, puis fusionner.
+- [ ] Publier v0.4.7, vérifier les artefacts GitHub et la révision Snap stable.
+- [ ] Fermer latest/beta après validation de stable et vérifier les replis candidate/beta.
+
+Choix : amd64, core24, confinement strict; edge et les anciennes releases restent hors périmètre. Préserver la modification locale de tasks/todo.md dans le checkout initial.
+
+Validation locale du 2026-10-18 : smoke et E2E GTK réels réussis sur X11 isolé, distributions et SHA-256 valides, desktop et AppStream valides. Le contrôle USN refuse le manifeste r21 vulnérable et un paquet manquant, puis accepte un manifeste de test corrigé. La construction Snap propre et la vérification du paquet réel restent à effectuer en CI.

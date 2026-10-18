@@ -28,22 +28,20 @@ sudo snap refresh koplyx --channel=latest/stable
 
 Le Snap strict ne peut pas configurer `/dev/uinput`, donc l'assistant n'y propose pas ydotool. Pour tester ydotool, installez le paquet Debian stable depuis les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest), puis déconnectez-vous et reconnectez-vous après l'installation du helper système.
 
-### Beta 0.4.7-beta.2
+### Version stable 0.4.7
 
-Cette beta corrige le collage vers GTK sur X11 et les entrées texte parasites lors de la copie d'un fichier. La version apparaît dans les paramètres.
+Cette version intègre les corrections de collage GTK sur X11, la capture des fichiers sans entrée texte parasite et le parcours amélioré de l'assistant. La version apparaît dans les paramètres. Le Snap est reconstruit avec les correctifs de sécurité Ubuntu pour [USN-8913-1](https://ubuntu.com/security/notices/USN-8913-1).
 
-```bash
-sudo snap refresh koplyx --channel=latest/beta
-```
+À partir de cette release, le canal `latest/beta` est fermé et suit son repli vers la stable. Pour choisir explicitement la stable, utilisez `sudo snap refresh koplyx --channel=latest/stable`.
 
-Le paquet `.deb` est proposé dans la [préversion GitHub](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/tag/v0.4.7-beta.2). Le test E2E vérifie une cible GTK sur X11 isolé; le parcours complet du portail GNOME/Wayland reste à valider sur le bureau.
+Le test E2E vérifie une cible GTK sur X11 isolé; le parcours complet du portail GNOME/Wayland reste à valider sur le bureau.
 
 ### Debian et Ubuntu (.deb)
 
-Téléchargez `koplyx_<version>_all.deb` dans les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest). Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release stable `0.4.6` :
+Téléchargez `koplyx_<version>_all.deb` dans les [GitHub Releases](https://github.com/DemeulemeesterxMaxime/Koplyx/releases/latest). Depuis le dossier de téléchargement, installez le fichier de la version choisie. Exemple pour la release stable `0.4.7` :
 
 ```bash
-sudo apt install ./koplyx_0.4.6_all.deb
+sudo apt install ./koplyx_0.4.7_all.deb
 ```
 
 Pour mettre à jour, téléchargez et installez le paquet de la nouvelle release.
